@@ -30,7 +30,7 @@ class Todo(Resource):
     schema_name = ("name", {
         "desc": u"名称",
         "required": True,
-        "validate": "name",
+        "validate": "re_name",
     })
     schema_date_out = ("date", {
         "desc": u"时间",
@@ -41,7 +41,7 @@ class Todo(Resource):
         "desc": u"时间",
         "required": True,
         "validate": "datetime",
-        "default": datetime.utcnow
+        "default": datetime.now
     })
     schema_finish = ("finish", {
         "desc": u"是否已完成",
@@ -67,8 +67,7 @@ class Todo(Resource):
     def get(self, id):
 
         if id in todos:
-            td = todos[id]
-            return dict(td, id=id)
+            return dict(todos[id], id=id)
         else:
             abort(404, "Not Found")
 
@@ -80,17 +79,22 @@ class Todo(Resource):
             newid = 1
         else:
             newid = sorted(todos.keys())[-1] + 1
+        todos[newid] = todo
         return dict(todo, id=newid)
 
     def put(self, id, **todo):
-        todos[id] = todo
-        return dict(todo, id=id)
+        if id in todos:
+            todos[id] = todo
+            return dict(todo, id=id)
+        else:
+            abort(404, "Not Found")
 
     def delete(self, id):
         if id in todos:
             del todos[id]
 
 api.add_resource(Todo)
+api.gen_res_js()
 
 if __name__ == '__main__':
     app.run(debug=True)

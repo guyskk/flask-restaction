@@ -2,7 +2,7 @@ from flask_restaction import Permission
 
 
 def test_permission():
-    p = Permission(filepath="tests/permission.json")
+    p = Permission(filepath="permission.json")
     assert p.permit("admin", "photo", "get")
     assert p.permit("userA", "photo", "get")
     assert not p.permit("userA", "message", "Post")

@@ -4,6 +4,5 @@ flask_restaction\__init__.py
 flask_restaction\api.py
 flask_restaction\output_json.py
 flask_restaction\permission.py
-flask_restaction\res.py
 flask_restaction\resource.py
 flask_restaction\js\res.js

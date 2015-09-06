@@ -112,9 +112,8 @@ class Api(object):
         """id and role must in the token"""
         if self.parse_me:
             return self.parse_me()
-        secret = self.app.config.get("RESOURCE_JWT_SECRET")
-        if not secret:
-            abort(500, "no RESOURCE_JWT_SECRET in app.config")
+        secret = self.app.config.get(
+            "RESOURCE_JWT_SECRET", "DEFAULT_RESOURCE_JWT_SECRET")
         algorithms = self.app.config.get("RESOURCE_JWT_ALG", 'HS256')
         token = request.headers.get("Authorization")
         if token is not None:
@@ -145,7 +144,8 @@ class Api(object):
         return rv, code, headers
 
     def gen_token(self, me):
-        secret = self.app.config["RESOURCE_JWT_SECRET"]
-        algorithm = self.app.config["RESOURCE_JWT_ALG"] or 'HS256'
+        secret = self.app.config.get(
+            "RESOURCE_JWT_SECRET", "DEFAULT_RESOURCE_JWT_SECRET")
+        algorithm = self.app.config.get("RESOURCE_JWT_ALG", 'HS256')
         token = jwt.encode(me, secret, algorithm=algorithm)
         return token
