@@ -1,0 +1,4 @@
+.. _permission:
+
+Permission
+==========
