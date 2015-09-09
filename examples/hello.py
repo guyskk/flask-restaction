@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath("../"))
 from flask import Flask
 from flask_restaction import Resource, Api
 
@@ -21,7 +24,7 @@ class Hello(Resource):
         return {"hello": name}
 
 api.add_resource(Hello)
-api.gen_res_js()
+api.gen_resjs()
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -13,16 +13,16 @@
     
     /*以下为jinja2模板，用于生成js*/
     
-    {% for name, actions in reslist %}
+    {% for name,auth_header,actions in reslist %}
     res.{{name}}={};
         {% for url, meth, action, needtoken in actions %}
         res.{{name}}.{{action}}=function(data,fn,progress){
-            headers={};
+            header={};
             {% if needtoken %}
-            addToken(headers);
+            addToken(header,"{{auth_header}}");
             {% endif %}
             var _fn=function(err, data, header, xhr){
-                saveToken(header);
+                saveToken(header,"{{auth_header}}");
                 if(typeof(fn)==="function"){
                     fn(err, data, header, xhr);
                 }
@@ -30,7 +30,7 @@
             res.ajax("{{url}}",{
                 method:"{{meth}}",
                 data:data,
-                headers: headers,
+                header: header,
                 fn:_fn,
                 progress:progress
             });
@@ -42,20 +42,21 @@
    
     
 
-    function addToken(header){
-        if(window.localStorage){
-            var _token=window.localStorage._token;
-            if(_token){
-                header["Authorization"]=_token;
+    function addToken(header, key){
+        if (header&&key) {
+            if(window.localStorage){
+                _token = window.localStorage._token;
+                if(_token){
+                    header[key]=_token;
+                }
             }
         }
     }
 
-    function saveToken(header) {
-        if (header) {
-            header["Authorization"]
-            if (header["Authorization"] && window.localStorage) {
-                window.localStorage._token = header["Authorization"];
+    function saveToken(header, key) {
+        if (header&&key) {
+            if (header[key] && window.localStorage) {
+                window.localStorage._token = header[key];
             }
         }
     }

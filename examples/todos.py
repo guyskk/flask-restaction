@@ -1,4 +1,9 @@
 # coding:utf-8
+
+import sys
+import os
+sys.path.insert(0, os.path.abspath("../"))
+
 from flask import Flask
 from flask_restaction import Api
 from flask_restaction import Resource
@@ -94,7 +99,7 @@ class Todo(Resource):
             del todos[id]
 
 api.add_resource(Todo)
-api.gen_res_js()
+api.gen_resjs()
 
 if __name__ == '__main__':
     app.run(debug=True)

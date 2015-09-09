@@ -5,7 +5,7 @@
     {
         method: "get/post/...",
         data: "object/string(id)/formdata",
-        headers: {},
+        header: {},
         fn: function(err, data, header, xhr) {
 
         },
@@ -133,9 +133,9 @@ window.res = (function(window) {
             req.setRequestHeader('Content-Type', 'application/json');
         }
         req.setRequestHeader('Accept', 'application/json');
-        if (options.headers) {
-            for (var k in options.headers) {
-                req.setRequestHeader(k, options.headers[k]);
+        if (options.header) {
+            for (var k in options.header) {
+                req.setRequestHeader(k, options.header[k]);
             }
         }
         req.onreadystatechange = function() {

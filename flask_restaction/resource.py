@@ -85,14 +85,14 @@ class Resource(View):
                 rv = self.full_dispatch_request(*args, **kwargs)
         except Exception as ex:
             rv = self._handle_error(ex)
-        rv, code, headers = self.unpack(rv)
+        rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
         if rv is None:
             return make_response("", code, headers)
         elif isinstance(rv, (ResponseBase, basestring)):
             return make_response(rv, code, headers)
         else:
-            mediatype = request.accept_mimeoutput_types.best_match(
+            mediatype = request.accept_mimetypes.best_match(
                 exporters.keys(), default='application/json')
             export = exporters[mediatype]
             return export(rv, code, headers)

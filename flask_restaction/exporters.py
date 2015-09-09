@@ -1,3 +1,5 @@
+# coding:utf-8
+
 from flask import json, current_app
 
 exporters = {}
@@ -30,8 +32,8 @@ def export_json(data, code, header):
     # Note that we add '\n' to end of response
     # (see https://github.com/mitsuhiko/flask/pull/1262)
     # https://github.com/Runscope/httpbin/issues/168
-    rv = current_app.response_class(
-        (json.dumps(data, indent=2, sort_keys=sort_keys),
-         '\n'),
-        mimetype='application/json')
-    return rv
+    dumped = json.dumps(data, indent=2, sort_keys=sort_keys) + "\n"
+    resp = current_app.response_class(
+        dumped, status=code, headers=header, mimetype='application/json')
+
+    return resp
