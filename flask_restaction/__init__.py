@@ -27,9 +27,10 @@ def abort_if_not_me(_id):
     if request.me["id"] != _id:
         raise ResourceException(403, {"error": "permission deny"})
 
-from output_json import output_json
+from exporters import exporters, exporter
 from permission import Permission
 from resource import Resource
 from api import Api
 __all__ = ["Api", "Resource", "Permission", "abort",
-           "abort_if_not_me", "ResourceException", "output_json"]
+           "abort_if_not_me", "ResourceException",
+           "exporters", "exporter"]

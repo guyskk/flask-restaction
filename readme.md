@@ -13,6 +13,12 @@
     pip install flask-restaction
 
 
+### Build Document
+
+    cd docs
+    make html
+
+
 ## Quickstart
 
 #### A minimal Flask-Restaction API looks like this:

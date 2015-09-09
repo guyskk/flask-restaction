@@ -1,7 +1,23 @@
 from flask import json, current_app
 
+exporters = {}
 
-def output_json(data):
+
+def exporter(mediatype):
+    """注册输出格式的装饰器"""
+    def wraper(fn):
+        register_exporter(mediatype, fn)
+        return fn
+    return wraper
+
+
+def register_exporter(mediatype, fn):
+    """注册输出格式"""
+    exporters[mediatype] = fn
+
+
+@exporter('application/json')
+def export_json(data, code, header):
     """Creates a :class:`~flask.Response` with the JSON representation of
     the given arguments with an :mimetype:`application/json` mimetype.
     Note: to avoid CSRF attack, don't use cookie to store session.

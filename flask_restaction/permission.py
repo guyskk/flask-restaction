@@ -1,5 +1,10 @@
 # coding:utf-8
+"""
+    permission
+    ~~~~~~~~~
 
+    权限模块
+"""
 import os
 from os.path import isfile
 import json
@@ -10,7 +15,10 @@ pattern_name = re.compile(ur"[A-Za-z]\w*", re.I)
 
 
 def validate(obj):
-    """验证permission数据格式是否正确"""
+    """验证 permission 数据格式是否正确
+
+    :param obj: 从 json 文件读取进来的dict对象
+    """
     assert isinstance(obj, dict), \
         "invalid obj, obj must be a dict: '%s'" % obj
     for role, perm in obj.items():
@@ -44,27 +52,11 @@ class Permission(object):
 
     """Permission 权限分配表
 
-        权限按role->resource->actions划分
-        JSON 文件格式
-        {
-            "role/*": {
-                "*/resource*": ["get", "post"],
-                "resource": ["action", ...]
-            },
-            ...
-        }
-        role为'*'时，表示匿名用户的权限。
-        resource为'*'时，表示拥有所有resource的所有action权限，
-            此时actions必须为'[]'且不能有其他resource。
-        resource为'resource*'时，表示拥有此resource的所有action权限，此时actions必须为'[]'。
-        role和resource（除去'*'号）只能是字母数字下划线组合，且不能以数字开头。
+    :param filepath: permission 文件路径
+    :param jsonstr: json 字符串
     """
 
     def __init__(self, filepath=None, jsonstr=None):
-        """
-        filepath 文件（json格式）路径
-        jsonstr json字符串
-        """
         if filepath is not None:
             if isfile(filepath):
                 with open(filepath) as f:
@@ -79,8 +71,11 @@ class Permission(object):
             self.permission = {}
 
     def permit(self, role, resource, action):
-        """
-        判断角色是否有对应的权限
+        """判断角色是否有对应的权限
+
+        :param role: 角色
+        :param resource: 资源
+        :param action: 操作
         """
         if role in self.permission:
             perm = self.permission[role]
@@ -96,21 +91,32 @@ class Permission(object):
             return False
 
     def dumps(self):
-        """
-        将权限分配表导出为json格式字符串
+        """将权限分配表导出为 json 格式字符串
         """
         return json.dumps(self.permission, indent=4)
 
     def dump(self, filepath):
-        """
-        将权限分配表用json格式保存到文件
+        """将权限分配表用 json 格式保存到文件
+
+        :param filepath: 文件路径
         """
         with open(filepath, "w") as f:
             f.write(self.dumps())
 
-    def add(self, role, resource, action):
-        """
-        给角色添加权限，可以使用'*'符号
+    def add(self, role, resource, action=None):
+        """给角色添加权限，可以使用 ``'*'`` 符号。
+
+        当 role, resource, action 不存在时会自动创建。
+
+        :param role: 角色
+        :param resource: 资源
+        :param action: 操作
+
+        例如::
+
+            permission.add("admin", "*")
+            permission.add("poster", "photo*")
+            permission.add("*", "photo", "get")
         """
         p = copy.deepcopy(self.permission)
         if role not in p:
@@ -137,10 +143,15 @@ class Permission(object):
                 raise ValueError(ex.message)
 
     def remove(self, role, resource=None, action=None):
-        """
-        移除权限
-        role!=None, resource==None, 删除role
-        role!=None, resource!=None,action==None, 删除resource
+        """移除权限
+
+        :param role: 角色
+        :param resource: 资源
+        :param action: 操作
+
+        - 当 ``role!=None, resource==None`` , 删除 role
+        - 当 ``role!=None, resource!=None,action==None`` , 删除 resource
+        - 当 ``role, resource, action`` 不存在时不进行操作也不抛 Exception
         """
         if role in self.permission:
             r = self.permission[role]

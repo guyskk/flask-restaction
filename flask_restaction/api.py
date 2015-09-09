@@ -13,20 +13,38 @@ from . import res_js
 
 class Api(object):
 
-    """docstring for Api"""
+    """docstring for Api
 
-    def __init__(self, app=None, permission_path="permission.json", parse_me=None):
+    RESOURCE_PERMISSION_PATH = "permission.json"
+    RESOURCE_AUTH_HEADER = "Authorization"
+    RESOURCE_AUTH_SECRET = "SECRET"
+    RESOURCE_AUTH_ALGORITHM = "HS256"
+    """
+
+    def __init__(self, app=None, permission_path="permission.json",
+                 auth_header="Authorization", auth_secret="SECRET",
+                 auth_algorithm="HS256"):
         self.permission_path = permission_path
+        self.auth_header = auth_header
+        self.auth_secret = auth_secret
+        self.auth_algorithm = auth_algorithm
+
         self.resources = []
+
         self.before_request_funcs = []
         self.after_request_funcs = []
-        self.error_handler = None
-        self.parse_me = parse_me
+        self.handle_error_func = None
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
         self.app = app
+        if self.is_blueprint():
+            self.app.record(lambda s: self.init_permission(s.app))
+        else:
+            self.init_permission(app)
+
+    def init_permission(self, app):
         ppath = join(app.root_path, self.permission_path)
         if exists(ppath):
             self.permission_path = ppath
@@ -75,8 +93,8 @@ class Api(object):
                 fn = res_cls.as_view(name, *class_args, **class_kwargs)
                 return fn(*args, **kwargs)
             except Exception as ex:
-                if self.error_handler:
-                    rv = self.error_handler(ex)
+                if self.handle_error_func:
+                    rv = self.handle_error_func(ex)
                     if rv is not None:
                         return rv
                 raise
@@ -98,7 +116,7 @@ class Api(object):
                     url = "/{0}/{1}".format(res["name"], act)
                 else:
                     url = "/{0}".format(res["name"])
-                action = meth + act
+                action = meth + "_" + act
                 needtoken = self.permission.permit("*", res["name"], action)
                 actions.append((url, meth, action, needtoken))
         js = template.render(reslist=reslist)
@@ -108,44 +126,51 @@ class Api(object):
         with open(path, "w") as f:
             f.write(js.encode("utf-8"))
 
-    def _parse_me(self):
+    def parse_me(self):
         """id and role must in the token"""
-        if self.parse_me:
-            return self.parse_me()
-        secret = self.app.config.get(
-            "RESOURCE_JWT_SECRET", "DEFAULT_RESOURCE_JWT_SECRET")
-        algorithms = self.app.config.get("RESOURCE_JWT_ALG", 'HS256')
-        token = request.headers.get("Authorization")
+        token = request.headers.get(self.auth_header)
         if token is not None:
             try:
-                me = jwt.decode(token, secret, algorithms=[algorithms])
+                me = jwt.decode(token, self.auth_secret,
+                                algorithms=[self.auth_algorithm])
                 if "id" in me and "role" in me:
                     return me
             except Exception:
                 pass
         return {"id": None, "role": "*"}
 
+    def gen_token(self, me):
+        token = jwt.encode(me, self.auth_secret, algorithm=self.auth_algorithm)
+        return token
+
     def _before_request(self):
         """before_request"""
-        request.me = self._parse_me()
-        if self.before_request_funcs:
-            for fn in self.before_request_funcs:
-                rv = fn()
-                if rv is not None:
-                    return rv
-        if not self.permission.permit(request.me["role"], request.resource, request.action):
-            abort(403, {"error": "permission deny"})
+        request.me = self.parse_me()
+        for fn in self.before_request_funcs:
+            rv = fn()
+            if rv is not None:
+                return rv
+        if not self.permission.permit(
+                request.me["role"], request.resource, request.action):
+            abort(403, "permission deny")
         return None
 
     def _after_request(self, rv, code, headers):
-        if self.after_request_funcs:
-            for fn in self.after_request_funcs:
-                rv, code, headers = fn(rv, code, headers)
+        for fn in self.after_request_funcs:
+            rv, code, headers = fn(rv, code, headers)
         return rv, code, headers
 
-    def gen_token(self, me):
-        secret = self.app.config.get(
-            "RESOURCE_JWT_SECRET", "DEFAULT_RESOURCE_JWT_SECRET")
-        algorithm = self.app.config.get("RESOURCE_JWT_ALG", 'HS256')
-        token = jwt.encode(me, secret, algorithm=algorithm)
-        return token
+    def after_request(self, f):
+        """装饰器"""
+        self.after_request_funcs.append(f)
+        return f
+
+    def before_request(self, f):
+        """装饰器"""
+        self.before_request_funcs.append(f)
+        return f
+
+    def error_handler(self, f):
+        """装饰器"""
+        self.handle_error_func = f
+        return f
