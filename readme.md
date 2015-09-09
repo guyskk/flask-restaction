@@ -18,6 +18,9 @@
     cd docs
     make html
 
+### Readthedocs
+
+    <http://flask-restaction.readthedocs.org/zh/latest/>
 
 ## Quickstart
 
