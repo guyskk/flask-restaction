@@ -1,4 +1,6 @@
 # coding:utf-8
+
+"""Flask-Restaction is a powerful flask ext for creat restful api"""
 from flask import request
 import re
 import pkg_resources
@@ -10,7 +12,11 @@ res_js = res_js.decode("utf-8")
 
 class ResourceException(Exception):
 
-    """docstring for RescurceException"""
+    """RescurceException
+
+    :param code: http status code
+    :param error: dict, error message
+    """
 
     def __init__(self, code, error):
         self.code = code
@@ -18,12 +24,19 @@ class ResourceException(Exception):
 
 
 def abort(code, error):
+    """raise a RescurceException
+
+    :param code: http status code
+    :param error: dict or string, error message
+    """
     if isinstance(error, basestring):
         error = {"error": error}
     raise ResourceException(code, error)
 
 
 def abort_if_not_me(_id):
+    """``if request.me["id"] != _id``, 
+    raise a RescurceException with code 403"""
     if request.me["id"] != _id:
         raise ResourceException(403, {"error": "permission deny"})
 

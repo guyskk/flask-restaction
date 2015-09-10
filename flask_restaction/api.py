@@ -1,5 +1,6 @@
 # coding:utf-8
-
+"""Api is a manager of resources
+"""
 from flask import Blueprint, request
 import os
 from os.path import join, exists
@@ -13,7 +14,7 @@ from . import res_js
 
 class Api(object):
 
-    """Api
+    """Api is a manager of resources
 
     :param app: Flask or Blueprint
     :param permission_path: permission file path
@@ -41,7 +42,10 @@ class Api(object):
             self.init_app(app)
 
     def init_app(self, app):
-        """init_app"""
+        """init_app
+
+        :param app: Flask or Blueprint
+        """
         self.app = app
         if self.is_blueprint():
             self.app.record(lambda s: self.init_permission(s.app))
@@ -63,14 +67,43 @@ class Api(object):
             self.permission.add("*", "*", None)
 
     def is_blueprint(self):
-        """is_blueprint"""
+        """self.app is_blueprint or not"""
         return isinstance(self.app, Blueprint)
 
     def parse_resource(self, res_cls, name=None):
-        """parse_resource
+        """parse resource class
 
         :param res_cls: resource class
-        :param name: display resource name
+        :param name: display resource name, used in url
+        :return:
+
+            info of resource class::
+
+                {
+                    "name": name,
+                    "classname": classname,
+                    "meth_act": meth_act,
+                    "actions": actions,
+                    "methods": methods,
+                    "rules": rules,
+                }
+
+            meth_act is tuple(meth, act)::
+
+                'get' -> ('get', '')
+                'get_list' -> ('get', 'list')
+                'post' -> ('post', '')
+
+            actions is a list of tuple(meth, act, url, endpoint, action)::
+
+                meth, act:   the same as meth_act
+                url:         '/name/act' or '/name'
+                endpoint:    'classname@action' or 'classname'
+                action:      resource's method name
+
+            methods is a list of availble httpmethod in resource
+
+            rules is a list of availble tuple(url, endpoint) in resource
         """
         if not type(res_cls) is type:
             raise ValueError("%s is not class" % res_cls)
@@ -108,7 +141,7 @@ class Api(object):
         """add_resource
 
         :param res_cls: resource class
-        :param name: name
+        :param name: display resource name, used in url
         :param class_args: class_args
         :param class_kwargs: class_kwargs
         """
@@ -132,7 +165,7 @@ class Api(object):
         self.resources.append(res)
 
     def gen_resjs(self):
-        """生成 res.js
+        """genrate res.js, should be called after added all resources
         """
         template = Template(res_js)
         reslist = []
@@ -150,7 +183,18 @@ class Api(object):
             f.write(js.encode("utf-8"))
 
     def parse_me(self):
-        """id and role must in the token"""
+        """parse http header auth token
+
+        :return:
+
+            a dict::
+
+                {"id": user_id, "role": "role"}
+
+            if token not exists or invalid::
+
+                {"id": None, "role": "*"}
+        """
         token = request.headers.get(self.auth_header)
         if token is not None:
             try:
@@ -163,7 +207,10 @@ class Api(object):
         return {"id": None, "role": "*"}
 
     def gen_token(self, me):
-        """gen_token"""
+        """generate token, id and role must in param ``me``
+
+        :param me: a dict like ``{"id": user_id, "role": "role"}``
+        """
         token = jwt.encode(me, self.auth_secret, algorithm=self.auth_algorithm)
         return token
 
@@ -186,16 +233,16 @@ class Api(object):
         return rv, code, headers
 
     def after_request(self, f):
-        """装饰器"""
+        """decorater 装饰器"""
         self.after_request_funcs.append(f)
         return f
 
     def before_request(self, f):
-        """装饰器"""
+        """decorater 装饰器"""
         self.before_request_funcs.append(f)
         return f
 
     def error_handler(self, f):
-        """装饰器"""
+        """decorater 装饰器"""
         self.handle_error_func = f
         return f
