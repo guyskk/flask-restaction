@@ -1,11 +1,5 @@
 # coding:utf-8
-"""
-    permission
-    ~~~~~~~~~
 
-    权限模块
-"""
-import os
 from os.path import isfile
 import json
 import re
@@ -162,3 +156,9 @@ class Permission(object):
                     del r[resource]
                 elif action in r[resource]:
                     r[resource].remove(action)
+
+        def __repr__(self):
+            return repr(self.permission)
+
+        def __str__(self):
+            return str(self.permission)

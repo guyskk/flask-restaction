@@ -33,7 +33,7 @@ A minimal Flask-Restaction API:
             return {"hello": name}
 
     api.add_resource(Hello)
-    api.gen_res_js()
+    api.gen_resjs()
 
     if __name__ == '__main__':
         app.run(debug=True)
@@ -200,6 +200,5 @@ Next Todo
 ------------
 
 - tests 
-- support blueprint
 - document
 - ...

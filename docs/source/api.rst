@@ -22,15 +22,7 @@ Resource
 .. autoclass:: Resource
    :members:
    :undoc-members:
-   :inherited-members:
 
-
-Validater
-------------------
-
-.. autoclass:: Api
-   :members:
-   :inherited-members:
 
 Permission
 ------------------
@@ -42,6 +34,56 @@ Permission
 res.js
 ------------------
 
-.. autoclass:: Api
+.. code-block:: javascript
+
+   /*以下为jinja2模板，用于生成js*/
+    
+    {% for name,auth_header,actions in reslist %}
+    res.{{name}}={};
+        {% for url, meth, action, needtoken in actions %}
+        res.{{name}}.{{action}}=function(data,fn,progress){
+            header={};
+            {% if needtoken %}
+            addToken(header,"{{auth_header}}");
+            {% endif %}
+            var _fn=function(err, data, header, xhr){
+                saveToken(header,"{{auth_header}}");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("{{url}}",{
+                method:"{{meth}}",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        {% endfor %}
+    {% endfor %}
+    
+    /*End jinja2模板*/
+
+
+
+Validater
+------------------
+
+.. module:: validater
+
+.. automodule:: validater.validate
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+.. automodule:: validater.validaters
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: validater.ProxyDict
    :members:
-   :inherited-members:
+   :undoc-members:

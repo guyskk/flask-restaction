@@ -6,7 +6,10 @@ exporters = {}
 
 
 def exporter(mediatype):
-    """注册输出格式的装饰器"""
+    """decorater for register exporter
+
+    :param mediatype: mediatype, such as ``application/json``
+    """
     def wraper(fn):
         register_exporter(mediatype, fn)
         return fn
@@ -14,7 +17,10 @@ def exporter(mediatype):
 
 
 def register_exporter(mediatype, fn):
-    """注册输出格式"""
+    """register exporter
+
+    :param mediatype: mediatype, such as ``application/json``
+    """
     exporters[mediatype] = fn
 
 
@@ -23,7 +29,14 @@ def export_json(data, code, header):
     """Creates a :class:`~flask.Response` with the JSON representation of
     the given arguments with an :mimetype:`application/json` mimetype.
     Note: to avoid CSRF attack, don't use cookie to store session.
-    see `flask json-security`
+    see ~ flask json-security
+
+    default indent=2,
+    sort_keys when current_app.debug
+
+    :param data: flask.Response or any type object that can dump to json
+    :param code: http status code
+    :param header: http header
     """
 
     # sort_keys in debug mode

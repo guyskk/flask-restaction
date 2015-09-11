@@ -1,6 +1,5 @@
 # coding:utf-8
-"""Api is a manager of resources
-"""
+
 from flask import Blueprint, request
 import os
 from os.path import join, exists
@@ -245,16 +244,16 @@ class Api(object):
         return rv, code, headers
 
     def after_request(self, f):
-        """decorater 装饰器"""
+        """decorater"""
         self.after_request_funcs.append(f)
         return f
 
     def before_request(self, f):
-        """decorater 装饰器"""
+        """decorater"""
         self.before_request_funcs.append(f)
         return f
 
     def error_handler(self, f):
-        """decorater 装饰器"""
+        """decorater"""
         self.handle_error_func = f
         return f

@@ -10,7 +10,18 @@ from . import ResourceException, abort, exporters
 
 class Resource(View):
 
-    """Resource代表一个资源"""
+    """Resource代表一个资源
+
+    - schema_inputs is a dict of scheams for validate inputs.
+        it's key is method name
+    - schema_outputs is a dict of scheams for validate outputs.
+        it's key is method name
+    - output_types is a list of custom type of outputs
+        , the custom type object will be proxy by validater.ProxyDict
+    - before_request_funcs is a list of functions
+    - after_request_funcs is a list of functions
+    - handle_error_func is a functions
+    """
 
     schema_inputs = {}
     schema_outputs = {}
@@ -50,24 +61,24 @@ class Resource(View):
 
     @classmethod
     def after_request(cls, f):
-        """装饰器"""
+        """decorater"""
         cls.after_request_funcs.append(f)
         return f
 
     @classmethod
     def before_request(cls, f):
-        """装饰器"""
+        """decorater"""
         cls.before_request_funcs.append(f)
         return f
 
     @classmethod
     def error_handler(cls, f):
-        """装饰器"""
+        """decorater"""
         cls.handle_error_func = f
         return f
 
     def dispatch_request(self, *args, **kwargs):
-        """处理和分发请求
+        """preproccess request and dispatch request
         """
         act = request.endpoint.split('@')
         if len(act) > 1:
@@ -98,7 +109,7 @@ class Resource(View):
             return export(rv, code, headers)
 
     def full_dispatch_request(self, *args, **kwargs):
-        """实际处理请求
+        """actual dispatch request, validate inputs and outputs
         """
         fn = getattr(self, request.action, None)
         if fn is None:
@@ -140,7 +151,10 @@ class Resource(View):
 
 
 def unpack(rv):
-    """将rv转成(data, code, headers)"""
+    """convert rv to tuple(data, code, headers)
+
+    :param rv: data or tuple that contain code and headers
+    """
     status = headers = None
     if isinstance(rv, tuple):
         rv, status, headers = rv + (None,) * (3 - len(rv))
