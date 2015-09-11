@@ -20,7 +20,7 @@
 
 ### Readthedocs
 
-    <http://flask-restaction.readthedocs.org/zh/latest/>
+http://flask-restaction.readthedocs.org/zh/latest/
 
 ## Quickstart
 
