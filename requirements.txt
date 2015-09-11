@@ -1,0 +1,4 @@
+Flask==0.10.1
+bson==0.4.1
+validater==0.6.3
+
