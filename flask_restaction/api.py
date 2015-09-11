@@ -5,6 +5,7 @@ from flask import Blueprint, request
 import os
 from os.path import join, exists
 import jwt
+from datetime import datetime, timedelta
 from jinja2 import Template
 from . import Permission
 from . import pattern_action
@@ -18,19 +19,21 @@ class Api(object):
 
     :param app: Flask or Blueprint
     :param permission_path: permission file path
-    :param auth_header: httpheader name
+    :param auth_header: http header name
     :param auth_secret: jwt secret
-    :param auth_algorithm: jwt algorithm
+    :param auth_alg: jwt algorithm
+    :param auth_exp: jwt expiration time (seconds)
     :param resjs_name: res.js file name
     """
 
     def __init__(self, app=None, permission_path="permission.json",
                  auth_header="Authorization", auth_secret="SECRET",
-                 auth_algorithm="HS256", resjs_name="res.js"):
+                 auth_alg="HS256", auth_exp=1200, resjs_name="res.js"):
         self.permission_path = permission_path
         self.auth_header = auth_header
         self.auth_secret = auth_secret
-        self.auth_algorithm = auth_algorithm
+        self.auth_alg = auth_alg
+        self.auth_exp = auth_exp
         self.resjs_name = resjs_name
 
         self.resources = []
@@ -196,22 +199,31 @@ class Api(object):
                 {"id": None, "role": "*"}
         """
         token = request.headers.get(self.auth_header)
+        options = {
+            'require_exp': True,
+        }
         if token is not None:
             try:
                 me = jwt.decode(token, self.auth_secret,
-                                algorithms=[self.auth_algorithm])
+                                algorithms=[self.auth_alg], options=options)
                 if "id" in me and "role" in me:
                     return me
-            except Exception:
+            except jwt.InvalidTokenError:
                 pass
         return {"id": None, "role": "*"}
 
-    def gen_token(self, me):
+    def gen_token(self, me, auth_exp=None):
         """generate token, id and role must in param ``me``
 
         :param me: a dict like ``{"id": user_id, "role": "role"}``
+        :param auth_exp: seconds of jwt token expiration time
+                         , default is ``self.auth_exp``
         """
-        token = jwt.encode(me, self.auth_secret, algorithm=self.auth_algorithm)
+        if auth_exp is None:
+            auth_exp = self.auth_exp
+        exp = datetime.now() + timedelta(seconds=auth_exp)
+        me["exp"] = exp.isoformat()
+        token = jwt.encode(me, self.auth_secret, algorithm=self.auth_alg)
         return token
 
     def _before_request(self):
