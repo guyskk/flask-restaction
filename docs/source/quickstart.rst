@@ -141,12 +141,10 @@ flask_restaction use ``json web token`` for authorize.
 
 see https://github.com/jpadilla/pyjwt
 
-you should config ``RESOURCE_JWT_SECRET`` in ``app.config``, defalut value is ``"DEFAULT_RESOURCE_JWT_SECRET"``
+**Note:**
 
-you can config ``RESOURCE_JWT_ALG`` in ``app.config``,
-defalut value is 'HS256'
+you should add you own auth_secret to api, default auth_secret is ``"SECRET"``, see :ref:`api` for detail
 
-token store in ``request.headers.["Authorization"]``
 
 you can access auth info by `request.me`, it's struct is:
 
@@ -157,12 +155,12 @@ you can access auth info by `request.me`, it's struct is:
         "role":user_role
     }
 
-and you should add ``Authorization`` header to response after user login, 
-it's value can be generate by ``api.gen_token(self, me)``
+and you should add auth header(default ``Authorization``) to response after user login, 
+it's value can be generate by ``api.gen_token(me)``
 
 **Note:**
 
-res.js will auto add ``Authorization`` header to request if needed, and will auto save ``Authorization`` token to localstroge when recive ``Authorization`` header
+res.js will auto add auth header(default ``Authorization``) to request if needed, and will auto save auth token to localstroge when recive auth header
 
 
 Permission control
