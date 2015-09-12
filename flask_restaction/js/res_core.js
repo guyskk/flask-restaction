@@ -22,7 +22,7 @@
             addToken(header,"{{auth_header}}");
             {% endif %}
             var _fn=function(err, data, header, xhr){
-                saveToken(header,"{{auth_header}}");
+                saveToken(xhr,"{{auth_header}}");
                 if(typeof(fn)==="function"){
                     fn(err, data, header, xhr);
                 }
@@ -43,7 +43,7 @@
     
 
     function addToken(header, key){
-        if (header&&key) {
+        if (header!==null&&key!==null) {
             if(window.localStorage){
                 _token = window.localStorage._token;
                 if(_token){
@@ -53,10 +53,11 @@
         }
     }
 
-    function saveToken(header, key) {
-        if (header&&key) {
-            if (header[key] && window.localStorage) {
-                window.localStorage._token = header[key];
+    function saveToken(xhr, key) {
+        if (key!==null) {
+            token=xhr.getResponseHeader(key)
+            if (token!==null && window.localStorage) {
+                window.localStorage._token = token;
             }
         }
     }

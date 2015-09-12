@@ -223,30 +223,289 @@ window.res = (function(window) {
     
     /*以下为jinja2模板，用于生成js*/
     
-    {% for name,auth_header,actions in reslist %}
-    res.{{name}}={};
-        {% for url, meth, action, needtoken in actions %}
-        res.{{name}}.{{action}}=function(data,fn,progress){
+    
+    res.user={};
+        
+        res.user.delete=function(data,fn,progress){
             header={};
-            {% if needtoken %}
-            addToken(header,"{{auth_header}}");
-            {% endif %}
+            
+            addToken(header,"Authorization");
+            
             var _fn=function(err, data, header, xhr){
-                saveToken(xhr,"{{auth_header}}");
+                saveToken(xhr,"Authorization");
                 if(typeof(fn)==="function"){
                     fn(err, data, header, xhr);
                 }
             }
-            res.ajax("{{url}}",{
-                method:"{{meth}}",
+            res.ajax("/user",{
+                method:"delete",
                 data:data,
                 header: header,
                 fn:_fn,
                 progress:progress
             });
         };
-        {% endfor %}
-    {% endfor %}
+        
+        res.user.get=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user",{
+                method:"get",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.get_list=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user/list",{
+                method:"get",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.post=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user",{
+                method:"post",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.post_login=function(data,fn,progress){
+            header={};
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user/login",{
+                method:"post",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.post_logout=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user/logout",{
+                method:"post",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.post_register=function(data,fn,progress){
+            header={};
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user/register",{
+                method:"post",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.put=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user",{
+                method:"put",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.user.put_setting=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/user/setting",{
+                method:"put",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+    
+    res.todo={};
+        
+        res.todo.delete=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/todo",{
+                method:"delete",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.todo.get=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/todo",{
+                method:"get",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.todo.get_list=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/todo/list",{
+                method:"get",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.todo.post=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/todo",{
+                method:"post",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+        res.todo.put=function(data,fn,progress){
+            header={};
+            
+            addToken(header,"Authorization");
+            
+            var _fn=function(err, data, header, xhr){
+                saveToken(xhr,"Authorization");
+                if(typeof(fn)==="function"){
+                    fn(err, data, header, xhr);
+                }
+            }
+            res.ajax("/todo",{
+                method:"put",
+                data:data,
+                header: header,
+                fn:_fn,
+                progress:progress
+            });
+        };
+        
+    
     
     /*End jinja2模板*/
    

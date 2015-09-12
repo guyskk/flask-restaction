@@ -121,7 +121,7 @@ class Api(object):
             if act == "":
                 action = meth
                 url = "/" + name
-                endpoint = name
+                endpoint = classname
             else:
                 action = meth + "_" + act
                 url = "/{0}/{1}".format(name, act)
@@ -163,7 +163,7 @@ class Api(object):
                 raise
 
         for url, end in res["rules"]:
-            self.app.add_url_rule(url, end, view, methods=res["methods"])
+            self.app.add_url_rule(url, endpoint=end, view_func=view, methods=res["methods"])
         self.resources.append(res)
 
     def gen_resjs(self):
@@ -220,8 +220,7 @@ class Api(object):
         """
         if auth_exp is None:
             auth_exp = self.auth_exp
-        exp = datetime.now() + timedelta(seconds=auth_exp)
-        me["exp"] = exp.isoformat()
+        me["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
         token = jwt.encode(me, self.auth_secret, algorithm=self.auth_alg)
         return token
 

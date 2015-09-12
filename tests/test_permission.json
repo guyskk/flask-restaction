@@ -1,0 +1,16 @@
+{
+    "*": {
+        "photo": ["get"]
+    },
+    "admin": {
+        "*": []
+    },
+    "userA": {
+        "photo*": [],
+        "message": ["get", "post"]
+    },
+    "userB": {
+        "photo": ["get_list"],
+        "message": ["get", "post"]
+    }
+}

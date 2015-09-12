@@ -87,7 +87,7 @@ class Resource(View):
             meth_name = request.method.lower()
         if not hasattr(self, meth_name) and request.method == 'HEAD':
             meth_name = "get"
-        request.resource = self.__class__.__name__
+        request.resource = self.__class__.__name__.lower()
         request.action = meth_name
         try:
             # before_request
@@ -98,11 +98,11 @@ class Resource(View):
             rv = self._handle_error(ex)
         rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
-        if rv is None:
-            return make_response("", code, headers)
-        elif isinstance(rv, (ResponseBase, basestring)):
+        if isinstance(rv, (ResponseBase, basestring)):
             return make_response(rv, code, headers)
         else:
+            if rv is None:
+                rv = {}
             mediatype = request.accept_mimetypes.best_match(
                 exporters.keys(), default='application/json')
             export = exporters[mediatype]
@@ -138,6 +138,7 @@ class Resource(View):
                 rv = fn(**values)
         else:
             rv = fn()
+        rv, code, headers = unpack(rv)
         if outputs is not None:
             if output_types and isinstance(rv, tuple(output_types)):
                 (errors, values) = validate(ProxyDict(rv, output_types), outputs)
@@ -147,7 +148,7 @@ class Resource(View):
                 abort(500, dict(errors))
             else:
                 rv = values
-        return rv
+        return rv, code, headers
 
 
 def unpack(rv):
@@ -159,5 +160,5 @@ def unpack(rv):
     if isinstance(rv, tuple):
         rv, status, headers = rv + (None,) * (3 - len(rv))
     if isinstance(status, (dict, list)):
-        headers, status = status, None
+        headers, status = status, headers
     return (rv, status, headers)
