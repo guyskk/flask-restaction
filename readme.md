@@ -22,6 +22,117 @@
 
 http://flask-restaction.readthedocs.org/zh/latest/
 
+**The document's api part has some problems on readthedocs, please clone the source code(`git clone git@github.com:guyskk/flask-restaction.git`) and build document manually. π_π!!**
+
+If you know how to fix this problem, don't hesitate to give me a favor.
+
+
+```
+Running Sphinx v1.3.1
+making output directory...
+loading translations [zh]... done
+loading intersphinx inventory from https://docs.python.org/objects.inv...
+building [mo]: targets for 0 po files that are out of date
+building [readthedocs]: targets for 7 source files that are out of date
+updating environment: 7 added, 0 changed, 0 removed
+reading sources... [ 14%] api
+reading sources... [ 28%] index
+reading sources... [ 42%] permission
+reading sources... [ 57%] quickstart
+reading sources... [ 71%] res.js
+reading sources... [ 85%] resource
+reading sources... [100%] validater
+
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:14: WARNING: autodoc: failed to import class u'Api' from module u'flask_restaction'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/__init__.py", line 92, in <module>
+    from resource import Resource
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/resource.py", line 6, in <module>
+    from validater import validate
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:22: WARNING: autodoc: failed to import class u'Resource' from module u'flask_restaction'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/__init__.py", line 92, in <module>
+    from resource import Resource
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/resource.py", line 6, in <module>
+    from validater import validate
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:30: WARNING: autodoc: failed to import class u'Permission' from module u'flask_restaction'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/__init__.py", line 92, in <module>
+    from resource import Resource
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/flask_restaction/resource.py", line 6, in <module>
+    from validater import validate
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:75: WARNING: autodoc: failed to import module u'validater.validate'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:81: WARNING: autodoc: failed to import module u'validater.validaters'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/api.rst:87: WARNING: autodoc: failed to import class u'ProxyDict' from module u'validater'; the following exception was raised:
+Traceback (most recent call last):
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/sphinx/ext/autodoc.py", line 385, in import_object
+    __import__(self.modname)
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/__init__.py", line 5, in <module>
+    from .validaters import validaters, add_validater
+  File "/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/envs/latest/local/lib/python2.7/site-packages/validater/validaters.py", line 3, in <module>
+    from bson.objectid import ObjectId
+ImportError: No module named objectid
+looking for now-outdated files... none found
+pickling environment... done
+checking consistency... done
+preparing documents... done
+writing output... [ 14%] api
+writing output... [ 28%] index
+writing output... [ 42%] permission
+writing output... [ 57%] quickstart
+writing output... [ 71%] res.js
+writing output... [ 85%] resource
+writing output... [100%] validater
+
+generating indices... genindex py-modindex
+writing additional pages... search
+copying static files... WARNING: html_static_path entry u'/home/docs/checkouts/readthedocs.org/user_builds/flask-restaction/checkouts/latest/docs/source/_static' does not exist
+done
+copying extra files... done
+dumping search index in English (code: en) ... done
+dumping object inventory... done
+build succeeded, 7 warnings.
+Copying readthedocs-dynamic-include.js_t... done
+Copying readthedocs-data.js_t... done
+```
+
 ## Quickstart
 
 #### A minimal Flask-Restaction API looks like this:
