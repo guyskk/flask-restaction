@@ -17,7 +17,7 @@
     res.{{name}}={};
         {% for url, meth, action, needtoken in actions %}
         res.{{name}}.{{action}}=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             {% if needtoken %}
             addToken(header,"{{auth_header}}");
             {% endif %}

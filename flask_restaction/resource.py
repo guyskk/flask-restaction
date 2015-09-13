@@ -18,9 +18,22 @@ class Resource(View):
         it's key is method name
     - output_types is a list of custom type of outputs
         , the custom type object will be proxy by validater.ProxyDict
-    - before_request_funcs is a list of functions
-    - after_request_funcs is a list of functions
-    - handle_error_func is a functions
+    - before_request_funcs is a list of functions::
+
+        def fn():
+            return (rv, [code, headers]) or None
+
+    - after_request_funcs is a list of functions,
+        Must return ``tuple(rv, code, headers)``::
+
+        def fn(rv, code, headers):
+            return (rv, code, headers) or None
+
+    - handle_error_func is a functions::
+
+        def fn(ex):
+            return (rv, [code, headers])
+
     """
 
     schema_inputs = {}
