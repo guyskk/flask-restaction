@@ -13,7 +13,8 @@ setup(
     install_requires=[
         'flask>=0.1',
         'pyjwt>=1.4',
-        'validater>=0.6.3'
+        'validater>=0.6.3',
+        'bson>=0.4'
     ],
     classifiers=[
         'Framework :: Flask',
