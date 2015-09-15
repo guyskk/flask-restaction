@@ -14,7 +14,7 @@ setup(
         'flask>=0.1',
         'pyjwt>=1.4',
         'validater>=0.6.3',
-        'bson>=0.4'
+        'pymongo>=3.0'
     ],
     classifiers=[
         'Framework :: Flask',
