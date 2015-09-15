@@ -1,5 +1,4 @@
 Flask==0.10.1
-bson==0.4.1
 pyjwt==1.4
-validater==0.6.3
+validater==0.6.4
 
