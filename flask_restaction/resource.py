@@ -23,7 +23,14 @@ class ResourceViewType(type):
         rv = type.__new__(cls, name, bases, d)
         rv.before_request_funcs = []
         rv.after_request_funcs = []
-        rv.handle_error_func = None
+        # In order to aviod TypeError: unbound method
+        # handle_error_func is list with just one item
+        # 函数和方法是不同的：
+        # 1. 将函数赋给class, class得到的是另一个对象（方法），
+        # 这个方法是那个函数被包装之后的对象。
+        # 2. 一般方法要使用实例调用，你用类直接调用，
+        # 调用的只能是类方法或静态方法。
+        rv.handle_error_func = []
         return rv
 
 
@@ -48,7 +55,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
         def fn(rv, code, headers):
             return (rv, code, headers) or None
 
-    - handle_error_func is a functions::
+    - handle_error_func is is list with just one function::
 
         def fn(ex):
             return (rv, [code, headers])
@@ -58,9 +65,6 @@ class Resource(with_metaclass(ResourceViewType, View)):
     schema_inputs = {}
     schema_outputs = {}
     output_types = []
-    # before_request_funcs = []
-    # after_request_funcs = []
-    # handle_error_func = None
 
     @classmethod
     def _before_request(cls):
@@ -80,7 +84,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
     @classmethod
     def _handle_error(cls, ex):
         if cls.handle_error_func:
-            rv = cls.handle_error_func(ex)
+            rv = cls.handle_error_func[0](ex)
             if rv is not None:
                 return rv
         if isinstance(ex, ResourceException):
@@ -106,7 +110,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
     @classmethod
     def error_handler(cls, f):
         """decorater"""
-        cls.handle_error_func = f
+        cls.handle_error_func = [f]
         return f
 
     def dispatch_request(self, *args, **kwargs):

@@ -2,6 +2,7 @@
 from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
 import pytest
+import json
 """
 blueprint.resource@action
 resource@action
@@ -21,13 +22,23 @@ def app():
         def get(self):
             return "hello"
 
+        def get_error(self):
+            raise ValueError("get_error")
+
         def post_login(self):
             return "login"
+
+    @Hello.error_handler
+    def error_handler(ex):
+        return {"ok": "error_hander"}
 
     class File(Resource):
 
         def get(self):
             return "file"
+
+        def get_error(self):
+            raise ValueError("get_error")
 
         def post_login(self):
             return "login"
@@ -51,6 +62,8 @@ def test_hello(app):
     with app.test_client() as c:
         assert 'hello' == c.get('/hello').data
         assert "login" == c.post('/hello/login').data
+        assert 2 == c.get('/hello/error').status_code // 100
+        assert {"ok": "error_hander"} == json.loads(c.get('/hello/error').data)
 
 
 def test_file(app):
@@ -66,3 +79,12 @@ def test_file(app):
     with app.test_client() as c:
         assert 'file' == c.get('/upload').data
         assert "login" == c.post('/upload/login').data
+
+    with pytest.raises(ValueError):
+        with app.test_client() as c:
+            try:
+                c.get('/upload/error').data.status_code
+            except ValueError as ex:
+                assert ex.message == "get_error"
+                raise
+            assert True

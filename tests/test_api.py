@@ -48,6 +48,9 @@ def appapi():
             global out_obj
             return out_obj
 
+        def get_error(self):
+            raise ValueError("get_error")
+
         def post_login(self, date):
             global out_obj
             return out_obj
@@ -74,7 +77,7 @@ def appapi():
     @api.error_handler
     def api_error_handler(ex):
         if event_handler_config[2]:
-            return {"hello": "error_handler"}
+            return "error_handler" + ex.message
         else:
             return None
 
@@ -97,3 +100,10 @@ def test_base(appapi):
         config(False, True, True)
         assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
         assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+
+        config(False, False, True)
+        assert "error_handler" in c.get("/hello/error").data
+        assert "get_error" in c.get("/hello/error").data
+        config(False, False, False)
+        with pytest.raises(ValueError):
+            c.get("/hello/error").data
