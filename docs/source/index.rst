@@ -11,6 +11,9 @@ Welcome to Flask-Restaction!
 Flask-Restaction 依赖 validater 校验输入输出，欲知详情请移步 
 `《validater 文档》 <https://github.com/guyskk/validater>`_ 。
 
+阅读完《 :ref:`quickstart` 》之后，建议您阅读《 :ref:`api` 》，这样能对 Flask-Restaction 有更深入的了解。另外， example 目录中有几个示例，其中包含了框架的绝大部分用法。
+
+
 Flask-Restaction 是什么
 --------------------------
 
@@ -42,10 +45,8 @@ Install
    :maxdepth: 2
 
    quickstart
-   resource
    validater
-   permission
-   res.js
+   resjs
 
 
 API参考

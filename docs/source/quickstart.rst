@@ -57,6 +57,7 @@ you will see:
 
 if you visit ``http://127.0.0.1:5000/hello?name=kk``
 you will see: 
+
 .. code ::
 
     {
@@ -131,7 +132,51 @@ we can use ``res.resource.action(data, function(err, value))`` to access resourc
 Validater
 ---------
 
-see https://github.com/guyskk/validater
+Resource class use ``schema_inputs``, ``schema_outputs``, ``output_types`` to validate inputs and outputs.
+
+The ``output_types`` is a list of class that you want to return, then the return value will be proxy as a dict.
+
+You can split schema dict into some tuples and combine them into ``schema_inputs`` and ``schema_outputs``.
+
+
+For example:
+
+.. code-block:: python
+
+    class Hello(Resource):
+        schema_name = ("name", {
+            "desc": "name",
+            "required": True,
+            "validate": "re_name",
+            "default": "world"
+        })
+        schema_date = ("date", {
+            "desc": "date",
+            "required": True,
+            "validate": "datetime",
+        })
+        schema_hello = ("hello", {
+            "desc": "hello",
+            "required": True,
+            "validate": "unicode",
+        })
+        schema_inputs = {
+            "get": dict([schema_name]),
+            "post_login": dict([schema_date]),
+        }
+        schema_outputs = {
+            "get": dict([schema_hello]),
+            "post_login": dict([schema_hello])
+        }
+
+        def get(self, name):
+            return {u"hello": u"world"}
+
+        def post_login(self, date):
+            return {u"hello": u"world"}
+
+
+For more information, see `validater <https://github.com/guyskk/validater>`_
 
 
 Authorize
@@ -141,12 +186,10 @@ flask_restaction use ``json web token`` for authorize.
 
 see https://github.com/jpadilla/pyjwt
 
-**Note:**
-
-you should add you own auth_secret to api, default auth_secret is ``"SECRET"``, see :ref:`api` for detail
+**You should add you own auth_secret to api**, default auth_secret is ``"SECRET"``, see :ref:`api` for detail
 
 
-you can access auth info by `request.me`, it's struct is:
+You can access auth info by `request.me`, it's struct is:
 
 .. code ::
 
@@ -155,7 +198,7 @@ you can access auth info by `request.me`, it's struct is:
         "role":user_role
     }
 
-and you should add auth header(default ``Authorization``) to response after user login, 
+And you should add auth header(default ``Authorization``) to response after user login, 
 it's value can be generate by ``api.gen_token(me)``
 
 **Note:**
@@ -168,11 +211,11 @@ Permission control
 
 ``permission.json`` 权限分配表 
 
-``permission.json`` should be saved in root path of you flask application
+By default, ``permission.json`` should be saved in root path of you flask application, you can change to other path, see :ref:`api` .
 
 权限按role->resource->action划分
 
-JSON 文件格式
+JSON struct
 
 .. code ::
 
@@ -194,9 +237,7 @@ JSON 文件格式
   只能是字母数字下划线组合，且不能以数字开头。
 
 
-Next Todo
-------------
+Process Flow
+---------------------
 
-- tests 
-- document
-- ...
+.. image:: _static/flask-restaction.svg
