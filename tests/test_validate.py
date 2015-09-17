@@ -1,11 +1,7 @@
 from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
-
-app = Flask(__name__)
-app.debug = True
-api = Api(app)
-
+import pytest
 out_obj = {"hello": "world"}
 
 
@@ -14,43 +10,50 @@ def set_out(obj):
     out_obj = obj
 
 
-class Hello(Resource):
-    schema_name = ("name", {
-        "desc": "name",
-        "required": True,
-        "validate": "re_name",
-        "default": "world"
-    })
-    schema_date = ("date", {
-        "desc": "date",
-        "required": True,
-        "validate": "datetime",
-    })
-    schema_hello = ("hello", {
-        "desc": "hello",
-        "required": True,
-        "validate": "unicode",
-    })
-    schema_inputs = {
-        "get": dict([schema_name]),
-        "post_login": dict([schema_date]),
-    }
-    schema_outputs = {
-        "get": dict([schema_hello])
-    }
+@pytest.fixture(scope="module")
+def app():
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
 
-    def get(self, name):
-        global out_obj
-        return out_obj
+    class Hello(Resource):
+        schema_name = ("name", {
+            "desc": "name",
+            "required": True,
+            "validate": "re_name",
+            "default": "world"
+        })
+        schema_date = ("date", {
+            "desc": "date",
+            "required": True,
+            "validate": "datetime",
+        })
+        schema_hello = ("hello", {
+            "desc": "hello",
+            "required": True,
+            "validate": "unicode",
+        })
+        schema_inputs = {
+            "get": dict([schema_name]),
+            "post_login": dict([schema_date]),
+        }
+        schema_outputs = {
+            "get": dict([schema_hello])
+        }
 
-    def post_login(self, date):
-        global out_obj
-        return out_obj
+        def get(self, name):
+            global out_obj
+            return out_obj
 
-api.add_resource(Hello)
+        def post_login(self, date):
+            global out_obj
+            return out_obj
+
+    api.add_resource(Hello)
+    return app
 
 
-def test_inputs():
+def test_inputs(app):
     set_out({"hello": u"world"})
     with app.test_client() as c:
         assert 400 == c.get("hello?name=").status_code
@@ -69,7 +72,7 @@ def test_inputs():
         assert "required" in c.post("hello/login", data={}).data
 
 
-def test_outputs():
+def test_outputs(app):
     with app.test_client() as c:
 
         set_out({"hello": u"world"})
@@ -90,7 +93,7 @@ def test_outputs():
         assert "world" in c.get("hello").data
 
 
-def test_outputs_not_debug():
+def test_outputs_not_debug(app):
     app.debug = False
     with app.test_client() as c:
 

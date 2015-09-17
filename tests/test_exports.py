@@ -2,6 +2,7 @@ from flask import Flask, current_app
 from flask_restaction import exporters, exporter
 from flask_restaction import Api, Resource
 import json
+import pytest
 
 
 @exporter("text/html")
@@ -15,20 +16,22 @@ def test_base():
     assert "text/html" in exporters
 
 
-app = Flask(__name__)
-app.debug = True
-api = Api(app)
+@pytest.fixture(scope="module")
+def app():
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+
+    class Hello(Resource):
+
+        def get(self):
+            return ["hello"]
+
+    api.add_resource(Hello)
+    return app
 
 
-class Hello(Resource):
-
-    def get(self):
-        return ["hello"]
-
-api.add_resource(Hello)
-
-
-def test_export():
+def test_export(app):
 
     def get_text(c, url):
         return c.get(

@@ -1,6 +1,7 @@
 
 from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
+import pytest
 """
 blueprint.resource@action
 resource@action
@@ -8,33 +9,36 @@ blueprint.resource
 resource
 """
 
-app = Flask(__name__)
-app.debug = True
-api = Api(app)
+
+@pytest.fixture(scope="module")
+def app():
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+
+    class Hello(Resource):
+
+        def get(self):
+            return "hello"
+
+        def post_login(self):
+            return "login"
+
+    class File(Resource):
+
+        def get(self):
+            return "file"
+
+        def post_login(self):
+            return "login"
+
+    api.add_resource(Hello)
+    api.add_resource(File, name="upload")
+
+    return app
 
 
-class Hello(Resource):
-
-    def get(self):
-        return "hello"
-
-    def post_login(self):
-        return "login"
-
-
-class File(Resource):
-
-    def get(self):
-        return "file"
-
-    def post_login(self):
-        return "login"
-
-api.add_resource(Hello)
-api.add_resource(File, name="upload")
-
-
-def test_hello():
+def test_hello(app):
 
     with app.test_request_context('/hello/login'):
         assert request.endpoint == 'hello@login'
@@ -49,7 +53,7 @@ def test_hello():
         assert "login" == c.post('/hello/login').data
 
 
-def test_file():
+def test_file(app):
 
     with app.test_request_context('/upload'):
         assert url_for("file") == '/upload'
