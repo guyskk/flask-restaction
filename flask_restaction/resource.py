@@ -2,13 +2,32 @@
 
 from flask.views import View
 from flask import request, make_response, current_app
+from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
 from . import ResourceException, abort, exporters
 
 
-class Resource(View):
+class ResourceViewType(type):
+
+    """Used to provide standalone::
+
+        before_request_funcs,
+        after_request_funcs,
+        handle_error_func
+
+    for each actual Resource class
+    """
+    def __new__(cls, name, bases, d):
+        rv = type.__new__(cls, name, bases, d)
+        rv.before_request_funcs = []
+        rv.after_request_funcs = []
+        rv.handle_error_func = None
+        return rv
+
+
+class Resource(with_metaclass(ResourceViewType, View)):
 
     """Resource代表一个资源
 
@@ -39,9 +58,9 @@ class Resource(View):
     schema_inputs = {}
     schema_outputs = {}
     output_types = []
-    before_request_funcs = []
-    after_request_funcs = []
-    handle_error_func = None
+    # before_request_funcs = []
+    # after_request_funcs = []
+    # handle_error_func = None
 
     @classmethod
     def _before_request(cls):

@@ -4,6 +4,7 @@ from flask import Blueprint, request
 import os
 from os.path import join, exists
 import jwt
+import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
 from . import Permission
@@ -107,7 +108,7 @@ class Api(object):
 
             rules is a list of availble tuple(url, endpoint) in resource
         """
-        if not type(res_cls) is type:
+        if not inspect.isclass(res_cls):
             raise ValueError("%s is not class" % res_cls)
         classname = res_cls.__name__.lower()
         if name is None:
@@ -217,12 +218,24 @@ class Api(object):
         :param me: a dict like ``{"id": user_id, "role": "role"}``
         :param auth_exp: seconds of jwt token expiration time
                          , default is ``self.auth_exp``
+        :return: string
         """
         if auth_exp is None:
             auth_exp = self.auth_exp
         me["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
         token = jwt.encode(me, self.auth_secret, algorithm=self.auth_alg)
         return token
+
+    def gen_auth_header(self, me, auth_exp=None):
+        """generate auth_header, id and role must in param ``me``
+
+        :param me: a dict like ``{"id": user_id, "role": "role"}``
+        :param auth_exp: seconds of jwt token expiration time
+                         , default is ``self.auth_exp``
+        :return: dict
+        """
+        auth = {self.auth_header: self.gen_token(me)}
+        return auth
 
     def _before_request(self):
         """before_request"""
