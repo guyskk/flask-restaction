@@ -6,6 +6,7 @@
 - Validate inputs and Convert outputs
 - Authorize and Permission control
 - Auto generate res.js
+- Auto generate documents
 
 
 ### Install

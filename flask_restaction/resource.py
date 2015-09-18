@@ -13,8 +13,8 @@ class ResourceViewType(type):
 
     """Used to provide standalone::
 
-        before_request_funcs,
-        after_request_funcs,
+        before_request_funcs
+        after_request_funcs
         handle_error_func
 
     for each actual Resource class
@@ -52,8 +52,8 @@ class Resource(with_metaclass(ResourceViewType, View)):
     - after_request_funcs is a list of functions,
         Must return ``tuple(rv, code, headers)``::
 
-        def fn(rv, code, headers):
-            return (rv, code, headers) or None
+            def fn(rv, code, headers):
+                return (rv, code, headers) or None
 
     - handle_error_func is is list with just one function::
 

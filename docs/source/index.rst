@@ -29,6 +29,8 @@ You can do this Easily:
 
 - Auto generate res.js
     
+- Auto generate documents
+
 
 Install
 -------

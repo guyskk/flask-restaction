@@ -34,7 +34,8 @@ A minimal Flask-Restaction API:
 
     api.add_resource(Hello)
     api.gen_resjs()
-
+    api.gen_resdocs()
+    
     if __name__ == '__main__':
         app.run(debug=True)
 
