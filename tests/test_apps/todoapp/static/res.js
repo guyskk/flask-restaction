@@ -227,7 +227,7 @@ window.res = (function(window) {
     res.user={};
         
         res.user.delete=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -247,7 +247,7 @@ window.res = (function(window) {
         };
         
         res.user.get=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -267,7 +267,7 @@ window.res = (function(window) {
         };
         
         res.user.get_list=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -287,7 +287,7 @@ window.res = (function(window) {
         };
         
         res.user.post=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -307,7 +307,7 @@ window.res = (function(window) {
         };
         
         res.user.post_login=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             var _fn=function(err, data, header, xhr){
                 saveToken(xhr,"Authorization");
@@ -325,7 +325,7 @@ window.res = (function(window) {
         };
         
         res.user.post_logout=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -345,7 +345,7 @@ window.res = (function(window) {
         };
         
         res.user.post_register=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             var _fn=function(err, data, header, xhr){
                 saveToken(xhr,"Authorization");
@@ -363,7 +363,7 @@ window.res = (function(window) {
         };
         
         res.user.put=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -383,7 +383,7 @@ window.res = (function(window) {
         };
         
         res.user.put_setting=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -406,7 +406,7 @@ window.res = (function(window) {
     res.todo={};
         
         res.todo.delete=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -426,7 +426,7 @@ window.res = (function(window) {
         };
         
         res.todo.get=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -446,7 +446,7 @@ window.res = (function(window) {
         };
         
         res.todo.get_list=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -466,7 +466,7 @@ window.res = (function(window) {
         };
         
         res.todo.post=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             
@@ -486,7 +486,7 @@ window.res = (function(window) {
         };
         
         res.todo.put=function(data,fn,progress){
-            header={};
+            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
             

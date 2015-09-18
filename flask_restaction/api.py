@@ -7,10 +7,12 @@ import jwt
 import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
+from copy import deepcopy
+import json
 from . import Permission
 from . import pattern_action
 from . import abort
-from . import res_js
+from . import res_js, res_docs
 
 
 class Api(object):
@@ -28,13 +30,15 @@ class Api(object):
 
     def __init__(self, app=None, permission_path="permission.json",
                  auth_header="Authorization", auth_secret="SECRET",
-                 auth_alg="HS256", auth_exp=1200, resjs_name="res.js"):
+                 auth_alg="HS256", auth_exp=1200, resjs_name="res.js",
+                 resdocs_name="resdocs.html"):
         self.permission_path = permission_path
         self.auth_header = auth_header
         self.auth_secret = auth_secret
         self.auth_alg = auth_alg
         self.auth_exp = auth_exp
         self.resjs_name = resjs_name
+        self.resdocs_name = resdocs_name
 
         self.resources = []
 
@@ -91,7 +95,7 @@ class Api(object):
                     "rules": rules,
                 }
 
-            meth_act is tuple(meth, act)::
+            meth_act is a list of tuple(meth, act)::
 
                 'get' -> ('get', '')
                 'get_list' -> ('get', 'list')
@@ -118,6 +122,7 @@ class Api(object):
         meth_act = [tuple(pattern_action.findall(x)[0]) for x in dir(res_cls)
                     if pattern_action.match(x)]
         actions = []
+        docstrings = {}
         for meth, act in meth_act:
             if act == "":
                 action = meth
@@ -127,6 +132,7 @@ class Api(object):
                 action = meth + "_" + act
                 url = "/{0}/{1}".format(name, act)
                 endpoint = "{0}@{1}".format(classname, act)
+            docstrings[action] = getattr(res_cls, action).__doc__
             actions.append((meth, act, url, endpoint, action))
 
         methods = set([x[0] for x in actions])
@@ -138,6 +144,9 @@ class Api(object):
             "actions": actions,
             "methods": methods,
             "rules": rules,
+            "schema_inputs": deepcopy(res_cls.schema_inputs),
+            "schema_outputs": deepcopy(res_cls.schema_inputs),
+            "docstrings": docstrings
         }
 
     def add_resource(self, res_cls, name=None, *class_args, **class_kwargs):
@@ -167,23 +176,78 @@ class Api(object):
             self.app.add_url_rule(url, endpoint=end, view_func=view, methods=res["methods"])
         self.resources.append(res)
 
-    def gen_resjs(self):
-        """genrate res.js, should be called after added all resources
+    def _normal_validate(self, obj):
+        """change lamada validate to string ``'~'`` """
+        if not isinstance(obj, basestring):
+            return "~"
+
+    def parse_reslist(self):
+        """parse_reslist
+        :return: reslist
+
+        - reslist: list of tuple(name, auth_header, actions)
+        - actions: list of tuple(url, http_method, action,
+            needtoken, schema_input, schema_output, doc)
+
         """
-        template = Template(res_js)
         reslist = []
         for res in self.resources:
+            schema_inputs = res["schema_inputs"]
+            schema_outputs = res["schema_inputs"]
+            docstrings = res["docstrings"]
             actions = []
             reslist.append((res["name"], self.auth_header, actions))
             for meth, act, url, endpoint, action in res["actions"]:
                 needtoken = not self.permission.permit("*", res["name"], action)
-                actions.append((url, meth, action, needtoken))
-        js = template.render(reslist=reslist)
+                inputs = json.dumps(schema_inputs.get(action), indent=2, sort_keys=True,
+                           ensure_ascii=False, default=self._normal_validate)
+                outputs = json.dumps(schema_outputs.get(action), indent=2, sort_keys=True,
+                           ensure_ascii=False, default=self._normal_validate)
+                actions.append(
+                    (url, meth, action, needtoken, inputs, outputs,
+                        docstrings.get(action)))
+        return reslist
+
+    def _gen_from_template(self, tmpl, name):
+        """genarate something and write to static_folder
+
+        :param tmpl: template unicode string
+        :param name: file name to write
+        """
+        template = Template(tmpl)
+        reslist = self.parse_reslist()
+        rendered = template.render(reslist=reslist)
         if not exists(self.app.static_folder):
             os.makedirs(self.app.static_folder)
-        path = join(self.app.static_folder, self.resjs_name)
+        path = join(self.app.static_folder, name)
         with open(path, "w") as f:
-            f.write(js.encode("utf-8"))
+            f.write(rendered.encode("utf-8"))
+
+    def gen_resjs(self):
+        """genarate res.js, should be called after added all resources
+        """
+        self._gen_from_template(res_js, self.resjs_name)
+        # template = Template(res_js)
+        # reslist = self.parse_reslist()
+        # js = template.render(reslist=reslist)
+        # if not exists(self.app.static_folder):
+        #     os.makedirs(self.app.static_folder)
+        # path = join(self.app.static_folder, self.resjs_name)
+        # with open(path, "w") as f:
+        #     f.write(js.encode("utf-8"))
+
+    def gen_resdocs(self):
+        """genarate resdocs.html, should be called after added all resources
+        """
+        self._gen_from_template(res_docs, self.resdocs_name)
+        # template = Template(res_docs)
+        # reslist = self.parse_reslist()
+        # js = template.render(reslist=reslist)
+        # if not exists(self.app.static_folder):
+        #     os.makedirs(self.app.static_folder)
+        # path = join(self.app.static_folder, self.resdocs_name)
+        # with open(path, "w") as f:
+        #     f.write(js.encode("utf-8"))
 
     def parse_me(self):
         """parse http header auth token

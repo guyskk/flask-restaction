@@ -8,6 +8,9 @@ import pkg_resources
 pattern_action = re.compile(ur'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
 res_js = pkg_resources.resource_string(__name__, "js/res.js")
 res_js = res_js.decode("utf-8")
+res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")
+res_docs = res_docs.decode("utf-8")
+
 http_status_code_text = {
     100: "Continue",
     101: "Switching Protocol",
@@ -93,4 +96,4 @@ from resource import Resource
 from api import Api
 __all__ = ["Api", "Resource", "Permission", "abort",
            "abort_if_not_me", "ResourceException",
-           "exporters", "exporter"]
+           "exporters", "exporter", "res_docs"]

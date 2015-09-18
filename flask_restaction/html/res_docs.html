@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Api Documrnts</title>
+    <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css">
+    <script type="text/javascript" src="/static/res.js"></script>
+    <style type="text/css">
+    .resource {
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: solid 2px orange;
+    }
+    .schema{
+
+    }
+    </style>
+</head>
+
+<body class="container-fluid">
+    <h2>Api Documents</h2>
+    <ul>
+        {% for name,auth_header,actions in reslist %}
+        <li>
+        <a class="lead" href="#{{name}}">{{name}}</a>
+        <span><code>auth_header: {{auth_header}}</code></span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% for name,auth_header,actions in reslist %}
+    <div class="resource table-responsive">
+        <h2 id="{{name}}">{{name}}</h2>
+        <table class="table table-striped">
+            <tr>
+                <th>action</th>
+                <th>url</th>
+                <th>method</th>
+                <th>param</th>
+                <th>auth</th>
+                <th>return</th>
+                <th>docs</th>
+            </tr>
+            {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
+            <tr>
+                <td class="info"><strong>{{action}}</strong></td>
+                <td class="success"><code>{{url}}</code></td>
+                <td class="info"><code>{{meth}}</code></td>
+                <td class="success">
+                <pre>{{inputs}}</pre>
+                </td>
+                <td class="info">{{needtoken}}</td>
+                <td class="success">
+                <pre>{{outputs}}</pre>
+                </td>
+                <td class="info">{{docs}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</body>
+
+</html>
