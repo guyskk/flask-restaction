@@ -1,26 +1,11 @@
 # coding:utf-8
 
-import sys
-import os
-sys.path.insert(0, os.path.abspath("../"))
-
-from flask import Flask
-from flask_restaction import Api
 from flask_restaction import Resource
 from flask_restaction import abort
 from datetime import datetime
 
-app = Flask(__name__)
-api = Api(app)
-app.config["JSON_AS_ASCII"] = False
-app.config["RESOURCE_JWT_SECRET"] = "RESOURCE_JWT_SECRET"
-todos = {
-    1: {
-        "name": "todo1",
-        "date": datetime.utcnow(),
-        "finish": False
-    },
-}
+
+todos = {}
 
 
 class Todo(Resource):
@@ -70,11 +55,10 @@ class Todo(Resource):
     types = []
 
     def get(self, id):
-
         if id in todos:
             return dict(todos[id], id=id)
         else:
-            abort(404, "Not Found")
+            abort(404)
 
     def get_list(self):
         return [dict(v, id=k) for k, v in todos.items()]
@@ -83,7 +67,7 @@ class Todo(Resource):
         if not todos:
             newid = 1
         else:
-            newid = sorted(todos.keys())[-1] + 1
+            newid = max(todos) + 1
         todos[newid] = todo
         return dict(todo, id=newid)
 
@@ -92,14 +76,8 @@ class Todo(Resource):
             todos[id] = todo
             return dict(todo, id=id)
         else:
-            abort(404, "Not Found")
+            abort(404)
 
     def delete(self, id):
         if id in todos:
             del todos[id]
-
-api.add_resource(Todo)
-api.gen_resjs()
-
-if __name__ == '__main__':
-    app.run(debug=True)
