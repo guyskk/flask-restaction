@@ -146,7 +146,7 @@ class Api(object):
             "methods": methods,
             "rules": rules,
             "schema_inputs": deepcopy(res_cls.schema_inputs),
-            "schema_outputs": deepcopy(res_cls.schema_inputs),
+            "schema_outputs": deepcopy(res_cls.schema_outputs),
             "docstrings": docstrings
         }
 
