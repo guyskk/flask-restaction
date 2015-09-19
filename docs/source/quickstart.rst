@@ -138,12 +138,14 @@ then you inputs will be escape to avoid attack:
     });
 
 
-we can use ``res.resource.action(data, function(err, value))`` to access resources provided by rest api.
+You can use ``res.resource.action(data, function(err, value))`` to access resources provided by rest api.
 
 - ``resource`` is resource's name, such as ``hello``
 
 - ``action`` is ... such as ``get`` , ``post`` ... 
-  not only http method, ``getlist`` , ``upload`` is ok
+  not only http method, ``get_list`` , ``post_upload`` is ok
+- If you use blueprint, then You should use``res.blueprint.resource.action`` to access resources
+
 
 Validater
 ---------
@@ -268,10 +270,10 @@ Work with Blueprint
     api = Api(bp_api)
 
     #2
-    api.add_resource(Article, url_prefix='/api')
+    api.add_resource(Article)
 
     #3
-    app.register_blueprint(bp_api)
+    app.register_blueprint(bp_api, url_prefix='/api')
 
     #4
     api.gen_resjs()

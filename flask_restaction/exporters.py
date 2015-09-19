@@ -45,7 +45,8 @@ def export_json(data, code, header):
     # Note that we add '\n' to end of response
     # (see https://github.com/mitsuhiko/flask/pull/1262)
     # https://github.com/Runscope/httpbin/issues/168
-    dumped = json.dumps(data, indent=2, sort_keys=sort_keys) + "\n"
+    dumped = json.dumps(data, indent=2,
+                        ensure_ascii=False, sort_keys=sort_keys) + "\n"
     resp = current_app.response_class(
         dumped, status=code, headers=header, mimetype='application/json')
 

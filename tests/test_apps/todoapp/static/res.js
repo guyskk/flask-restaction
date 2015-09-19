@@ -224,9 +224,13 @@ window.res = (function(window) {
     /*以下为jinja2模板，用于生成js*/
     
     
-    res.user={};
+    ress=res;
+    
+    
+    
+    ress.user={};
         
-        res.user.delete=function(data,fn,progress){
+        ress.user.delete=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -246,7 +250,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.get=function(data,fn,progress){
+        ress.user.get=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -266,7 +270,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.get_list=function(data,fn,progress){
+        ress.user.get_list=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -286,7 +290,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.post=function(data,fn,progress){
+        ress.user.post=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -306,7 +310,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.post_login=function(data,fn,progress){
+        ress.user.post_login=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             var _fn=function(err, data, header, xhr){
@@ -324,7 +328,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.post_logout=function(data,fn,progress){
+        ress.user.post_logout=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -344,7 +348,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.post_register=function(data,fn,progress){
+        ress.user.post_register=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             var _fn=function(err, data, header, xhr){
@@ -362,7 +366,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.put=function(data,fn,progress){
+        ress.user.put=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -382,7 +386,7 @@ window.res = (function(window) {
             });
         };
         
-        res.user.put_setting=function(data,fn,progress){
+        ress.user.put_setting=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -403,9 +407,9 @@ window.res = (function(window) {
         };
         
     
-    res.todo={};
+    ress.todo={};
         
-        res.todo.delete=function(data,fn,progress){
+        ress.todo.delete=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -425,7 +429,7 @@ window.res = (function(window) {
             });
         };
         
-        res.todo.get=function(data,fn,progress){
+        ress.todo.get=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -445,7 +449,7 @@ window.res = (function(window) {
             });
         };
         
-        res.todo.get_list=function(data,fn,progress){
+        ress.todo.get_list=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -465,7 +469,7 @@ window.res = (function(window) {
             });
         };
         
-        res.todo.post=function(data,fn,progress){
+        ress.todo.post=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");
@@ -485,7 +489,7 @@ window.res = (function(window) {
             });
         };
         
-        res.todo.put=function(data,fn,progress){
+        ress.todo.put=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             
             addToken(header,"Authorization");

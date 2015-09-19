@@ -223,10 +223,17 @@ window.res = (function(window) {
     
     /*以下为jinja2模板，用于生成js*/
     
-    {% for name,auth_header,actions in reslist %}
-    res.{{name}}={};
+    {% if blueprint != None and blueprint!="" %}
+    res.{{blueprint}}={};
+    ress=res.{{blueprint}};
+    {% else %}
+    ress=res;
+    {% endif %}
+    
+    {% for name,doc,actions in reslist %}
+    ress.{{name}}={};
         {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
-        res.{{name}}.{{action}}=function(data,fn,progress){
+        ress.{{name}}.{{action}}=function(data,fn,progress){
             header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
             {% if needtoken %}
             addToken(header,"{{auth_header}}");

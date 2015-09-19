@@ -57,8 +57,10 @@ class Api(object):
         self.app = app
         if self.is_blueprint():
             self.app.record(lambda s: self.init_permission(s.app))
+            self.app.record(lambda s: setattr(self, "url_prefix", s.url_prefix))
         else:
             self.init_permission(app)
+            self.url_prefix = None
 
     def init_permission(self, app):
         """init_permission
@@ -90,10 +92,14 @@ class Api(object):
                 {
                     "name": name,
                     "classname": classname,
+                    "docs": res_cls.__doc__,
                     "meth_act": meth_act,
                     "actions": actions,
                     "methods": methods,
                     "rules": rules,
+                    "schema_inputs": res_cls.schema_inputs
+                    "schema_outputs": res_cls.schema_outputs
+                    "docstrings": docstrings
                 }
 
             meth_act is a list of tuple(meth, act)::
@@ -138,9 +144,11 @@ class Api(object):
 
         methods = set([x[0] for x in actions])
         rules = set([(x[2], x[3]) for x in actions])
+
         return {
             "name": name,
             "classname": classname,
+            "docs": res_cls.__doc__,
             "meth_act": meth_act,
             "actions": actions,
             "methods": methods,
@@ -184,30 +192,52 @@ class Api(object):
 
     def parse_reslist(self):
         """parse_reslist
-        :return: reslist
 
-        - reslist: list of tuple(name, auth_header, actions)
+        :return: resources
+
+        - resources::
+
+            {
+                "auth_header": self.auth_header,
+                "blueprint": bp_name,
+                "url_prefix": url_prefix,
+                "reslist": reslist
+            }
+
+        - reslist: list of tuple(res_name, res_doc, actions)
         - actions: list of tuple(url, http_method, action,
-            needtoken, schema_input, schema_output, doc)
+            needtoken, schema_input, schema_output, action_doc)
 
         """
+        if self.is_blueprint():
+            bp_name = self.app.name
+        else:
+            bp_name = None
         reslist = []
+        resources = {
+            "auth_header": self.auth_header,
+            "blueprint": bp_name,
+            "url_prefix": self.url_prefix,
+            "reslist": reslist
+        }
         for res in self.resources:
             schema_inputs = res["schema_inputs"]
             schema_outputs = res["schema_outputs"]
             docstrings = res["docstrings"]
             actions = []
-            reslist.append((res["name"], self.auth_header, actions))
+            reslist.append((res["name"], res["docs"], actions))
             for meth, act, url, endpoint, action in res["actions"]:
+                if self.url_prefix:
+                    url = self.url_prefix + url
                 needtoken = not self.permission.permit("*", res["name"], action)
                 inputs = json.dumps(schema_inputs.get(action), indent=2, sort_keys=True,
-                           ensure_ascii=False, default=self._normal_validate)
+                                    ensure_ascii=False, default=self._normal_validate)
                 outputs = json.dumps(schema_outputs.get(action), indent=2, sort_keys=True,
-                           ensure_ascii=False, default=self._normal_validate)
+                                     ensure_ascii=False, default=self._normal_validate)
                 actions.append(
                     (url, meth, action, needtoken, inputs, outputs,
                         docstrings.get(action)))
-        return reslist
+        return resources
 
     def _gen_from_template(self, tmpl, name):
         """genarate something and write to static_folder
@@ -216,8 +246,8 @@ class Api(object):
         :param name: file name to write
         """
         template = Template(tmpl)
-        reslist = self.parse_reslist()
-        rendered = template.render(reslist=reslist)
+        resources = self.parse_reslist()
+        rendered = template.render(**resources)
         if not exists(self.app.static_folder):
             os.makedirs(self.app.static_folder)
         path = join(self.app.static_folder, name)
@@ -228,27 +258,11 @@ class Api(object):
         """genarate res.js, should be called after added all resources
         """
         self._gen_from_template(res_js, self.resjs_name)
-        # template = Template(res_js)
-        # reslist = self.parse_reslist()
-        # js = template.render(reslist=reslist)
-        # if not exists(self.app.static_folder):
-        #     os.makedirs(self.app.static_folder)
-        # path = join(self.app.static_folder, self.resjs_name)
-        # with open(path, "w") as f:
-        #     f.write(js.encode("utf-8"))
 
     def gen_resdocs(self):
         """genarate resdocs.html, should be called after added all resources
         """
         self._gen_from_template(res_docs, self.resdocs_name)
-        # template = Template(res_docs)
-        # reslist = self.parse_reslist()
-        # js = template.render(reslist=reslist)
-        # if not exists(self.app.static_folder):
-        #     os.makedirs(self.app.static_folder)
-        # path = join(self.app.static_folder, self.resdocs_name)
-        # with open(path, "w") as f:
-        #     f.write(js.encode("utf-8"))
 
     def parse_me(self):
         """parse http header auth token
