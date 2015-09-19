@@ -66,6 +66,21 @@ you will see:
     }
 
 
+Use url_for
+-----------
+    
+The endpoint is ``resource@action``::
+    
+    resource -> Resource class name, lowcase
+    action   -> action's last part name, lowcase
+
+For Example::
+    
+    Hello.get -> url_for("hello") -> /hello
+    # suppose Hello.get_list exists
+    Hello.get_list -> url_for("hello@list") -> /hello/list
+    Hello.post_login -> url_for("hello@login") -> /hello/login
+    
 Use res.js
 -----------
 
@@ -236,6 +251,36 @@ JSON struct
   此时actions必须为 ``[]`` 。
 - role和resource（除去 ``*`` 号）
   只能是字母数字下划线组合，且不能以数字开头。
+
+Work with Blueprint
+---------------------
+
+.. code-block :: python
+
+    from flask import Flask, Blueprint
+    from flask_restaction import Api
+    from .article import Article
+
+    app = Flask(__name__)
+
+    #1
+    bp_api = Blueprint('api', __name__, static_folder='static')
+    api = Api(bp_api)
+
+    #2
+    api.add_resource(Article, url_prefix='/api')
+
+    #3
+    app.register_blueprint(bp_api)
+
+    #4
+    api.gen_resjs()
+    api.gen_resdocs()
+
+
+- You should add ``static_folder='something'`` to Blueprint if you need gen_resjs or gen_resdocs, because res.js and resdocs is save in Blueprint's static_folder.
+
+- You should do #1, #2, #3, #4 orderly, otherwise will cause error, because Resource urls was registered when register_blueprint and permission was inited after register_blueprint.
 
 
 Process Flow

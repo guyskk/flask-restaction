@@ -26,6 +26,7 @@ class Api(object):
     :param auth_alg: jwt algorithm
     :param auth_exp: jwt expiration time (seconds)
     :param resjs_name: res.js file name
+    :param resdocs_name: resdocs.html file name
     """
 
     def __init__(self, app=None, permission_path="permission.json",
@@ -193,7 +194,7 @@ class Api(object):
         reslist = []
         for res in self.resources:
             schema_inputs = res["schema_inputs"]
-            schema_outputs = res["schema_inputs"]
+            schema_outputs = res["schema_outputs"]
             docstrings = res["docstrings"]
             actions = []
             reslist.append((res["name"], self.auth_header, actions))
