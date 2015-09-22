@@ -1,4 +1,4 @@
-"""desc"""
+"""http://flask-restaction.readthedocs.org/zh/latest/"""
 from distutils.core import setup
 setup(
     name="flask-restaction",

@@ -70,7 +70,7 @@ class ResourceException(Exception):
         self.error = error
 
 
-def abort(code, error):
+def abort(code, error=None):
     """raise a RescurceException
 
     :param code: http status code
