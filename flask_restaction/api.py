@@ -1,5 +1,7 @@
 # coding:utf-8
 
+from __future__ import unicode_literals
+
 from flask import Blueprint, request
 import os
 from os.path import join, exists

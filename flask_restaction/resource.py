@@ -1,5 +1,6 @@
 # coding:utf-8
 
+from __future__ import unicode_literals
 from flask.views import View
 from flask import request, make_response, current_app
 from flask._compat import with_metaclass
