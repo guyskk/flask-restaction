@@ -2,7 +2,7 @@
 from distutils.core import setup
 setup(
     name="flask-restaction",
-    version="0.15.5",
+    version="0.15.6",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="kk",
@@ -13,7 +13,7 @@ setup(
     install_requires=[
         'flask>=0.1',
         'pyjwt>=1.4',
-        'validater>=0.7.1'
+        'validater>=0.7.2'
     ],
     classifiers=[
         'Framework :: Flask',

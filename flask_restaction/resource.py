@@ -7,7 +7,9 @@ from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
+import sys
 from . import ResourceException, abort, exporters
+# from flask import _compat
 
 
 class ResourceViewType(type):
@@ -84,6 +86,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
 
     @classmethod
     def _handle_error(cls, ex):
+
         if cls.handle_error_func:
             rv = cls.handle_error_func[0](ex)
             if rv is not None:
@@ -94,7 +97,11 @@ class Resource(with_metaclass(ResourceViewType, View)):
             else:
                 return ex.error, ex.code
         else:
-            raise ex
+            # reraise exception with_traceback
+            # exc_type, exc_value, tb = sys.exc_info()
+            # assert exc_value is ex
+            # _compat.reraise(exc_type, exc_value, tb)
+            return None
 
     @classmethod
     def after_request(cls, f):
@@ -133,6 +140,8 @@ class Resource(with_metaclass(ResourceViewType, View)):
                 rv = self.full_dispatch_request(*args, **kwargs)
         except Exception as ex:
             rv = self._handle_error(ex)
+            if rv is None:
+                raise
         rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
         if isinstance(rv, (ResponseBase, basestring)):

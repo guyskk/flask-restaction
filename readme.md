@@ -29,3 +29,7 @@ http://flask-restaction.readthedocs.org/zh/latest/
 - tests 
 - document
 - ...
+
+## license 
+
+MIT License
