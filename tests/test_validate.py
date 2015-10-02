@@ -56,7 +56,9 @@ def app():
 def test_inputs(app):
     set_out({"hello": u"world"})
     with app.test_client() as c:
-        assert 400 == c.get("hello?name=").status_code
+        # treat "" as NULL then asign default value
+        assert 200 == c.get("hello?name=").status_code
+        assert "world" in c.get("hello?name=").data
         assert 400 == c.get("hello?name=1").status_code
         assert 400 == c.get("hello?name=a1533gfdhgfh544y4yhb").status_code
         assert "hello" in c.get("hello?name=a12345").data

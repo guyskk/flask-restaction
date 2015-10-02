@@ -29,12 +29,14 @@ class Api(object):
     :param auth_exp: jwt expiration time (seconds)
     :param resjs_name: res.js file name
     :param resdocs_name: resdocs.html file name
+    :param bootstrap: url for bootstrap.css
     """
 
     def __init__(self, app=None, permission_path="permission.json",
                  auth_header="Authorization", auth_secret="SECRET",
                  auth_alg="HS256", auth_exp=1200, resjs_name="res.js",
-                 resdocs_name="resdocs.html"):
+                 resdocs_name="resdocs.html",
+                 bootstrap="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"):
         self.permission_path = permission_path
         self.auth_header = auth_header
         self.auth_secret = auth_secret
@@ -42,7 +44,7 @@ class Api(object):
         self.auth_exp = auth_exp
         self.resjs_name = resjs_name
         self.resdocs_name = resdocs_name
-
+        self.bootstrap = bootstrap
         self.resources = []
 
         self.before_request_funcs = []
@@ -249,7 +251,9 @@ class Api(object):
         """
         template = Template(tmpl)
         resources = self.parse_reslist()
-        rendered = template.render(**resources)
+        rendered = template.render(
+            resjs_name=self.resjs_name,
+            bootstrap=self.bootstrap, **resources)
         if not exists(self.app.static_folder):
             os.makedirs(self.app.static_folder)
         path = join(self.app.static_folder, name)

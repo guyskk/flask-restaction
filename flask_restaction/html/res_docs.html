@@ -3,8 +3,8 @@
 
 <head>
     <title>Api Documrnts</title>
-    <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css">
-    <script type="text/javascript" src="/static/res.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{bootstrap}}">
+    <script type="text/javascript" src="/static/{{resjs_name}}"></script>
     <style type="text/css">
     .resource {
         padding-bottom: 15px;
@@ -34,17 +34,19 @@
         <p><pre>{{docs}}</pre></p>
         <table class="table table-striped">
             <tr>
-                <th>action</th>
+                <th>action / docs</th>
                 <th>url</th>
                 <th>method</th>
                 <th>param</th>
                 <th>auth</th>
                 <th>return</th>
-                <th>docs</th>
             </tr>
             {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
             <tr>
-                <td class="info"><strong>{{action}}</strong></td>
+                <td class="info">
+                <strong>{{action}}</strong>
+                <p>{{docs}}</p>
+                </td>
                 <td class="success"><code>{{url}}</code></td>
                 <td class="info"><code>{{meth}}</code></td>
                 <td class="success">
@@ -54,7 +56,6 @@
                 <td class="success">
                 <pre>{{outputs}}</pre>
                 </td>
-                <td class="info">{{docs}}</td>
             </tr>
             {% endfor %}
         </table>
