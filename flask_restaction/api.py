@@ -12,7 +12,7 @@ from jinja2 import Template
 from copy import deepcopy
 import json
 from . import Permission
-from . import pattern_action
+from . import pattern_action, pattern_endpoint
 from . import abort
 from . import res_js, res_docs
 
@@ -24,28 +24,30 @@ class Api(object):
     :param app: Flask or Blueprint
     :param permission_path: permission file path
     :param auth_header: http header name
+    :param auth_token_name: token_name for saving auth_token in local_storge
     :param auth_secret: jwt secret
     :param auth_alg: jwt algorithm
     :param auth_exp: jwt expiration time (seconds)
     :param resjs_name: res.js file name
     :param resdocs_name: resdocs.html file name
-    :param bootstrap: url for bootstrap.css
+    :param bootstrap: url for bootstrap.css, used for resdocs
     """
 
     def __init__(self, app=None, permission_path="permission.json",
-                 auth_header="Authorization", auth_secret="SECRET",
-                 auth_alg="HS256", auth_exp=1200, resjs_name="res.js",
-                 resdocs_name="resdocs.html",
+                 auth_header="Authorization", auth_token_name="res_token",
+                 auth_secret="SECRET", auth_alg="HS256", auth_exp=1200,
+                 resjs_name="res.js", resdocs_name="resdocs.html",
                  bootstrap="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"):
         self.permission_path = permission_path
         self.auth_header = auth_header
+        self.auth_token_name = auth_token_name
         self.auth_secret = auth_secret
         self.auth_alg = auth_alg
         self.auth_exp = auth_exp
         self.resjs_name = resjs_name
         self.resdocs_name = resdocs_name
         self.bootstrap = bootstrap
-        self.resources = []
+        self.resources = {}
 
         self.before_request_funcs = []
         self.after_request_funcs = []
@@ -59,12 +61,12 @@ class Api(object):
         :param app: Flask or Blueprint
         """
         self.app = app
+        self.url_prefix = None
         if self.is_blueprint():
             self.app.record(lambda s: self.init_permission(s.app))
             self.app.record(lambda s: setattr(self, "url_prefix", s.url_prefix))
         else:
             self.init_permission(app)
-            self.url_prefix = None
 
     def init_permission(self, app):
         """init_permission
@@ -93,18 +95,17 @@ class Api(object):
 
             info of resource class::
 
-                {
-                    "name": name,
-                    "classname": classname,
-                    "docs": res_cls.__doc__,
-                    "meth_act": meth_act,
-                    "actions": actions,
-                    "methods": methods,
-                    "rules": rules,
-                    "schema_inputs": res_cls.schema_inputs
-                    "schema_outputs": res_cls.schema_outputs
-                    "docstrings": docstrings
-                }
+                tuple("classname", {
+                        "name": name,
+                        "docs": res_cls.__doc__,
+                        "meth_act": meth_act,
+                        "actions": actions,
+                        "methods": methods,
+                        "rules": rules,
+                        "schema_inputs": res_cls.schema_inputs
+                        "schema_outputs": res_cls.schema_outputs
+                        "docstrings": docstrings
+                    })
 
             meth_act is a list of tuple(meth, act)::
 
@@ -149,9 +150,9 @@ class Api(object):
         methods = set([x[0] for x in actions])
         rules = set([(x[2], x[3]) for x in actions])
 
-        return {
+        return (classname, {
+            "class": res_cls,
             "name": name,
-            "classname": classname,
             "docs": res_cls.__doc__,
             "meth_act": meth_act,
             "actions": actions,
@@ -160,7 +161,7 @@ class Api(object):
             "schema_inputs": deepcopy(res_cls.schema_inputs),
             "schema_outputs": deepcopy(res_cls.schema_outputs),
             "docstrings": docstrings
-        }
+        })
 
     def add_resource(self, res_cls, name=None, *class_args, **class_kwargs):
         """add_resource
@@ -170,7 +171,7 @@ class Api(object):
         :param class_args: class_args
         :param class_kwargs: class_kwargs
         """
-        res = self.parse_resource(res_cls, name)
+        classname, res = self.parse_resource(res_cls, name)
         res_cls.before_request_funcs.insert(0, self._before_request)
         res_cls.after_request_funcs.append(self._after_request)
 
@@ -187,7 +188,7 @@ class Api(object):
 
         for url, end in res["rules"]:
             self.app.add_url_rule(url, endpoint=end, view_func=view, methods=res["methods"])
-        self.resources.append(res)
+        self.resources[classname] = res
 
     def _normal_validate(self, obj):
         """change lamada validate to string ``'~'`` """
@@ -203,6 +204,7 @@ class Api(object):
 
             {
                 "auth_header": self.auth_header,
+                "auth_token_name": self.auth_token_name,
                 "blueprint": bp_name,
                 "url_prefix": url_prefix,
                 "reslist": reslist
@@ -220,11 +222,12 @@ class Api(object):
         reslist = []
         resources = {
             "auth_header": self.auth_header,
+            "auth_token_name": self.auth_token_name,
             "blueprint": bp_name,
             "url_prefix": self.url_prefix,
             "reslist": reslist
         }
-        for res in self.resources:
+        for classname, res in self.resources.items():
             schema_inputs = res["schema_inputs"]
             schema_outputs = res["schema_outputs"]
             docstrings = res["docstrings"]
@@ -234,10 +237,10 @@ class Api(object):
                 if self.url_prefix:
                     url = self.url_prefix + url
                 needtoken = not self.permission.permit("*", res["name"], action)
-                inputs = json.dumps(schema_inputs.get(action), indent=2, sort_keys=True,
-                                    ensure_ascii=False, default=self._normal_validate)
-                outputs = json.dumps(schema_outputs.get(action), indent=2, sort_keys=True,
-                                     ensure_ascii=False, default=self._normal_validate)
+                dumps = lambda v: json.dumps(v, indent=2, sort_keys=True, ensure_ascii=False,
+                                             default=self._normal_validate)
+                inputs = dumps(schema_inputs.get(action))
+                outputs = dumps(schema_outputs.get(action))
                 actions.append(
                     (url, meth, action, needtoken, inputs, outputs,
                         docstrings.get(action)))
@@ -270,37 +273,10 @@ class Api(object):
         """
         self._gen_from_template(res_docs, self.resdocs_name)
 
-    def parse_me(self):
-        """parse http header auth token
-
-        :return:
-
-            a dict::
-
-                {"id": user_id, "role": "role"}
-
-            if token not exists or invalid::
-
-                {"id": None, "role": "*"}
-        """
-        token = request.headers.get(self.auth_header)
-        options = {
-            'require_exp': True,
-        }
-        if token is not None:
-            try:
-                me = jwt.decode(token, self.auth_secret,
-                                algorithms=[self.auth_alg], options=options)
-                if "id" in me and "role" in me:
-                    return me
-            except jwt.InvalidTokenError:
-                pass
-        return {"id": None, "role": "*"}
-
     def gen_token(self, me, auth_exp=None):
-        """generate token, id and role must in param ``me``
+        """generate token, ``id`` must in param ``me``
 
-        :param me: a dict like ``{"id": user_id, "role": "role"}``
+        :param me: a dict like ``{"id": user_id, ...}``
         :param auth_exp: seconds of jwt token expiration time
                          , default is ``self.auth_exp``
         :return: string
@@ -312,19 +288,68 @@ class Api(object):
         return token
 
     def gen_auth_header(self, me, auth_exp=None):
-        """generate auth_header, id and role must in param ``me``
+        """generate auth_header, ``id`` must in param ``me``
 
-        :param me: a dict like ``{"id": user_id, "role": "role"}``
-        :param auth_exp: seconds of jwt token expiration time
-                         , default is ``self.auth_exp``
-        :return: dict
+        :return: ``{self.auth_header: self.gen_token(me)}``
         """
         auth = {self.auth_header: self.gen_token(me)}
         return auth
 
+    def parse_me(self):
+        """parse http header auth token
+
+        :return:
+
+            a dict::
+
+                {"id": user_id, ...}
+
+            if token not exists or not exists or token invalid::
+
+                {"id": None}
+        """
+        token = request.headers.get(self.auth_header)
+        options = {
+            'require_exp': True,
+        }
+        if token is not None:
+            try:
+                me = jwt.decode(token, self.auth_secret,
+                                algorithms=[self.auth_alg], options=options)
+                if "id" in me:
+                    return me
+            except jwt.InvalidTokenError:
+                pass
+        return {"id": None}
+
+    def parse_request(self):
+        find = pattern_endpoint.findall(request.endpoint)
+        if not find:
+            abort(500, "invalid endpoint: %s" % request.endpoint)
+        blueprint, resource, act = find[0]
+        if act:
+            meth_name = request.method.lower() + "_" + act
+        else:
+            meth_name = request.method.lower()
+
+        request.resource = resource
+        request.action = meth_name
+        request.me = self.parse_me()
+
+        res = self.resources.get(resource)
+        if res is None:
+            abort(404)
+        res_cls = res["class"]
+        if hasattr(res_cls, "user_role"):
+            fn_user_role = getattr(res_cls, "user_role")
+            role = fn_user_role(request.me["id"])
+        else:
+            role = "*"
+        request.me["role"] = role
+
     def _before_request(self):
         """before_request"""
-        request.me = self.parse_me()
+        self.parse_request()
         for fn in self.before_request_funcs:
             rv = fn()
             if rv is not None:

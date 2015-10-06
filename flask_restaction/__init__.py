@@ -8,6 +8,7 @@ import re
 import pkg_resources
 
 pattern_action = re.compile(r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
+pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 res_js = pkg_resources.resource_string(__name__, "js/res.js")
 res_js = res_js.decode("utf-8")
 res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")

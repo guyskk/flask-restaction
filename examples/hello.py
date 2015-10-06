@@ -1,6 +1,5 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath("../"))
+# coding:utf-8
+
 from flask import Flask
 from flask_restaction import Resource, Api
 
@@ -25,6 +24,7 @@ class Hello(Resource):
 
 api.add_resource(Hello)
 api.gen_resjs()
+api.gen_resdocs()
 
 if __name__ == '__main__':
     app.run(debug=True)

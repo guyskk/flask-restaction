@@ -13,7 +13,6 @@ users = {
     1: {
         "username": "guyskk",
         "password": "123456",
-        "role": "admin"
     }
 }
 
@@ -34,16 +33,11 @@ class User(Resource):
         "desc": u"6-20个字符",
         "required": True, "validate": "password"
     })
-    schema_role = ("role", {
-        "desc": u"角色",
-        "required": True,
-        "validate": lambda v: (v in user_roles, v)
-    })
     schema_inputs = {
         "get": dict([schema_id]),
         "get_list": dict(),
-        "post": dict([schema_role, schema_username, schema_password]),
-        "put": dict([schema_id, schema_role, schema_username, schema_password]),
+        "post": dict([schema_username, schema_password]),
+        "put": dict([schema_id, schema_username, schema_password]),
         "delete": dict([schema_id]),
         "post_register": dict([schema_username, schema_password]),
         "put_setting": dict([schema_id, schema_username, schema_password]),
@@ -51,7 +45,7 @@ class User(Resource):
         "post_logout": dict(),
     }
 
-    schema_userinfo = dict([schema_id, schema_role, schema_username])
+    schema_userinfo = dict([schema_id, schema_username])
     schema_outputs = {
         "get": schema_userinfo,
         "get_list": [schema_userinfo],
@@ -63,6 +57,13 @@ class User(Resource):
         "post_login": schema_userinfo,
         "post_logout": dict(),
     }
+
+    @staticmethod
+    def user_role(uid):
+        if uid == 1:
+            return "admin"
+        else:
+            return "*"
 
     @staticmethod
     def abort_if_not_admin_or_me(id):
@@ -114,9 +115,8 @@ class User(Resource):
     def post_login(self, username, password):
         for k, u in users.items():
             if u.get("username") == username and u.get("password") == password:
-                me = {"id": k, "role": u["role"]}
-                auth = {api.auth_header: api.gen_token(me)}
-                return dict(u, id=k), auth
+                me = {"id": k}
+                return dict(u, id=k), api.gen_auth_header(me)
         abort(403, u"登录失败")
 
     def post_logout(self):

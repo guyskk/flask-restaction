@@ -1,8 +1,8 @@
 """http://flask-restaction.readthedocs.org/zh/latest/"""
-from distutils.core import setup
+from setuptools import setup
 setup(
     name="flask-restaction",
-    version="0.15.6",
+    version="0.16.0",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="kk",

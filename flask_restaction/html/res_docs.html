@@ -20,6 +20,7 @@
     </div>
     <ul>
         <li>auth_header: <code>{{auth_header}}</code></li>
+        <li>auth_token_name: <code>{{auth_token_name}}</code></li>
         <li>blueprint: <code>{{blueprint}}</code></li>
         <li>url_prefix: <code>{{url_prefix}}</code></li>
         {% for name,docs,actions in reslist %}
@@ -31,7 +32,7 @@
     {% for name,docs,actions in reslist %}
     <div class="resource table-responsive">
         <h2 id="{{name}}">{{name}}</h2>
-        <p><pre>{{docs}}</pre></p>
+        <p><pre>{{docs or 'docs of resource'}}</pre></p>
         <table class="table table-striped">
             <tr>
                 <th>action / docs</th>
@@ -45,7 +46,7 @@
             <tr>
                 <td class="info">
                 <strong>{{action}}</strong>
-                <p>{{docs}}</p>
+                <p>{{docs or ''}}</p>
                 </td>
                 <td class="success"><code>{{url}}</code></td>
                 <td class="info"><code>{{meth}}</code></td>

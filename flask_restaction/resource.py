@@ -7,9 +7,7 @@ from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
-import sys
 from . import ResourceException, abort, exporters
-# from flask import _compat
 
 
 class ResourceViewType(type):
@@ -58,16 +56,26 @@ class Resource(with_metaclass(ResourceViewType, View)):
             def fn(rv, code, headers):
                 return (rv, code, headers) or None
 
-    - handle_error_func is is list with just one function::
+    - handle_error_func is list with just one function::
 
         def fn(ex):
             return (rv, [code, headers])
+
+    - user_role is function that return user_role::
+
+        @staticmethod
+        def user_role(user_id):
+            return "role of user or '*' if user_id is None"
 
     """
 
     schema_inputs = {}
     schema_outputs = {}
     output_types = []
+
+    # @staticmethod
+    # def user_role(user_id):
+    #     pass
 
     @classmethod
     def _before_request(cls):
@@ -97,10 +105,6 @@ class Resource(with_metaclass(ResourceViewType, View)):
             else:
                 return ex.error, ex.code
         else:
-            # reraise exception with_traceback
-            # exc_type, exc_value, tb = sys.exc_info()
-            # assert exc_value is ex
-            # _compat.reraise(exc_type, exc_value, tb)
             return None
 
     @classmethod
@@ -124,15 +128,6 @@ class Resource(with_metaclass(ResourceViewType, View)):
     def dispatch_request(self, *args, **kwargs):
         """preproccess request and dispatch request
         """
-        act = request.endpoint.split('@')
-        if len(act) > 1:
-            meth_name = request.method.lower() + "_" + act[1]
-        else:
-            meth_name = request.method.lower()
-        if not hasattr(self, meth_name) and request.method == 'HEAD':
-            meth_name = "get"
-        request.resource = self.__class__.__name__.lower()
-        request.action = meth_name
         try:
             # before_request
             rv = self._before_request()
@@ -142,6 +137,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
             rv = self._handle_error(ex)
             if rv is None:
                 raise
+        # after_request
         rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
         if isinstance(rv, (ResponseBase, basestring)):
@@ -166,7 +162,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
         method = request.method.lower()
         if inputs is not None:
             if method in ["get", "delete"]:
-                data = request.args.copy()
+                data = request.args
             elif method in ["post", "put"]:
                 if request.headers["Content-Type"] == 'application/json':
                     try:
@@ -174,7 +170,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
                     except:
                         abort(400, "Invalid json content")
                 else:
-                    data = request.form.copy()
+                    data = request.form
             else:
                 data = {}
             (errors, values) = validate(data, inputs)

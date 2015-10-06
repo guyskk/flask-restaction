@@ -88,3 +88,32 @@ def test_file(app):
                 assert ex.message == "get_error"
                 raise
             assert True
+
+
+def test_user_role():
+    class Hello(Resource):
+
+        @staticmethod
+        def user_role(uid):
+            return "role_%s" % uid
+
+        def get(self):
+            return "hello"
+
+        def post_login(self):
+            me = {"id": 123}
+            return "login", 200, api.gen_auth_header(me)
+
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        rv = c.post("/hello/login")
+        assert "login" in rv.data
+        assert api.auth_header in rv.headers
+        auth = {api.auth_header: rv.headers[api.auth_header]}
+        rv2 = c.get("/hello", headers=auth)
+        assert str(request.me["id"]) == "123"
+        assert request.me["role"] == "role_123"

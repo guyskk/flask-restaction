@@ -1,6 +1,6 @@
 # personal data
-oth
-tests/test_apps/todoapp/static/
+examples/static/
+tests/todoapp/static/
 
 # pkg resource
 MANIFEST

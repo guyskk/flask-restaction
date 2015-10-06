@@ -54,6 +54,13 @@ class Todo(Resource):
     }
     types = []
 
+    @staticmethod
+    def user_role(uid):
+        if uid == 1:
+            return "admin"
+        else:
+            return "*"
+
     def get(self, id):
         if id in todos:
             return dict(todos[id], id=id)

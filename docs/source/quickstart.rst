@@ -140,10 +140,11 @@ then you inputs will be escape to avoid attack:
 
 You can use ``res.resource.action(data, function(err, value))`` to access resources provided by rest api.
 
-- ``resource`` is resource's name, such as ``hello``
+- ``resource`` is resource's name(is not always resource's classname, depends on add_resource), such as ``hello``
 
 - ``action`` is ... such as ``get`` , ``post`` ... 
   not only http method, ``get_list`` , ``post_upload`` is ok
+
 - If you use blueprint, then You should use``res.blueprint.resource.action`` to access resources
 
 
@@ -216,8 +217,26 @@ You can access auth info by `request.me`, it's struct is:
         "role":user_role
     }
 
-And you should add auth header(default ``Authorization``) to response after user login, 
-it's value can be generate by ``api.gen_token(me)``
+And you should add auth header(default ``Authorization``) to response after user login, it's value can be generate
+by ``api.gen_token(me)`` or ``api.gen_auth_token(me)``.
+
+**user_role function of Resource**
+
+.. code-block:: python
+
+    class User(Resource):
+
+        @staticmethod
+        def user_role(user_id):
+            return "role of user"
+
+
+This function must be decorated by ``@staticmethod``, it will be called before request and it's return value will be
+in ``request.me["role"]``, then permission system will use it.
+
+The Usage of user_role
+
+A user can be different role in different field, and only one role in one field. A field consist of some Resources or only one Resource, so this can avoid the effect of user/permission system when add new Resource or new module to you application.
 
 **Note:**
 
@@ -227,11 +246,11 @@ res.js will auto add auth header(default ``Authorization``) to request if needed
 Permission control
 ------------------------------
 
-``permission.json`` 权限分配表 
+``permission.json`` permission table
 
 By default, ``permission.json`` should be saved in root path of you flask application, you can change to other path, see :ref:`api` .
 
-权限按role->resource->action划分
+permission subdivide by role->resource->action
 
 JSON struct
 
@@ -245,14 +264,13 @@ JSON struct
         ...
     }
 
-- role为 ``*`` 时，表示匿名用户的权限。
-- resource为 ``*`` 时，表示拥有所有resource的
-  所有action权限，此时actions必须为 ``[]`` 且不能有其他resource。
-- resource为 ``resource*`` 时，
-  表示拥有此resource的所有action权限，
-  此时actions必须为 ``[]`` 。
-- role和resource（除去 ``*`` 号）
-  只能是字母数字下划线组合，且不能以数字开头。
+- When role is ``*``, represent anonymous user.
+
+- When resource is ``*``, represent the role can access all resources all actions, actions must be ``[]`` and can't has other resource.
+
+- When resource is ``resource*``, represent the role can access this resource's all action, actions must be ``[]``.
+
+- role and resource must be combine of a-z_0-9 and start with a-z.
 
 Work with Blueprint
 ---------------------

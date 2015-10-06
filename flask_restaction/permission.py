@@ -72,6 +72,8 @@ class Permission(object):
         :param resource: 资源
         :param action: 操作
         """
+        if role is None:
+            role = "*"
         if role in self.permission:
             perm = self.permission[role]
             for r, a in perm.items():

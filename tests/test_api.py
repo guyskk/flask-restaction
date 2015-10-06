@@ -1,24 +1,34 @@
-from flask import Flask, request, url_for
+# coding:utf-8
+
+from __future__ import unicode_literals
+from flask import Flask, Blueprint, request, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
 import pytest
-
-out_obj = {u"hello": u"world"}
-event_handler_config = [True, True, True]
+from mock import Mock, patch
 
 
-def set_out(obj):
-    global out_obj
-    out_obj = obj
+def test_parse_request():
+    class Hello(Resource):
+
+        def get(self):
+            return "hello"
+
+    app = Flask(__name__)
+    app.debug = True
+    bp = Blueprint("blueprint", __name__)
+    api = Api(bp)
+    api.add_resource(Hello)
+    app.register_blueprint(bp, url_prefix="/api")
+    with app.test_client() as c:
+        rv = c.get("/api/hello")
+        assert "hello" in rv.data
+        assert request.resource == "hello"
+        assert request.action == "get"
+        assert request.me["id"] is None
 
 
-def config(*config):
-    global event_handler_config
-    event_handler_config = list(config)
-
-
-@pytest.fixture(scope="module")
-def appapi():
+def create_api():
     class Hello(Resource):
         schema_name = ("name", {
             "desc": "name",
@@ -41,69 +51,92 @@ def appapi():
             "post_login": dict([schema_date]),
         }
         schema_outputs = {
-            "get": dict([schema_hello])
+            "get": dict([schema_hello]),
+            "get_error": dict([schema_hello]),
+            "post_login": dict([schema_hello]),
         }
 
         def get(self, name):
-            global out_obj
-            return out_obj
+            return {"hello": name}
 
         def get_error(self):
             raise ValueError("get_error")
 
         def post_login(self, date):
-            global out_obj
-            return out_obj
+            return {"hello": "world"}
 
     app = Flask(__name__)
     app.debug = True
     api = Api(app)
     api.add_resource(Hello)
 
-    @api.before_request
-    def api_before_request():
-        if event_handler_config[0]:
-            return {"hello": "before_request"}
-        else:
-            return None
-
-    @api.after_request
-    def api_after_request(data, code, headers):
-        if event_handler_config[1]:
-            return {"hello": "after_request"}, code, headers
-        else:
-            return data, code, headers
-
-    @api.error_handler
-    def api_error_handler(ex):
-        if event_handler_config[2]:
-            return "error_handler" + ex.message
-        else:
-            return None
-
-    return app, api
+    return api
 
 
-def test_base(appapi):
-    app, api = appapi
+def test_api_before_request():
+    api = create_api()
+    app = api.app
+
+    mk = Mock(return_value={"hello": "before_request"})
+    api.before_request(mk)
 
     with app.test_client() as c:
-        config(True, True, True)
-        assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
-        config(True, False, True)
         assert "before_request" in c.get("/hello", query_string={"name": "haha"}).data
         assert "before_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
-        config(False, False, True)
-        assert "world" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "re_name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
-        config(False, True, True)
+        mk.return_value = None
+        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
+
+
+def test_api_after_request():
+    api = create_api()
+    app = api.app
+
+    with app.test_client() as c:
+        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
+        mk = Mock()
+        mk.return_value = ({"hello": "after_request"}, 200, None)
+        api.after_request(mk)
         assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
         assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
 
-        config(False, False, True)
+
+def test_befor_after():
+    api = create_api()
+    app = api.app
+
+    before = Mock(return_value={"hello": "before_request"})
+    api.before_request(before)
+
+    after = Mock()
+    after.return_value = ({"hello": "after_request"}, 200, None)
+    api.after_request(after)
+
+    with app.test_client() as c:
+        assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
+        assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+
+
+def test_api_error_handler():
+    api = create_api()
+    app = api.app
+
+    mk = Mock(return_value="error_handler")
+    api.error_handler(mk)
+
+    with app.test_client() as c:
         assert "error_handler" in c.get("/hello/error").data
-        assert "get_error" in c.get("/hello/error").data
-        config(False, False, False)
+        mk.return_value = None
         with pytest.raises(ValueError):
             c.get("/hello/error").data
+
+
+def test_base():
+    api = create_api()
+    app = api.app
+
+    with app.test_client() as c:
+        assert "world" in c.get("/hello").data
+        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert "re_name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data

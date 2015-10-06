@@ -1,4 +1,4 @@
-from .todoapp import app
+from todoapp import app
 import json
 
 
@@ -30,7 +30,6 @@ def test_login():
         data = json.loads(resp.data)
         assert "id" in data
         assert "username" in data
-        assert "role" in data
         assert "Authorization" in resp.headers
 
 

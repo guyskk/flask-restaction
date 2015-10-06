@@ -8,6 +8,7 @@ from flask import Flask
 from flask_restaction import Api
 
 app = Flask(__name__)
+app.debug = True
 api = Api(app)
 app.config["JSON_AS_ASCII"] = False
 

@@ -275,7 +275,7 @@ window.res = (function(window) {
     function addToken(header, key){
         if (header!==null&&key!==null) {
             if(window.localStorage){
-                _token = window.localStorage._token;
+                _token = window.localStorage.{{auth_token_name}};
                 if(_token){
                     header[key]=_token;
                 }
@@ -287,9 +287,10 @@ window.res = (function(window) {
         if (key!==null) {
             token=xhr.getResponseHeader(key)
             if (token!==null && window.localStorage) {
-                window.localStorage._token = token;
+                window.localStorage.{{auth_token_name}} = token;
             }
         }
     }
 
 })(res);
+
