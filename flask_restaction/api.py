@@ -31,35 +31,63 @@ class Api(object):
     :param resjs_name: res.js file name
     :param resdocs_name: resdocs.html file name
     :param bootstrap: url for bootstrap.css, used for resdocs
+
+    default value::
+
+        {
+            "app": None,
+            "permission_path": "permission.json",
+            "auth_header": "Authorization",
+            "auth_token_name": "res_token",
+            "auth_secret": "SECRET",
+            "auth_alg": "HS256",
+            "auth_exp": 1200,
+            "resjs_name": "res.js",
+            "resdocs_name": "resdocs.html",
+            "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
+        }
+
+    other attrs::
+
+        permission Permission object
+
     """
 
-    def __init__(self, app=None, permission_path="permission.json",
-                 auth_header="Authorization", auth_token_name="res_token",
-                 auth_secret="SECRET", auth_alg="HS256", auth_exp=1200,
-                 resjs_name="res.js", resdocs_name="resdocs.html",
-                 bootstrap="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"):
-        self.permission_path = permission_path
-        self.auth_header = auth_header
-        self.auth_token_name = auth_token_name
-        self.auth_secret = auth_secret
-        self.auth_alg = auth_alg
-        self.auth_exp = auth_exp
-        self.resjs_name = resjs_name
-        self.resdocs_name = resdocs_name
-        self.bootstrap = bootstrap
-        self.resources = {}
+    def __init__(self, app=None, **config):
 
+        self.resources = {}
         self.before_request_funcs = []
         self.after_request_funcs = []
         self.handle_error_func = None
+
+        self.__config(**config)
+
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app):
+    def __config(self, **config):
+        _default_config = {
+            "app": None,
+            "permission_path": "permission.json",
+            "auth_header": "Authorization",
+            "auth_token_name": "res_token",
+            "auth_secret": "SECRET",
+            "auth_alg": "HS256",
+            "auth_exp": 1200,
+            "resjs_name": "res.js",
+            "resdocs_name": "resdocs.html",
+            "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
+        }
+        for k, v in _default_config.items():
+            vv = config[k] if k in config else v
+            setattr(self, k, vv)
+
+    def init_app(self, app, **config):
         """init_app
 
         :param app: Flask or Blueprint
         """
+        self.__config(**config)
         self.app = app
         self.url_prefix = None
         if self.is_blueprint():
