@@ -1,13 +1,15 @@
 # coding:utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from flask.views import View
 from flask import request, make_response, current_app
 from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
-from . import ResourceException, abort, exporters
+from flask_restaction import ResourceException, abort, exporters
 
 
 class ResourceViewType(type):

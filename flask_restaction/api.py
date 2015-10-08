@@ -1,6 +1,7 @@
 # coding:utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 from flask import Blueprint, request
 import os
@@ -11,10 +12,10 @@ from datetime import datetime, timedelta
 from jinja2 import Template
 from copy import deepcopy
 import json
-from . import Permission
-from . import pattern_action, pattern_endpoint
-from . import abort
-from . import res_js, res_docs
+from flask_restaction import Permission
+from flask_restaction import pattern_action, pattern_endpoint
+from flask_restaction import abort
+from flask_restaction import res_js, res_docs
 
 
 class Api(object):

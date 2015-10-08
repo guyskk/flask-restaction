@@ -1,11 +1,13 @@
 # coding:utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from os.path import isfile
 import json
 import re
 import copy
-from . import pattern_action
+from flask_restaction import pattern_action
 pattern_name = re.compile(ur"[A-Za-z]\w*", re.I)
 
 

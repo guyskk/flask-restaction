@@ -1,6 +1,7 @@
 # coding:utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 """Flask-Restaction is a powerful flask ext for creat restful api"""
 from flask import request
@@ -93,10 +94,10 @@ def abort_if_not_me(_id):
     if request.me["id"] != _id:
         raise ResourceException(403, {"error": "permission deny"})
 
-from exporters import exporters, exporter
-from permission import Permission
-from resource import Resource
-from api import Api
+from flask_restaction.exporters import exporters, exporter
+from flask_restaction.permission import Permission
+from flask_restaction.resource import Resource
+from flask_restaction.api import Api
 __all__ = ["Api", "Resource", "Permission", "abort",
            "abort_if_not_me", "ResourceException",
            "exporters", "exporter", "res_docs"]
