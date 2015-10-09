@@ -27,7 +27,7 @@ class User(Resource):
     })
     schema_username = ("username", {
         "desc": u"4-16个字符, 不能有特殊字符",
-        "required": True, "validate": "re_name"
+        "required": True, "validate": "name"
     })
     schema_password = ("password", {
         "desc": u"6-20个字符",

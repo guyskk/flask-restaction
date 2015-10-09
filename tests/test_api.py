@@ -33,7 +33,7 @@ def create_api():
         schema_name = ("name", {
             "desc": "name",
             "required": True,
-            "validate": "re_name",
+            "validate": "name",
             "default": "world"
         })
         schema_date = ("date", {
@@ -139,4 +139,4 @@ def test_base():
     with app.test_client() as c:
         assert "world" in c.get("/hello").data
         assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "re_name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert "name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data

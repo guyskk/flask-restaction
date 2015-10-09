@@ -8,7 +8,7 @@ import json
 import re
 import copy
 from flask_restaction import pattern_action
-pattern_name = re.compile(ur"[A-Za-z]\w*", re.I)
+pattern_name = re.compile(r"[A-Za-z]\w*", re.I)
 
 
 def validate(obj):

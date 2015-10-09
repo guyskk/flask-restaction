@@ -20,12 +20,12 @@ class Todo(Resource):
     schema_name = ("name", {
         "desc": u"名称",
         "required": True,
-        "validate": "re_name",
+        "validate": "name",
     })
     schema_date_out = ("date", {
         "desc": u"时间",
         "required": True,
-        "validate": lambda v: (True, v.isoformat()),
+        "validate": "iso_datetime",
     })
     schema_date_in = ("date", {
         "desc": u"时间",

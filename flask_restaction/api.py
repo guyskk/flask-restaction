@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
+import six
 
 from flask import Blueprint, request
 import os
@@ -221,7 +222,7 @@ class Api(object):
 
     def _normal_validate(self, obj):
         """change lamada validate to string ``'~'`` """
-        if not isinstance(obj, basestring):
+        if not isinstance(obj, six.string_types):
             return "~"
 
     def parse_reslist(self):

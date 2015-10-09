@@ -20,7 +20,7 @@ def app():
         schema_name = ("name", {
             "desc": "name",
             "required": True,
-            "validate": "re_name",
+            "validate": "name",
             "default": "world"
         })
         schema_date = ("date", {

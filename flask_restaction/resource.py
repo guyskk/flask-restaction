@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
+import six
 
 from flask.views import View
 from flask import request, make_response, current_app
@@ -142,7 +143,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
         # after_request
         rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
-        if isinstance(rv, (ResponseBase, basestring)):
+        if isinstance(rv, (ResponseBase, six.string_types)):
             return make_response(rv, code, headers)
         else:
             if rv is None:

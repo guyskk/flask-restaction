@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
+import six
 
 """Flask-Restaction is a powerful flask ext for creat restful api"""
 from flask import request
@@ -11,9 +12,11 @@ import pkg_resources
 pattern_action = re.compile(r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
 pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 res_js = pkg_resources.resource_string(__name__, "js/res.js")
-res_js = res_js.decode("utf-8")
 res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")
-res_docs = res_docs.decode("utf-8")
+
+if six.PY2:
+    res_js = res_js.decode("utf-8")
+    res_docs = res_docs.decode("utf-8")
 
 http_status_code_text = {
     100: "Continue",
@@ -82,8 +85,8 @@ def abort(code, error=None):
     """
 
     if error is None and code in http_status_code_text:
-        error = http_status_code_text[code]
-    if isinstance(error, basestring):
+        error = {"error": http_status_code_text[code]}
+    elif isinstance(error, six.string_types):
         error = {"error": error}
     raise ResourceException(code, error)
 
@@ -92,7 +95,7 @@ def abort_if_not_me(_id):
     """``if request.me["id"] != _id``, 
     raise a RescurceException with code 403"""
     if request.me["id"] != _id:
-        raise ResourceException(403, {"error": "permission deny"})
+        raise ResourceException(403, "permission deny")
 
 from flask_restaction.exporters import exporters, exporter
 from flask_restaction.permission import Permission
@@ -100,4 +103,4 @@ from flask_restaction.resource import Resource
 from flask_restaction.api import Api
 __all__ = ["Api", "Resource", "Permission", "abort",
            "abort_if_not_me", "ResourceException",
-           "exporters", "exporter", "res_docs"]
+           "exporters", "exporter", "http_status_code_text"]
