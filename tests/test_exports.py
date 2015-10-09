@@ -29,7 +29,7 @@ def app():
     class Hello(Resource):
 
         def get(self):
-            return ["hello"]
+            return [123]
 
     api.add_resource(Hello)
     return app
@@ -48,11 +48,11 @@ def test_export(app):
                           "application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"})
     with app.test_client() as c:
         resp = get_text(c, '/hello')
-        assert 'hello' in str(resp.data)
+        assert b'[123]' == resp.data
         assert "text/html" in resp.headers["Content-Type"]
         resp = get_json(c, '/hello')
-        assert ['hello'] == json.loads(str(resp.data))
+        assert b'[\n  123\n]\n' == resp.data
         assert "application/json" in resp.headers["Content-Type"]
         resp = c.get('/hello')
-        assert ['hello'] == json.loads(str(resp.data))
+        assert b'[\n  123\n]\n' == resp.data
         assert "application/json" in resp.headers["Content-Type"]
