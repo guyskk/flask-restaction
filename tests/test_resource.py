@@ -67,7 +67,8 @@ def test_hello(app):
         assert b'hello' == c.get('/hello').data
         assert b"login" == c.post('/hello/login').data
         assert 2 == c.get('/hello/error').status_code // 100
-        assert {"ok": "error_hander"} == json.loads(str(c.get('/hello/error').data))
+        assert b"ok"in c.get('/hello/error').data
+        assert b"error_hander" in c.get('/hello/error').data
 
 
 def test_file(app):
