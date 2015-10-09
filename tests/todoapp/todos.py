@@ -1,5 +1,6 @@
 # coding:utf-8
 
+from __future__ import unicode_literals
 from flask_restaction import Resource
 from flask_restaction import abort
 from datetime import datetime
@@ -18,23 +19,23 @@ class Todo(Resource):
         "validate": "int",
     })
     schema_name = ("name", {
-        "desc": u"名称",
+        "desc": "名称",
         "required": True,
         "validate": "name",
     })
     schema_date_out = ("date", {
-        "desc": u"时间",
+        "desc": "时间",
         "required": True,
         "validate": "iso_datetime",
     })
     schema_date_in = ("date", {
-        "desc": u"时间",
+        "desc": "时间",
         "required": True,
         "validate": "datetime",
         "default": datetime.now
     })
     schema_finish = ("finish", {
-        "desc": u"是否已完成",
+        "desc": "是否已完成",
         "required": True,
         "validate": "bool",
         "default": False

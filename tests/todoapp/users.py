@@ -1,5 +1,5 @@
 # coding:utf-8
-
+from __future__ import unicode_literals
 from flask import request
 from flask_restaction import Resource
 from flask_restaction import abort, abort_if_not_me
@@ -17,7 +17,7 @@ users = {
 }
 
 
-re_password = re.compile(ur"""^[a-zA-Z0-9~!@#$%^&*(),./;'<>?:"-_=+]{6,20}$""")
+re_password = re.compile(r"""^[a-zA-Z0-9~!@#$%^&*(),./;'<>?:"-_=+]{6,20}$""")
 add_validater("password", re_validater(re_password))
 
 
@@ -26,11 +26,11 @@ class User(Resource):
         "required": True, "validate": "int"
     })
     schema_username = ("username", {
-        "desc": u"4-16个字符, 不能有特殊字符",
+        "desc": "4-16个字符, 不能有特殊字符",
         "required": True, "validate": "name"
     })
     schema_password = ("password", {
-        "desc": u"6-20个字符",
+        "desc": "6-20个字符",
         "required": True, "validate": "password"
     })
     schema_inputs = {
@@ -117,7 +117,7 @@ class User(Resource):
             if u.get("username") == username and u.get("password") == password:
                 me = {"id": k}
                 return dict(u, id=k), api.gen_auth_header(me)
-        abort(403, u"登录失败")
+        abort(403, "登录失败")
 
     def post_logout(self):
         auth = {api.auth_header: api.gen_token(request.me, auth_exp=-1)}

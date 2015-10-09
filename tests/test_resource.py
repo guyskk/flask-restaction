@@ -47,7 +47,8 @@ def app():
             return "login"
 
     api.add_resource(Hello)
-    api.add_resource(File, name=b"upload")
+    # name can't be unicode on py2
+    api.add_resource(File, name=str("upload"))
 
     return app
 
@@ -88,7 +89,7 @@ def test_file(app):
             try:
                 c.get('/upload/error').data.status_code
             except ValueError as ex:
-                assert ex.message == "get_error"
+                assert str(ex) == "get_error"
                 raise
             assert True
 
