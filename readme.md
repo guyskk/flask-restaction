@@ -8,6 +8,7 @@
 - Auto generate res.js
 - Auto generate documents
 
+**Support py3 since v0.17.0, tested on py27 and py34**
 
 ### Install
     
@@ -19,15 +20,22 @@
     cd docs
     make html
 
-### Readthedocs
+### Documents on Readthedocs
 
 http://flask-restaction.readthedocs.org/zh/latest/
 
+### Test
 
-### Next Todo
+    py.test
 
-- tests 
-- document
+    or
+
+    tox
+
+### Todo
+
+- more tests
+- more documents
 - ...
 
 ## license 

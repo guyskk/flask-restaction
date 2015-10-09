@@ -2,7 +2,7 @@
 from setuptools import setup
 setup(
     name="flask-restaction",
-    version="0.16.1",
+    version="0.17.0",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="kk",

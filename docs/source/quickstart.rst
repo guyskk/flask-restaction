@@ -147,6 +147,23 @@ You can use ``res.resource.action(data, function(err, value))`` to access resour
 
 - If you use blueprint, then You should use``res.blueprint.resource.action`` to access resources
 
+Py2&py3
+---------
+
+Flask-restaction support py3 since v0.17.0, tested on py27 and py34.
+and more tests is required to make it more stable.
+
+Also, you should use the latest version of flask.
+
+You'd better put statements below to the head of all modules if you use py2. It will reduce you work of transfer to py3.
+
+.. code-block:: python
+
+    # coding:utf-8
+
+    from __future__ import unicode_literals
+    from __future__ import absolute_import
+
 
 Validater
 ---------
@@ -166,7 +183,7 @@ For example:
         schema_name = ("name", {
             "desc": "name",
             "required": True,
-            "validate": "re_name",
+            "validate": "name",
             "default": "world"
         })
         schema_date = ("date", {
@@ -177,7 +194,7 @@ For example:
         schema_hello = ("hello", {
             "desc": "hello",
             "required": True,
-            "validate": "unicode",
+            "validate": "str",
         })
         schema_inputs = {
             "get": dict([schema_name]),
@@ -189,10 +206,10 @@ For example:
         }
 
         def get(self, name):
-            return {u"hello": u"world"}
+            return {"hello": "world"}
 
         def post_login(self, date):
-            return {u"hello": u"world"}
+            return {"hello": "world"}
 
 
 For more information, see `validater <https://github.com/guyskk/validater>`_
@@ -228,7 +245,7 @@ by ``api.gen_token(me)`` or ``api.gen_auth_token(me)``.
 
         @staticmethod
         def user_role(user_id):
-            return "role of user"
+            return "role of user" or "*" if user not exists
 
 
 This function must be decorated by ``@staticmethod``, it will be called before request and it's return value will be
