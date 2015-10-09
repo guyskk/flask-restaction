@@ -1,3 +1,8 @@
+# coding:utf-8
+
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
@@ -54,67 +59,67 @@ def app():
 
 
 def test_inputs(app):
-    set_out({"hello": u"world"})
+    set_out({"hello": "world"})
     with app.test_client() as c:
         # treat "" as NULL then asign default value
         assert 200 == c.get("hello?name=").status_code
-        assert "world" in c.get("hello?name=").data
+        assert b"world" in c.get("hello?name=").data
         assert 400 == c.get("hello?name=1").status_code
         assert 400 == c.get("hello?name=a1533gfdhgfh544y4yhb").status_code
-        assert "hello" in c.get("hello?name=a12345").data
-        assert "hello" in c.get("hello").data
-        assert "world" in c.get("hello").data
-        assert "hello" in c.post("hello/login", data={
+        assert b"hello" in c.get("hello?name=a12345").data
+        assert b"hello" in c.get("hello").data
+        assert b"world" in c.get("hello").data
+        assert b"hello" in c.post("hello/login", data={
             "date": datetime.now().isoformat()
         }).data
         assert 400 == c.post("hello/login").status_code
         assert 400 == c.post("hello/login", data={
             "date": "fsdbdsgafd"
         }).status_code
-        assert "required" in c.post("hello/login", data={}).data
+        assert b"required" in c.post("hello/login", data={}).data
 
 
 def test_outputs(app):
     with app.test_client() as c:
 
-        set_out({"hello": u"world"})
-        assert "hello" in c.get("hello").data
-
-        set_out({"hello0": u"world"})
-        assert "required" in c.get("hello").data
-
         set_out({"hello": "world"})
-        assert "unicode" in c.get("hello").data
+        assert b"hello" in c.get("hello").data
+
+        set_out({"hello0": "world"})
+        assert b"required" in c.get("hello").data
+
+        set_out({"hello": 123})
+        assert b"unicode" in c.get("hello").data
 
         set_out({})
-        assert "required" in c.get("hello").data
+        assert b"required" in c.get("hello").data
 
-        set_out({u"hello": u"world"})
-        assert "hello" in c.get("hello").data
+        set_out({"hello": "world"})
+        assert b"hello" in c.get("hello").data
 
-        assert "world" in c.get("hello").data
+        assert b"world" in c.get("hello").data
 
 
 def test_outputs_not_debug(app):
     app.debug = False
     with app.test_client() as c:
 
-        set_out({"hello": u"world"})
-        assert "hello" in c.get("hello").data
-
-        set_out({"hello0": u"world"})
-        assert "required" not in c.get("hello").data
-        assert "error" in c.get("hello").data
-
         set_out({"hello": "world"})
-        assert "unicode" not in c.get("hello").data
-        assert "error" in c.get("hello").data
+        assert b"hello" in c.get("hello").data
+
+        set_out({"hello0": "world"})
+        assert b"required" not in c.get("hello").data
+        assert b"error" in c.get("hello").data
+
+        set_out({"hello": 123})
+        assert b"unicode" not in c.get("hello").data
+        assert b"error" in c.get("hello").data
 
         set_out({})
-        assert "required" not in c.get("hello").data
-        assert "error" in c.get("hello").data
+        assert b"required" not in c.get("hello").data
+        assert b"error" in c.get("hello").data
 
-        set_out({u"hello": u"world"})
-        assert "hello" in c.get("hello").data
+        set_out({"hello": "world"})
+        assert b"hello" in c.get("hello").data
 
-        assert "world" in c.get("hello").data
+        assert b"world" in c.get("hello").data

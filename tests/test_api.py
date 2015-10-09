@@ -1,6 +1,7 @@
 # coding:utf-8
 
 from __future__ import unicode_literals
+from __future__ import absolute_import
 from flask import Flask, Blueprint, request, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
@@ -22,7 +23,7 @@ def test_parse_request():
     app.register_blueprint(bp, url_prefix="/api")
     with app.test_client() as c:
         rv = c.get("/api/hello")
-        assert "hello" in rv.data
+        assert b"hello" in rv.data
         assert request.resource == "hello"
         assert request.action == "get"
         assert request.me["id"] is None
@@ -81,10 +82,10 @@ def test_api_before_request():
     api.before_request(mk)
 
     with app.test_client() as c:
-        assert "before_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "before_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"before_request" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"before_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
         mk.return_value = None
-        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
         assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
 
 
@@ -93,13 +94,13 @@ def test_api_after_request():
     app = api.app
 
     with app.test_client() as c:
-        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
         assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
         mk = Mock()
         mk.return_value = ({"hello": "after_request"}, 200, None)
         api.after_request(mk)
-        assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"after_request" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
 
 
 def test_befor_after():
@@ -114,8 +115,8 @@ def test_befor_after():
     api.after_request(after)
 
     with app.test_client() as c:
-        assert "after_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"after_request" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
 
 
 def test_api_error_handler():
@@ -126,7 +127,7 @@ def test_api_error_handler():
     api.error_handler(mk)
 
     with app.test_client() as c:
-        assert "error_handler" in c.get("/hello/error").data
+        assert b"error_handler" in c.get("/hello/error").data
         mk.return_value = None
         with pytest.raises(ValueError):
             c.get("/hello/error").data
@@ -137,6 +138,6 @@ def test_base():
     app = api.app
 
     with app.test_client() as c:
-        assert "world" in c.get("/hello").data
-        assert "haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert "name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"world" in c.get("/hello").data
+        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
+        assert b"name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data

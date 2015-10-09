@@ -1,3 +1,7 @@
+# coding:utf-8
+
+from __future__ import unicode_literals
+from __future__ import absolute_import
 from flask import Flask, current_app
 from flask_restaction import exporters, exporter
 from flask_restaction import Api, Resource
@@ -44,11 +48,11 @@ def test_export(app):
                           "application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"})
     with app.test_client() as c:
         resp = get_text(c, '/hello')
-        assert str(['hello']) == resp.data
+        assert 'hello' in str(resp.data)
         assert "text/html" in resp.headers["Content-Type"]
         resp = get_json(c, '/hello')
-        assert ['hello'] == json.loads(resp.data)
+        assert ['hello'] == json.loads(str(resp.data))
         assert "application/json" in resp.headers["Content-Type"]
         resp = c.get('/hello')
-        assert ['hello'] == json.loads(resp.data)
+        assert ['hello'] == json.loads(str(resp.data))
         assert "application/json" in resp.headers["Content-Type"]

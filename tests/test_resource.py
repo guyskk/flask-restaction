@@ -1,4 +1,7 @@
+# coding:utf-8
 
+from __future__ import unicode_literals
+from __future__ import absolute_import
 from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
 import pytest
@@ -44,7 +47,7 @@ def app():
             return "login"
 
     api.add_resource(Hello)
-    api.add_resource(File, name="upload")
+    api.add_resource(File, name=b"upload")
 
     return app
 
@@ -60,10 +63,10 @@ def test_hello(app):
         assert request.endpoint == 'hello'
 
     with app.test_client() as c:
-        assert 'hello' == c.get('/hello').data
-        assert "login" == c.post('/hello/login').data
+        assert b'hello' == c.get('/hello').data
+        assert b"login" == c.post('/hello/login').data
         assert 2 == c.get('/hello/error').status_code // 100
-        assert {"ok": "error_hander"} == json.loads(c.get('/hello/error').data)
+        assert {"ok": "error_hander"} == json.loads(str(c.get('/hello/error').data))
 
 
 def test_file(app):
@@ -77,8 +80,8 @@ def test_file(app):
         assert request.endpoint == 'file@login'
 
     with app.test_client() as c:
-        assert 'file' == c.get('/upload').data
-        assert "login" == c.post('/upload/login').data
+        assert b'file' == c.get('/upload').data
+        assert b"login" == c.post('/upload/login').data
 
     with pytest.raises(ValueError):
         with app.test_client() as c:
@@ -111,7 +114,7 @@ def test_user_role():
 
     with app.test_client() as c:
         rv = c.post("/hello/login")
-        assert "login" in rv.data
+        assert b"login" in rv.data
         assert api.auth_header in rv.headers
         auth = {api.auth_header: rv.headers[api.auth_header]}
         rv2 = c.get("/hello", headers=auth)
