@@ -1,4 +1,0 @@
-Flask==0.10.1
-pyjwt==1.4
-validater==0.7.3
-
