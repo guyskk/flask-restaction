@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from todoapp import app
-import json
 
 
 def test_base():
@@ -31,9 +30,8 @@ def test_login():
         data = {"username": "guyskk", "password": "123456"}
         resp = c.post("/user/login", data=data)
         assert resp.status_code // 100 == 2
-        data = json.loads(str(resp.data))
-        assert "id" in data
-        assert "username" in data
+        assert b"id" in resp.data
+        assert b"username" in resp.data
         assert "Authorization" in resp.headers
 
 

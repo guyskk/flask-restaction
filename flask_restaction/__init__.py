@@ -14,9 +14,8 @@ pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 res_js = pkg_resources.resource_string(__name__, "js/res.js")
 res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")
 
-if six.PY2:
-    res_js = res_js.decode("utf-8")
-    res_docs = res_docs.decode("utf-8")
+res_js = res_js.decode("utf-8")
+res_docs = res_docs.decode("utf-8")
 
 http_status_code_text = {
     100: "Continue",

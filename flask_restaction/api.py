@@ -291,7 +291,10 @@ class Api(object):
             os.makedirs(self.app.static_folder)
         path = join(self.app.static_folder, name)
         with open(path, "w") as f:
-            f.write(rendered.encode("utf-8"))
+            if six.PY2:
+                f.write(rendered.encode("utf-8"))
+            else:
+                f.write(rendered)
 
     def gen_resjs(self):
         """genarate res.js, should be called after added all resources
