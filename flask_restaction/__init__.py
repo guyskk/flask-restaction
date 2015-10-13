@@ -100,6 +100,9 @@ from flask_restaction.exporters import exporters, exporter
 from flask_restaction.permission import Permission
 from flask_restaction.resource import Resource
 from flask_restaction.api import Api
-__all__ = ["Api", "Resource", "Permission", "abort",
-           "abort_if_not_me", "ResourceException",
-           "exporters", "exporter", "http_status_code_text"]
+
+# __all__ can't be unicode
+_all = ["Api", "Resource", "Permission", "abort",
+        "abort_if_not_me", "ResourceException",
+        "exporters", "exporter", "http_status_code_text"]
+__all__ = [str(x) for x in _all]
