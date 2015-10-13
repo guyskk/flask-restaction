@@ -11,7 +11,7 @@ A minimal Flask-Restaction API:
 .. code-block :: python
 
     from flask import Flask
-    from flask_restaction import Resource, Api
+    from flask.ext.restaction import Resource, Api
 
     app = Flask(__name__)
     api = Api(app)
@@ -323,7 +323,8 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 You can access auth info by ``request.me``, it's struct is:
 
 你可以通过 ``request.me`` 获取用户的身份信息，它的结构如下:
-.. code ::
+
+.. code::
 
     {
         "id":user_id, 
@@ -417,7 +418,7 @@ Work with Blueprint 使用蓝图
 .. code-block :: python
 
     from flask import Flask, Blueprint
-    from flask_restaction import Api
+    from flask.ext.restaction import Api
     from .article import Article
 
     app = Flask(__name__)

@@ -1,7 +1,7 @@
 # coding:utf-8
 
 from flask import Flask
-from flask_restaction import Resource, Api
+from flask.ext.restaction import Resource, Api
 
 app = Flask(__name__)
 api = Api(app)
