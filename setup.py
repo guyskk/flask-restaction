@@ -7,7 +7,7 @@ http://flask-restaction.readthedocs.org/zh/latest/
 from setuptools import setup
 setup(
     name="flask-restaction",
-    version="0.17.0",
+    version="0.17.1",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="guyskk",
@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'flask>=0.1',
         'pyjwt>=1.4',
-        'validater>=0.8.0',
+        'validater>=0.8.1',
         'six>=1.10.0',
     ],
     classifiers=[
