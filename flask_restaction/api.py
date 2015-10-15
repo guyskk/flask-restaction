@@ -18,6 +18,18 @@ from flask_restaction import pattern_action, pattern_endpoint
 from flask_restaction import abort
 from flask_restaction import res_js, res_docs
 
+_default_config = {
+    "permission_path": "permission.json",
+    "auth_header": "Authorization",
+    "auth_token_name": "res_token",
+    "auth_secret": "SECRET",
+    "auth_alg": "HS256",
+    "auth_exp": 1200,
+    "resjs_name": "res.js",
+    "resdocs_name": "resdocs.html",
+    "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
+}
+
 
 class Api(object):
 
@@ -37,7 +49,6 @@ class Api(object):
     default value::
 
         {
-            "app": None,
             "permission_path": "permission.json",
             "auth_header": "Authorization",
             "auth_token_name": "res_token",
@@ -61,36 +72,47 @@ class Api(object):
         self.before_request_funcs = []
         self.after_request_funcs = []
         self.handle_error_func = None
-
-        self.__config(**config)
+        self.app = None
 
         if app is not None:
             self.init_app(app)
+        self.__config(**config)
 
     def __config(self, **config):
-        _default_config = {
-            "app": None,
-            "permission_path": "permission.json",
-            "auth_header": "Authorization",
-            "auth_token_name": "res_token",
-            "auth_secret": "SECRET",
-            "auth_alg": "HS256",
-            "auth_exp": 1200,
-            "resjs_name": "res.js",
-            "resdocs_name": "resdocs.html",
-            "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
-        }
+
+        # default config
         for k, v in _default_config.items():
-            vv = config[k] if k in config else v
-            setattr(self, k, vv)
+            setattr(self, k, v)
+
+        # from app.config
+        if not self.is_blueprint():
+            for k in _default_config:
+                key = "API_" + k.upper()
+                if key in self.app.config:
+                    setattr(self, k, self.app.config[key])
+
+        # from params
+        for k in _default_config:
+            if k in config:
+                setattr(self, k, config[k])
+
+    def config(self, cfg):
+        """config api with cfg
+
+        :param cfg: a dict
+        """
+        for k in _default_config:
+            key = "API_" + k.upper()
+            if key in cfg:
+                setattr(self, k, cfg[key])
 
     def init_app(self, app, **config):
         """init_app
 
         :param app: Flask or Blueprint
         """
-        self.__config(**config)
         self.app = app
+        self.__config(**config)
         self.url_prefix = None
         if self.is_blueprint():
             self.app.record(lambda s: self.init_permission(s.app))

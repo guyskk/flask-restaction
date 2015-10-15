@@ -412,10 +412,11 @@ JSON struct
 - role 和 resource 只能由小写字母和下划线组成，并且以小写字母开头。
 
 
+
 Work with Blueprint 使用蓝图
 -----------------------------
 
-.. code-block :: python
+.. code-block:: python
 
     from flask import Flask, Blueprint
     from flask.ext.restaction import Api
@@ -445,6 +446,39 @@ Work with Blueprint 使用蓝图
 - 如果你需要 gen_resjs 或 gen_resdocs ，你应当添加 ``static_folder='something'`` 到 Blueprint 中，因为生成的 res.js 和 resdocs.html 都要保存到 Blueprint 的 static 目录中。
 
 - 你必须按 #1, #2, #3, #4 的顺序组织代码，否则会造成错误。因为 Resource urls 在 register_blueprint 时绑定，permission 在 register_blueprint 之后初始化。
+
+
+Config 配置
+-----------------------------
+
+You can load config to ``app.config`` (from config file or any other ways), and when api init with app other than blueprint, it will load configs from ``app.config``.
+
+If api init with blueprint, you can use :meth:`~flask_restaction.Api.config` and pass ``app.config`` to it.
+
+你可以把配置加载到 ``app.config`` （从配置文件中或其他方式），当 api 初始化接收参数是 app 而不是 blueprint 的时候它会从 ``app.config`` 从加载配置。
+
+如果 api 接收参数是 blueprint ，你可以使用 :meth:`~flask_restaction.Api.config` 并传递 ``app.config`` 给它。
+
+configs and default value:
+
+.. code-block:: python
+
+    API_PERMISSION_PATH = "permission.json", #权限配置文件的路径
+    API_AUTH_HEADER = "Authorization", #身份验证请求头
+    API_AUTH_TOKEN_NAME = "res_token", #身份验证token保存在localstorage中的名称
+    API_AUTH_SECRET = "SECRET", #用于加密身份验证token的密钥
+    API_AUTH_ALG = "HS256", #用于加密身份验证token的算法
+    API_AUTH_EXP = 1200, #身份验证token的过期时间，单位是秒
+    API_RESJS_NAME = "res.js", #res.js文件名
+    API_RESDOCS_NAME = "resdocs.html", #resdocs.html文件名
+    API_BOOTSTRAP = "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css" 
+                                       #用于resdocs.html中
+
+You can also add params when app init, the params will used as config and override config in ``app.config``.
+
+你也可以在 api 初始化的时候传递参数，这些参数也会被当作配置，并且会覆盖 ``app.config`` 中的配置。
+
+see :class:`~flask_restaction.Api`
 
 
 Process Flow 请求处理流程

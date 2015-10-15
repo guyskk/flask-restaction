@@ -141,3 +141,28 @@ def test_base():
         assert b"world" in c.get("/hello").data
         assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
         assert b"name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+
+
+def test_config():
+    app = Flask(__name__)
+    app.config.from_object("config_data")
+    app.debug = True
+    configs = ["permission_path", "auth_header", "auth_token_name", "auth_secret",
+               "auth_alg", "auth_exp", "resjs_name", "resdocs_name", "bootstrap"]
+    bp = Blueprint("blueprint", __name__)
+    api_bp = Api(bp)
+    api_app = Api(app)
+
+    for k in configs:
+        key = "API_" + k.upper()
+        assert key in app.config
+        assert app.config[key] == key
+        assert hasattr(api_app, k)
+        assert getattr(api_app, k) == key
+        # inited with blue_print can't load configs
+        assert getattr(api_bp, k) != key
+
+    api_bp.config(app.config)
+    for k in configs:
+        key = "API_" + k.upper()
+        assert getattr(api_bp, k) == key

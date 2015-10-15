@@ -1,4 +1,4 @@
-flask>=0.1
+flask>=0.10.1
 pyjwt>=1.4
-validater>=0.8.0
+validater>=0.8.1
 six>=1.10.0
