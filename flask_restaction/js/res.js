@@ -220,9 +220,11 @@ window.res = (function(window) {
     fn：function(err, data, header, xhr)
     progress: function(percent, msg)
 
-    此文件是根据后端API自动生成，调用需要授权的接口时，
-    会自动向data数据中添加'_token'。登录成功后'_token'
-    自动储存在浏览器localStorage中，并从返回的data中移除。
+    此文件是根据后端 API 自动生成，调用需要授权的接口时，
+    会自动向请求头中添加 'res_token'。
+    登录成功后将请求头中的 'res_token' 自动储存在浏览器 localStorage 中。
+
+可以设置 res.website_url，这样可以将 ajax 请求的 url 变成绝对 url。
 
 */
 

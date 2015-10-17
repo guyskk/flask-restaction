@@ -3,6 +3,36 @@
 res.js
 ======
 
+res.ajax
+--------
+
+.. code-block:: javascript
+
+    /*
+    用法：
+        res.ajax(url, options)
+    参数 options：
+        {
+            method: "get/post/...",
+            data: "object/string(id)/formdata",
+            header: {},
+            fn: function(err, data, header, xhr) {
+
+            },
+            progress: function(percent, msg) {
+
+            }
+        }
+    当 data 是 formdata: 
+        表示上传文件, method必须是POST。
+    当 data 是 string(id):
+        表示input控件id, 会从其中获取要上传的文件, method必须是POST。
+    */
+   
+
+res.resource.action
+----------------------
+
 .. code-block:: javascript
 
     /*
@@ -17,23 +47,28 @@ res.js
         fn：function(err, data, header, xhr)
         progress: function(percent, msg)
 
-        此文件是根据后端API自动生成，调用需要授权的接口时，
-        会自动向data数据中添加'_token'。登录成功后'_token'
-        自动储存在浏览器localStorage中，并从返回的data中移除。
+        此文件是根据后端 API 自动生成，调用需要授权的接口时，
+        会自动向请求头中添加 'res_token'。
+        登录成功后将请求头中的 'res_token' 自动储存在浏览器 localStorage 中。
 
+    可以设置 res.website_url，这样可以将 ajax 请求的 url 变成绝对 url。
+    
     */
 
     (function(res) {
         
+        /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
+        res.website_url="";
+        header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+
         /*以下为jinja2模板，用于生成js*/
-        
         {% if blueprint != None and blueprint!="" %}
         res.{{blueprint}}={};
         ress=res.{{blueprint}};
         {% else %}
         ress=res;
         {% endif %}
-        
+
         {% for name,doc,actions in reslist %}
         ress.{{name}}={};
             {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
@@ -44,7 +79,7 @@ res.js
                     fn = data;
                     data = null;
                 }
-                header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
+                header={accept:header_accept};
                 {% if needtoken %}
                 addToken(header,"{{auth_header}}");
                 {% endif %}
@@ -54,7 +89,7 @@ res.js
                         fn(err, data, header, xhr);
                     }
                 }
-                res.ajax("{{url}}",{
+                res.ajax(res.website_url+"{{url}}",{
                     method:"{{meth}}",
                     data:data,
                     header: header,
@@ -66,8 +101,6 @@ res.js
         {% endfor %}
         
         /*End jinja2模板*/
-       
-        
 
         function addToken(header, key){
             if (header!==null&&key!==null) {
