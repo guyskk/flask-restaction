@@ -152,13 +152,15 @@ def test_config():
     bp = Blueprint("blueprint", __name__)
     api_bp = Api(bp)
     api_app = Api(app)
-
+    api_no_app = Api()
     for k in configs:
         key = "API_" + k.upper()
         assert key in app.config
         assert app.config[key] == key
         assert hasattr(api_app, k)
         assert getattr(api_app, k) == key
+
+        assert getattr(api_no_app, k) != key
         # inited with blue_print can't load configs
         assert getattr(api_bp, k) != key
 

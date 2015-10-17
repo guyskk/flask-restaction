@@ -85,7 +85,7 @@ class Api(object):
             setattr(self, k, v)
 
         # from app.config
-        if not self.is_blueprint():
+        if self.app is not None and not self.is_blueprint():
             for k in _default_config:
                 key = "API_" + k.upper()
                 if key in self.app.config:
@@ -135,7 +135,7 @@ class Api(object):
             self.permission.add("*", "*", None)
 
     def is_blueprint(self):
-        """self.app is_blueprint or not"""
+        """self.app is_blueprint or not, if self.app is None, return False"""
         return isinstance(self.app, Blueprint)
 
     def parse_resource(self, res_cls, name=None):
