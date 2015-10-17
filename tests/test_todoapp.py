@@ -43,10 +43,16 @@ def login():
 
 
 def test_todo():
+    import json
     with app.test_client() as c:
-        headers = {"Authorization": login()}
-        assert 403 != c.get("/todo", headers=headers).status_code
-        assert 403 != c.post("/todo", headers=headers).status_code
-        assert 403 != c.put("/todo", headers=headers).status_code
-        assert 403 != c.delete("/todo", headers=headers).status_code
-        assert 403 != c.get("/todo/list", headers=headers).status_code
+        headers = {
+            "Authorization": login(),
+            "Content-Type": "application/json"
+        }
+        data = json.dumps({"name": "todo_name"})
+        assert 200 == c.post("/todo", data=data, headers=headers).status_code
+        assert 200 == c.get("/todo?id=1", headers=headers).status_code
+        data = json.dumps({"name": "todo_name", "id": 1})
+        assert 200 == c.put("/todo", data=data, headers=headers).status_code
+        assert 200 == c.get("/todo/list", headers=headers).status_code
+        assert 200 == c.delete("/todo?id=1", headers=headers).status_code

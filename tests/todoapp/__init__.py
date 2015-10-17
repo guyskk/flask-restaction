@@ -1,15 +1,19 @@
 # coding:utf-8
-# import imp
-# import os
-# fp, pathname, description = imp.find_module("flask_restaction", [os.path.abspath("../../")])
-# imp.load_module("flask_restaction", fp, pathname, description)
-
-# coding:utf-8
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from flask import Flask
 from flask_restaction import Api
+from datetime import datetime
+from validater import add_validater
+
+
+def iso_datetime_validater(v):
+    if isinstance(v, datetime):
+        return (True, v.isoformat())
+    else:
+        return (False, None)
+add_validater("iso_datetime", iso_datetime_validater)
 
 app = Flask(__name__)
 app.debug = True
