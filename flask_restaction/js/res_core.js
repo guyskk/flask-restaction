@@ -18,15 +18,18 @@
 
 (function(res) {
     
+    /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
+    res.website_url="";
+    header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+
     /*以下为jinja2模板，用于生成js*/
-    
     {% if blueprint != None and blueprint!="" %}
     res.{{blueprint}}={};
     ress=res.{{blueprint}};
     {% else %}
     ress=res;
     {% endif %}
-    
+
     {% for name,doc,actions in reslist %}
     ress.{{name}}={};
         {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
@@ -37,7 +40,7 @@
                 fn = data;
                 data = null;
             }
-            header={accept:"application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"};
+            header={accept:header_accept};
             {% if needtoken %}
             addToken(header,"{{auth_header}}");
             {% endif %}
@@ -47,7 +50,7 @@
                     fn(err, data, header, xhr);
                 }
             }
-            res.ajax("{{url}}",{
+            res.ajax(res.website_url+"{{url}}",{
                 method:"{{meth}}",
                 data:data,
                 header: header,
@@ -59,8 +62,6 @@
     {% endfor %}
     
     /*End jinja2模板*/
-   
-    
 
     function addToken(header, key){
         if (header!==null&&key!==null) {
