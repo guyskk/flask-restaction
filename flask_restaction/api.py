@@ -17,6 +17,7 @@ from flask_restaction import Permission
 from flask_restaction import pattern_action, pattern_endpoint
 from flask_restaction import abort
 from flask_restaction import res_js, res_docs
+from flask_restaction import logger
 
 _default_config = {
     "permission_path": "permission.json",
@@ -130,6 +131,7 @@ class Api(object):
             self.permission_path = ppath
             self.permission = Permission(filepath=ppath)
         else:
+            logger.info("permission_path '%s' not exists, allow all request" % ppath)
             self.permission = Permission()
             # allow all request
             self.permission.add("*", "*", None)

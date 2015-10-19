@@ -8,6 +8,9 @@ import six
 from flask import request
 import re
 import pkg_resources
+import logging
+
+logger = logging.getLogger("flask_restaction")
 
 pattern_action = re.compile(r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
 pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")

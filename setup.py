@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'flask>=0.10.1',
         'pyjwt>=1.4',
-        'validater>=0.8.1',
+        'validater>=0.8.2',
         'six>=1.10.0',
     ],
     classifiers=[
