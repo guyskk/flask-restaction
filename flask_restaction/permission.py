@@ -70,7 +70,7 @@ class Permission(object):
     def permit(self, role, resource, action):
         """判断角色是否有对应的权限
 
-        :param role: 角色
+        :param role: 角色, '*' 或 None 表示 anonymous user
         :param resource: 资源
         :param action: 操作
         """

@@ -361,7 +361,7 @@ class Api(object):
 
                 {"id": user_id, ...}
 
-            if token not exists or not exists or token invalid::
+            if token not exists or id not exists or token invalid::
 
                 {"id": None}
         """
@@ -369,14 +369,17 @@ class Api(object):
         options = {
             'require_exp': True,
         }
-        if token is not None:
-            try:
-                me = jwt.decode(token, self.auth_secret,
-                                algorithms=[self.auth_alg], options=options)
-                if "id" in me:
-                    return me
-            except jwt.InvalidTokenError:
-                pass
+        try:
+            me = jwt.decode(token, self.auth_secret,
+                            algorithms=[self.auth_alg], options=options)
+            if "id" in me:
+                return me
+        except jwt.InvalidTokenError:
+            pass
+        except AttributeError:
+            # jwt's bug when token is None or int
+            # https://github.com/jpadilla/pyjwt/issues/183
+            pass
         return {"id": None}
 
     def parse_request(self):
@@ -396,12 +399,17 @@ class Api(object):
         res = self.resources.get(resource)
         if res is None:
             abort(404)
-        res_cls = res["class"]
-        if hasattr(res_cls, "user_role"):
-            fn_user_role = getattr(res_cls, "user_role")
-            role = fn_user_role(request.me["id"])
-        else:
-            role = "*"
+        try:
+            fn_user_role = getattr(res["class"], "user_role")
+            uid = request.me["id"]
+            # if uid is None, anonymous user
+            if uid is not None:
+                role = fn_user_role(uid)
+            else:
+                role = None
+        except Exception as ex:
+            logger.info("Error raised when get user_role: %s" % str(ex))
+            role = None
         request.me["role"] = role
 
     def _before_request(self):

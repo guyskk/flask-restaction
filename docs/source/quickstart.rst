@@ -344,19 +344,34 @@ by ``api.gen_token(me)`` or ``api.gen_auth_token(me)``.
 
         @staticmethod
         def user_role(user_id):
-            return "role of user" or "*" if user not exists
+            return "role of user" or None if user not exists
 
 
-This function must be decorated by ``@staticmethod``, it will be called before request and it's return value will be
-in ``request.me["role"]``, then permission system will use it.
+This function must be decorated by ``@staticmethod``, 
+it will be called before request(``if request["id"] is not None``) 
+and it's return value will be in ``request.me["role"]``, 
+then permission system will use it.
 
 这个函数必须用 ``@staticmethod`` 装饰，它会在请求处理之前调用，它的返回值会在 ``request.me["role"]`` 中，权限系统需要使用它。
 
 The Usage of user_role（user_role 函数的用处）
 
-A application(website) will be divide into some fields (modules). A user can be different role in different field, and only one role in one field. A field consist of some Resources or only one Resource, so this can avoid the effect of user/permission system when add new Resource or new field to you application.
+A application(website) will be divide into some fields (modules). A user can be different role in different field, and only one role in one field. A field consist of some Resources or only one Resource(user is also a Resource), so this can avoid the effect of user/permission system when add new Resource or new field to you application.
 
-一个应用（网站）通常会划分成几个领域（模块）。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource 组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
+.. code::
+
+    - user
+        - resource1
+        - resource2
+        - ...
+        - module1_user
+            - module1_resource
+            - ...
+        - module2_user
+            - module2_resource
+            - ...
+
+一个应用（网站）通常会划分成几个领域（模块）。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource(用户也是 Resource)组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
 
 **注意 Note:**
 
@@ -381,7 +396,7 @@ permission subdivide by role->resource->action
 
 JSON struct
 
-.. code ::
+.. code::
 
     {
         "role/*": {
