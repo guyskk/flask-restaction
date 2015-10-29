@@ -232,6 +232,9 @@ window.res = (function(window) {
     
     /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
     res.website_url="";
+    res.clear_token=function() {
+        window.localStorage.removeItem("{{auth_token_name}}")
+    }
     header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 
     /*以下为jinja2模板，用于生成js*/
