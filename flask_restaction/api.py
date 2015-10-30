@@ -13,11 +13,11 @@ from datetime import datetime, timedelta
 from jinja2 import Template
 from copy import deepcopy
 import json
-from flask_restaction import Permission
-from flask_restaction import pattern_action, pattern_endpoint
-from flask_restaction import abort
-from flask_restaction import res_js, res_docs
-from flask_restaction import logger
+from . import Permission
+from . import pattern_action, pattern_endpoint
+from . import abort
+from . import res_js, res_docs
+from . import logger
 
 _default_config = {
     "permission_path": "permission.json",

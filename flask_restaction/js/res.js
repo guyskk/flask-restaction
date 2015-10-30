@@ -245,11 +245,11 @@ window.res = (function(window) {
     ress=res;
     {% endif %}
 
+    /*当不需要传递data时，参数顺序是fn,progress,null*/
     {% for name,doc,actions in reslist %}
     ress.{{name}}={};
         {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
         ress.{{name}}.{{action}}=function(data,fn,progress){
-            /*当不需要传递data时，参数顺序是fn,progress,null*/
             if (progress===null && typeof(data)==="function"){
                 progress = fn;
                 fn = data;

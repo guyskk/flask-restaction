@@ -8,7 +8,7 @@
 - Auto generate res.js
 - Auto generate documents
 
-**Support py3 since v0.17.0, tested on py27 and py34**
+**Support py3 since v0.17.0**
 
 ### Install
     

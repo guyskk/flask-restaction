@@ -10,7 +10,7 @@ from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
-from flask_restaction import ResourceException, abort, exporters
+from . import ResourceException, abort, exporters
 
 
 class ResourceViewType(type):

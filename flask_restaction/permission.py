@@ -7,7 +7,7 @@ from os.path import isfile
 import json
 import re
 import copy
-from flask_restaction import pattern_action
+from . import pattern_action
 pattern_name = re.compile(r"[A-Za-z]\w*", re.I)
 
 
