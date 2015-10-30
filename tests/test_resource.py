@@ -71,6 +71,12 @@ def test_hello(app):
         assert b"error_hander" in c.get('/hello/error').data
 
 
+def test_unimplament_action(app):
+    with app.test_client() as c:
+        assert 404 == c.get("/unimplament_action").status_code
+        assert 404 == c.post("/upload").status_code
+
+
 def test_file(app):
 
     with app.test_request_context('/upload'):
@@ -85,14 +91,13 @@ def test_file(app):
         assert b'file' == c.get('/upload').data
         assert b"login" == c.post('/upload/login').data
 
-    with pytest.raises(ValueError):
-        with app.test_client() as c:
+    with app.test_client() as c:
+        with pytest.raises(ValueError):
             try:
-                c.get('/upload/error').data.status_code
+                c.get('/upload/error')
             except ValueError as ex:
                 assert str(ex) == "get_error"
                 raise
-            assert True
 
 
 def test_user_role():

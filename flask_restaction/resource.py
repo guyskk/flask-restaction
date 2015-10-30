@@ -158,7 +158,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
         """
         fn = getattr(self, request.action, None)
         if fn is None:
-            abort(404, 'Unimplemented action %r' % fn.name)
+            abort(404, 'Unimplemented action %r' % request.action)
         inputs = self.__class__.schema_inputs.get(request.action)
         outputs = self.__class__.schema_outputs.get(request.action)
         output_types = self.__class__.output_types
