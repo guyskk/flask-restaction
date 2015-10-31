@@ -1,6 +1,7 @@
 # personal data
 examples/static/
 tests/todoapp/static/
+tests/static
 
 # pkg resource
 MANIFEST

@@ -178,6 +178,14 @@ class Api(object):
 
             rules is a list of availble tuple(url, endpoint) in resource
         """
+
+        def ensure_unicode(s):
+            """decode s to unicode string by encoding='utf-8'"""
+            if s is not None and not isinstance(s, six.text_type):
+                return six.text_type(s, encoding="utf-8")
+            else:
+                return s
+
         if not inspect.isclass(res_cls):
             raise ValueError("%s is not class" % res_cls)
         classname = res_cls.__name__.lower()
@@ -198,7 +206,7 @@ class Api(object):
                 action = meth + "_" + act
                 url = "/{0}/{1}".format(name, act)
                 endpoint = "{0}@{1}".format(classname, act)
-            docstrings[action] = getattr(res_cls, action).__doc__
+            docstrings[action] = ensure_unicode(getattr(res_cls, action).__doc__)
             actions.append((meth, act, url, endpoint, action))
 
         methods = set([x[0] for x in actions])
@@ -207,7 +215,7 @@ class Api(object):
         return (classname, {
             "class": res_cls,
             "name": name,
-            "docs": res_cls.__doc__,
+            "docs": ensure_unicode(res_cls.__doc__),
             "meth_act": meth_act,
             "actions": actions,
             "methods": methods,
