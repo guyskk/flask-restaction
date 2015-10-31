@@ -167,7 +167,7 @@ class Resource(with_metaclass(ResourceViewType, View)):
             if method in ["get", "delete"]:
                 data = request.args
             elif method in ["post", "put"]:
-                if request.headers["Content-Type"] == 'application/json':
+                if request.mimetype == 'application/json':
                     try:
                         data = request.get_json()
                     except:

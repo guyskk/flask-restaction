@@ -127,3 +127,27 @@ def test_user_role():
         rv2 = c.get("/hello", headers=auth)
         assert str(request.me["id"]) == "123"
         assert request.me["role"] == "role_123"
+
+
+def test_request_content_type():
+    class Hello(Resource):
+        schema_inputs = {
+            "post": {
+                "name": {
+                    "validate": "str"
+                }
+            }
+        }
+
+        def post(self, name):
+            return {"hello": name}
+
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+    api.add_resource(Hello)
+    with app.test_client() as c:
+        headers = {"Content-Type": "application/json"}
+        assert 200 == c.post("/hello", headers=headers, data='{"name": "hahah"}').status_code
+        headers = {"Content-Type": "application/json;charset=UTF-8"}
+        assert 200 == c.post("/hello", headers=headers, data='{"name": "hahah"}').status_code
