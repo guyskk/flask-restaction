@@ -103,12 +103,15 @@ tuple_like schema::
 
 
 required 是否是必需的，输入的空字符串和None视作缺少
+
 validate 指定校验器，比如：int,str,url,email
+
 default 指定默认值，也可以是一个函数，比如：datetime.now
 
 tuple_like schema see :meth:`~flask_restaction.resource.parse_schema`
 
 schema function is used for combine schemas. Run the code below and you will understand it.
+
 schema 函数用于将 schema 组合，生成一个新的 schema。运行一下下面的代码你就明白了。
 
 .. code-block:: python
