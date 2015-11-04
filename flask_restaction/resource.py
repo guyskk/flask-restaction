@@ -1,12 +1,20 @@
 # coding:utf-8
 
+"""
+    flask_restaction.resource
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. versionadded:: 0.18.0
+       Support tuple_like schema, The ``schema,parse_schema,combine_schema`` function was added.
+"""
+
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
+from functools import partial
 from flask.views import View
 from flask import request, make_response, current_app
-from flask._compat import with_metaclass
 from werkzeug.wrappers import Response as ResponseBase
 from validater import validate
 from validater import ProxyDict
@@ -14,14 +22,12 @@ from . import ResourceException, abort, exporters
 
 
 class ResourceViewType(type):
-
-    """Used to provide standalone::
+    """Used to provide standalone callback functions
+       for each actual Resource class::
 
         before_request_funcs
         after_request_funcs
         handle_error_func
-
-    for each actual Resource class
     """
     def __new__(cls, name, bases, d):
         rv = type.__new__(cls, name, bases, d)
@@ -35,10 +41,11 @@ class ResourceViewType(type):
         # 2. 一般方法要使用实例调用，你用类直接调用，
         # 调用的只能是类方法或静态方法。
         rv.handle_error_func = []
+
         return rv
 
 
-class Resource(with_metaclass(ResourceViewType, View)):
+class Resource(six.with_metaclass(ResourceViewType, View)):
 
     """Resource代表一个资源
 
@@ -68,17 +75,12 @@ class Resource(with_metaclass(ResourceViewType, View)):
 
         @staticmethod
         def user_role(user_id):
-            return "role of user or '*' if user_id is None"
-
+            return "role of user or None"
     """
 
     schema_inputs = {}
     schema_outputs = {}
     output_types = []
-
-    # @staticmethod
-    # def user_role(user_id):
-    #     pass
 
     @classmethod
     def _before_request(cls):
@@ -207,3 +209,124 @@ def unpack(rv):
     if isinstance(status, (dict, list)):
         headers, status = status, headers
     return (rv, status, headers)
+
+
+def parse_schema(info):
+    """convert tuple_like schema to dict_like schema
+
+    tuple_like schema can has 1~3 items: ``(validate&required, default, desc)``
+    validate_required is needed, default and desc is opinion.
+    validate_required is a string like ``"+int&required"``, the ``&required`` is opinion.
+
+    For example::
+
+        "+int&required", 1, "the page number"
+
+    will be converted to::
+
+        {
+            "default": 1,
+            "validate": "+int",
+            "required": True,
+            "desc": "the page number"
+        }
+
+    And::
+
+        "+int", 1
+
+    will be converted to::
+
+        {
+            "default": 1,
+            "validate": "+int",
+            "required": False
+        }
+
+    And::
+
+        "+int", None, "the page number"
+
+    will be converted to::
+
+        {
+            "validate": "+int",
+            "required": False,
+            "desc": "the page number"
+        }
+
+    And if the tuple_like schema is string::
+
+        "+int&required"
+
+    will be converted to::
+
+        {
+            "validate": "+int",
+            "required": True
+        }
+
+    :param info: tuple_like schema
+    """
+    if isinstance(info, six.string_types):
+        info = (info, None, None)
+    else:
+        info = info + (None,) * (3 - len(info))
+    validate_required, default, desc = info
+    validate_required = validate_required.split("&")
+    validate = validate_required[0]
+    if len(validate_required) == 2:
+        assert validate_required[1] == "required", "invalid schema syntax"
+        required = True
+    else:
+        required = False
+    schema = {
+        "validate": validate,
+        "required": required,
+    }
+    if default is not None:
+        schema["default"] = default
+    if desc is not None:
+        schema["desc"] = desc
+    return schema
+
+
+def combine_schema(scope, *args):
+    """combine tuple_like validate schema from scope
+
+    :param scope: a dict, such as Class.__dict__
+    :param args: variable names or dicts
+    """
+    node = {}
+    for x in args:
+        # deal with x like: [[["name"]]]
+        list_deep = 0
+        while(isinstance(x, list)):
+            assert len(x) == 1, "invalid schema: list's length must be 1"
+            x = x[0]
+            list_deep += 1
+        info = scope[x]
+
+        if six.callable(info):
+            info = info(scope)
+        elif isinstance(info, dict):
+            info = info
+        else:
+            info = parse_schema(info)
+
+        # wrap info with []
+        if list_deep > 0:
+            assert len(args) == 1, "can't combine list and others"
+            while list_deep > 0:
+                info = [info]
+                list_deep -= 1
+            return info
+        node[x] = info
+    return node
+
+
+def schema(*args):
+    """combine validate schema, return a function for doing combine later"""
+    def lazy_combine(scope):
+        return combine_schema(scope, *args)
+    return lazy_combine

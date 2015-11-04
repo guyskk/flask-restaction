@@ -212,6 +212,14 @@ class Api(object):
         methods = set([x[0] for x in actions])
         rules = set([(x[2], x[3]) for x in actions])
 
+        # lazy_combine tuple_like schema
+        def do_combine(schema):
+            for k, v in schema.items():
+                if six.callable(v):
+                    schema[k] = v(res_cls.__dict__)
+        do_combine(res_cls.schema_inputs)
+        do_combine(res_cls.schema_outputs)
+
         return (classname, {
             "class": res_cls,
             "name": name,

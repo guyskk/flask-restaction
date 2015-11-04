@@ -11,25 +11,22 @@ A minimal Flask-Restaction API:
 .. code-block :: python
 
     from flask import Flask
-    from flask.ext.restaction import Resource, Api
+    from flask.ext.restaction import Resource, Api, schema
 
     app = Flask(__name__)
     api = Api(app)
 
 
+
     class Hello(Resource):
+        """docstrings Hello"""
+        name = "safestr&required", "world", "you name"
         schema_inputs = {
-            "get": {
-                "name": {
-                    "desc": "you name",
-                    "required": True,
-                    "validate": "safestr",
-                    "default": "world"
-                }
-            }
+            "get": schema("name")
         }
 
         def get(self, name):
+            """docstrings get"""
             return {"hello": name}
 
     api.add_resource(Hello)
@@ -80,30 +77,75 @@ You will see:
 3. 创建了一个 ``Hello`` 类，继承自 ``Resource`` 类
 4. 定义 schema_inputs，它指定了输入参数及格式
 5. 调用 api.add_resource(Hello) ，把 Hello 添加到 api 资源中
-6. 生成 res.js 和 resdocs.html 文件
+6. 生成 res.js 和 resdocs.html 文件, Visit ``http://127.0.0.1:5000/static/resdocs.html``
 
-URL 构建 Use url_for 
---------------------
 
-可以使用 flask 中的 url_for() 函数构建指定 action 的 URL，
-endpoint 名称是 ``resource@action_lastpart`` 。
+schema 的用法
+-------------------
 
-The endpoint is ``resource@action_lastpart``::
-    
-    resource -> resource class name, lowcase
-    action   -> action's last part name, lowcase
+Since v0.18.0, flask_restaction support tuple_like schema, 
+which can reduce 2/3 of schema code.
 
-格式 format::
+从 v0.18.0 开始，flask_restaction 使用 tuple_like schema，它可以少写2/3的 schema 代码。
 
-    Resource.action_lastpart -> url_for("resource@lastpart") -> /resource/lastpart
+tuple_like schema::
 
-For example::
-    
-    Hello.get -> url_for("hello") -> /hello
-    # suppose Hello.get_list exists
-    Hello.get_list -> url_for("hello@list") -> /hello/list
-    Hello.post_login -> url_for("hello@login") -> /hello/login
-    
+    name = "safestr&required", "world", "you name"
+
+== 等价于::
+
+    {
+        "desc": "you name",
+        "required": True,
+        "validate": "safestr",
+        "default": "world"
+    }
+
+
+required 是否是必需的，输入的空字符串和None视作缺少
+validate 指定校验器，比如：int,str,url,email
+default 指定默认值，也可以是一个函数，比如：datetime.now
+
+tuple_like schema see :meth:`~flask_restaction.resource.parse_schema`
+
+schema function is used for combine schemas. Run the code below and you will understand it.
+schema 函数用于将 schema 组合，生成一个新的 schema。运行一下下面的代码你就明白了。
+
+.. code-block:: python
+
+    from flask.ext.restaction import schema
+    import json
+
+    leaf1 = "+int&required", 1, "leaf1 desc"
+    leaf2 = "unicode&required"
+    leaf3 = "unicode", None, "article table of content"
+
+    branch1 = schema("leaf1", "leaf2")
+    branch2 = schema("branch1", "leaf3")
+
+    flower = schema(["branch1"])
+    tree = schema(["branch2"])
+
+    forest1 = schema(["tree"])
+    forest2 = schema([["branch2"]])
+    park = schema("tree", "flower")
+
+    scope = locals()
+
+    def pp(obj):
+        print json.dumps(obj, ensure_ascii=False, indent=4)
+
+    pp(branch1(scope))
+    pp(branch2(scope))
+
+    pp(flower(scope))
+    pp(tree(scope))
+
+    pp(forest1(scope))
+    pp(forest2(scope))
+    pp(park(scope))
+
+
 Use res.js
 -----------
 
@@ -111,29 +153,27 @@ Use res.js to access api is very simple, and you can also use jquery or other li
 
 使用 res.js 可以方便的调用 api ，当然了，使用 jquery 或者其他一些库也是完全可以的。
 
-Let's write test.html and save it in static folder
+Let's write hello.html and save it in static folder
 
-现在来写一个 test.html 并保存到 static 目录
+现在来写一个 hello.html 并保存到 static 目录
 
-.. code-block :: html
+.. code-block:: html
 
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
-        <title>test res.js</title>
+        <title>hello res.js</title>
         <script type="text/javascript" src="/static/res.js"></script>
         <script type="text/javascript">
         function send() {
             var name = document.getElementById("name").value;
-            if (name && name != "") {
-                var data = {
-                    name: name
-                };
-            }
-            res.hello.get(data, function(err, value) {
-                msg = JSON.stringify(err || value)
-                document.getElementById("message").innerText = msg;
+            res.hello.get({name: name}, function(err, value) {
+                if (!err){
+                    document.getElementById("message").innerText = value.hello;
+                }else{
+                    alert(err)
+                }
             });
         }
         </script>
@@ -145,11 +185,11 @@ Let's write test.html and save it in static folder
     </body>
     </html>
 
-Then open browser, visit ``http://127.0.0.1:5000/static/test.html``
+Then open browser, visit ``http://127.0.0.1:5000/static/hello.html``
 
 Have a try, and notice schema_inputs's ``"validate": "safestr"``
 
-打开浏览器，访问 ``http://127.0.0.1:5000/static/test.html``
+打开浏览器，访问 ``http://127.0.0.1:5000/static/hello.html``
 
 尝试一下，注意 ``schema_inputs`` 中的 ``"validate": "safestr"``
 
@@ -163,19 +203,22 @@ Then you inputs will be escape to avoid attack:
 
 你输入的字符串会被转义成如下内容：
 
-``{"hello":"&lt;script type=&#34;text/javascript&#34;&gt;alert(&#34;haha&#34;)&lt;/script&gt;"}``
+``&lt;script type=&#34;text/javascript&#34;&gt;alert(&#34;haha&#34;)&lt;/script&gt;``
 
 **注意 look at this:**
 
-.. code-block :: javascript
+.. code-block:: javascript
     
     #引用 res.js 文件
     <script type="text/javascript" src="/static/res.js"></script>
 
     #调用 api
     res.hello.get(data, function(err, value) {
-        msg = JSON.stringify(err || value)
-        document.getElementById("message").innerText = msg;
+        if (!err){
+            document.getElementById("message").innerText = value.hello;
+        }else{
+            alert(err)
+        }
     });
 
 
@@ -205,6 +248,29 @@ You can use ``res.resource.action(data, function(err, value))`` to access resour
 
 - 如果用的是蓝图（``blueprint``），就要用 
   ``res.blueprint.resource.action(data, function(err, value))`` 调用 api 。
+
+
+URL 构建 Use url_for 
+--------------------
+
+可以使用 flask 中的 url_for() 函数构建指定 action 的 URL，
+endpoint 名称是 ``resource@action_lastpart`` 。
+
+The endpoint is ``resource@action_lastpart``::
+    
+    resource -> resource class name, lowcase
+    action   -> action's last part name, lowcase
+
+格式 format::
+
+    Resource.action_lastpart -> url_for("resource@lastpart") -> /resource/lastpart
+
+For example::
+    
+    Hello.get -> url_for("hello") -> /hello
+    # suppose Hello.get_list exists
+    Hello.get_list -> url_for("hello@list") -> /hello/list
+    Hello.post_login -> url_for("hello@login") -> /hello/login
 
 
 Py2&py3

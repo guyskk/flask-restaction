@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>hello res.js</title>
+    <script type="text/javascript" src="/static/res.js"></script>
+    <script type="text/javascript">
+    function send() {
+        var name = document.getElementById("name").value;
+        res.hello.get({
+            name: name
+        }, function(err, value) {
+            if (!err) {
+                document.getElementById("message").innerText = value.hello;
+            } else {
+                alert(err)
+            }
+        });
+    }
+    </script>
+</head>
+
+<body>
+    <input id="name" type="text" placeholder="you name">
+    <p id="message"></p>
+    <button onclick="send()">GetHello</button>
+</body>
+
+</html>
