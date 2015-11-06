@@ -94,18 +94,19 @@ def abort(code, error=None):
 
 
 def abort_if_not_me(_id):
-    """``if request.me["id"] != _id``, 
-    raise a RescurceException with code 403"""
+    """raise a RescurceException with code 403 if request.me["id"] != _id
+    """
     if request.me["id"] != _id:
         raise ResourceException(403, "permission deny")
 
 from .exporters import exporters, exporter
 from .permission import Permission
-from .resource import Resource, schema
+from .resource import Resource
 from .api import Api
+from validater import schema
 
 # __all__ can't be unicode
-_all = ["Api", "Resource", "schema", "Permission", "abort",
-        "abort_if_not_me", "ResourceException",
-        "exporters", "exporter", "http_status_code_text"]
-__all__ = [str(x) for x in _all]
+__all__ = ["Api", "Resource", "schema", "Permission", "abort",
+           "abort_if_not_me", "ResourceException",
+           "exporters", "exporter", "http_status_code_text"]
+__all__ = [str(x) for x in __all__]

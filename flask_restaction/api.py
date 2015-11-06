@@ -216,7 +216,10 @@ class Api(object):
         def do_combine(schema):
             for k, v in schema.items():
                 if six.callable(v):
-                    schema[k] = v(res_cls.__dict__)
+                    try:
+                        schema[k] = v(res_cls.__dict__)
+                    except KeyError as ex:
+                        raise ValueError("%s not in Resource class: %s" % (str(ex), res_cls.__name__))
         do_combine(res_cls.schema_inputs)
         do_combine(res_cls.schema_outputs)
 

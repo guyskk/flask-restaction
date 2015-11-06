@@ -108,8 +108,6 @@ validate 指定校验器，比如：int,str,url,email
 
 default 指定默认值，也可以是一个函数，比如：datetime.now
 
-tuple_like schema see :meth:`~flask_restaction.resource.parse_schema`
-
 schema function is used for combine schemas. Run the code below and you will understand it.
 
 schema 函数用于将 schema 组合，生成一个新的 schema。运行一下下面的代码你就明白了。
@@ -334,7 +332,6 @@ For example:
             "default": "world"
         })
         schema_date = ("date", {
-            "desc": "date",
             "required": True,
             "validate": "datetime",
         })
@@ -364,6 +361,38 @@ For example:
                 "date":date,
             }
 
+也可以使用 tuple_like schema:
+
+.. code-block:: python
+    
+    from flask.ext.restaction import schema
+
+    class Hello(Resource):
+
+        name = "name&required", "world", "name"
+        date = "datetime&required"
+        hello = "str&required", None, "hello"
+
+        schema_inputs = {
+            "get": schema("name"),
+            "post_login": schema("name", "date"),
+        }
+        schema_outputs = {
+            "get": schema("hello"),
+            "post_login": schema("hello", "date")
+        }
+
+        # if you return a custom type object
+        # output_types = [custom_type]
+
+        def get(self, name):
+            return {"hello": name}
+
+        def post_login(self, name, date):
+            return {
+                "hello": name,
+                "date":date,
+            }
 
 For more information, see `validater <https://github.com/guyskk/validater>`_
 
