@@ -147,6 +147,13 @@ schema 函数用于将 schema 组合，生成一个新的 schema。运行一下�
     pp(park(scope))
 
 
+For more information:
+
+`tuple_like-schema <https://github.com/guyskk/validater#tuple_like-schema-1>`_
+
+If you need different schema with the same name, see 
+https://github.com/guyskk/validater#tuple_like-with_name-schema
+
 Use res.js
 -----------
 
