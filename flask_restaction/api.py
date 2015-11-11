@@ -12,6 +12,7 @@ import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
 from copy import deepcopy
+from collections import namedtuple
 import json
 from . import Permission
 from . import pattern_action, pattern_endpoint
@@ -167,7 +168,7 @@ class Api(object):
                 'get_list' -> ('get', 'list')
                 'post' -> ('post', '')
 
-            actions is a list of tuple(meth, act, url, endpoint, action)::
+            actions is a list of namedtuple(meth, act, url, endpoint, action)::
 
                 meth, act:   the same as meth_act
                 url:         '/name/act' or '/name'
@@ -197,6 +198,7 @@ class Api(object):
                     if pattern_action.match(x)]
         actions = []
         docstrings = {}
+        Action = namedtuple("Action", "meth act url endpoint action")
         for meth, act in meth_act:
             if act == "":
                 action = meth
@@ -207,7 +209,7 @@ class Api(object):
                 url = "/{0}/{1}".format(name, act)
                 endpoint = "{0}@{1}".format(classname, act)
             docstrings[action] = ensure_unicode(getattr(res_cls, action).__doc__)
-            actions.append((meth, act, url, endpoint, action))
+            actions.append(Action(meth, act, url, endpoint, action))
 
         methods = set([x[0] for x in actions])
         rules = set([(x[2], x[3]) for x in actions])
@@ -284,7 +286,7 @@ class Api(object):
             }
 
         - reslist: list of tuple(res_name, res_doc, actions)
-        - actions: list of tuple(url, http_method, action,
+        - actions: list of namedtuple(url, http_method, action,
             needtoken, schema_input, schema_output, action_doc)
 
         """
@@ -300,6 +302,8 @@ class Api(object):
             "url_prefix": self.url_prefix,
             "reslist": reslist
         }
+        Action = namedtuple(
+            "Action", "url http_method action needtoken schema_input schema_output action_doc")
         for classname, res in self.resources.items():
             schema_inputs = res["schema_inputs"]
             schema_outputs = res["schema_outputs"]
@@ -315,8 +319,8 @@ class Api(object):
                 inputs = dumps(schema_inputs.get(action))
                 outputs = dumps(schema_outputs.get(action))
                 actions.append(
-                    (url, meth, action, needtoken, inputs, outputs,
-                        docstrings.get(action)))
+                    Action(url, meth, action, needtoken, inputs, outputs,
+                           docstrings.get(action)))
         return resources
 
     def _gen_from_template(self, tmpl, name):
