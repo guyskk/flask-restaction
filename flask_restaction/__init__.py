@@ -97,7 +97,7 @@ def abort(code, error=None):
 
 
 def abort_if_not_me(_id):
-    """raise a RescurceException with code 403 if request.me["id"] != _id
+    """raise a ResourceException with code 403 if request.me["id"] != _id
     """
     if request.me["id"] != _id:
         raise ResourceException(403, "permission deny")

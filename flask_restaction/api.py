@@ -118,7 +118,8 @@ class Api(object):
         self.url_prefix = None
         if self.is_blueprint():
             self.app.record(lambda s: self.init_permission(s.app))
-            self.app.record(lambda s: setattr(self, "url_prefix", s.url_prefix))
+            self.app.record(lambda s: setattr(
+                self, "url_prefix", s.url_prefix))
         else:
             self.init_permission(app)
 
@@ -132,7 +133,8 @@ class Api(object):
             self.permission_path = ppath
             self.permission = Permission(filepath=ppath)
         else:
-            logger.info("permission_path '%s' not exists, allow all request" % ppath)
+            logger.info(
+                "permission_path '%s' not exists, allow all request" % ppath)
             self.permission = Permission()
             # allow all request
             self.permission.add("*", "*", None)
@@ -208,7 +210,8 @@ class Api(object):
                 action = meth + "_" + act
                 url = "/{0}/{1}".format(name, act)
                 endpoint = "{0}@{1}".format(classname, act)
-            docstrings[action] = ensure_unicode(getattr(res_cls, action).__doc__)
+            docstrings[action] = ensure_unicode(
+                getattr(res_cls, action).__doc__)
             actions.append(Action(meth, act, url, endpoint, action))
 
         methods = set([x[0] for x in actions])
@@ -221,7 +224,8 @@ class Api(object):
                     try:
                         schema[k] = v(res_cls.__dict__)
                     except KeyError as ex:
-                        raise ValueError("%s not in Resource class: %s" % (str(ex), res_cls.__name__))
+                        raise ValueError("%s not in Resource class: %s" % (
+                            str(ex), res_cls.__name__))
         do_combine(res_cls.schema_inputs)
         do_combine(res_cls.schema_outputs)
 
@@ -238,6 +242,41 @@ class Api(object):
             "docstrings": docstrings
         })
 
+    def make_view(self, cls, name, *class_args, **class_kwargs):
+        """Converts the class into an actual view function that can be used
+        with the routing system. Copyed from flask.views.py.
+        """
+        def view(*args, **kwargs):
+            self.parse_request()
+            try:
+                obj = view.view_class(*class_args, **class_kwargs)
+                self.parse_role(obj)
+                return obj.dispatch_request(*args, **kwargs)
+            except Exception as ex:
+                if self.handle_error_func:
+                    rv = self.handle_error_func(ex)
+                    if rv is not None:
+                        return rv
+                raise
+
+        if cls.decorators:
+            view.__name__ = name
+            view.__module__ = cls.__module__
+            for decorator in cls.decorators:
+                view = decorator(view)
+
+        # We attach the view class to the view function for two reasons:
+        # first of all it allows us to easily figure out what class-based
+        # view this thing came from, secondly it's also used for instantiating
+        # the view class so you can actually replace it with something else
+        # for testing purposes and debugging.
+        view.view_class = cls
+        view.__name__ = name
+        view.__doc__ = cls.__doc__
+        view.__module__ = cls.__module__
+        view.methods = cls.methods
+        return view
+
     def add_resource(self, res_cls, name=None, *class_args, **class_kwargs):
         """add_resource
 
@@ -250,19 +289,12 @@ class Api(object):
         res_cls.before_request_funcs.insert(0, self._before_request)
         res_cls.after_request_funcs.append(self._after_request)
 
-        def view(*args, **kwargs):
-            try:
-                fn = res_cls.as_view(res["name"], *class_args, **class_kwargs)
-                return fn(*args, **kwargs)
-            except Exception as ex:
-                if self.handle_error_func:
-                    rv = self.handle_error_func(ex)
-                    if rv is not None:
-                        return rv
-                raise
+        view = self.make_view(
+            res_cls, res["name"], *class_args, **class_kwargs)
 
         for url, end in res["rules"]:
-            self.app.add_url_rule(url, endpoint=end, view_func=view, methods=res["methods"])
+            self.app.add_url_rule(
+                url, endpoint=end, view_func=view, methods=res["methods"])
         self.resources[classname] = res
 
     def _normal_validate(self, obj):
@@ -313,7 +345,8 @@ class Api(object):
             for meth, act, url, endpoint, action in res["actions"]:
                 if self.url_prefix:
                     url = self.url_prefix + url
-                needtoken = not self.permission.permit("*", res["name"], action)
+                needtoken = not self.permission.permit(
+                    "*", res["name"], action)
                 dumps = lambda v: json.dumps(v, indent=2, sort_keys=True, ensure_ascii=False,
                                              default=self._normal_validate)
                 inputs = dumps(schema_inputs.get(action))
@@ -419,11 +452,10 @@ class Api(object):
         request.action = meth_name
         request.me = self.parse_me()
 
-        res = self.resources.get(resource)
-        if res is None:
-            abort(404)
+    def parse_role(self, view):
+        """exec resource.user_role"""
         try:
-            fn_user_role = getattr(res["class"], "user_role")
+            fn_user_role = getattr(view, "user_role")
             uid = request.me["id"]
             # if uid is None, anonymous user
             if uid is not None:
@@ -437,7 +469,6 @@ class Api(object):
 
     def _before_request(self):
         """before_request"""
-        self.parse_request()
         for fn in self.before_request_funcs:
             rv = fn()
             if rv is not None:
