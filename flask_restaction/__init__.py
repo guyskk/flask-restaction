@@ -10,9 +10,12 @@ import re
 import pkg_resources
 import logging
 
+__version__ = "0.18.1"
+
 logger = logging.getLogger("flask_restaction")
 
-pattern_action = re.compile(r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
+pattern_action = re.compile(
+    r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
 pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 res_js = pkg_resources.resource_string(__name__, "js/res.js")
 res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")

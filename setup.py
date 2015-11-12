@@ -5,9 +5,15 @@ Flask-Restaction
 http://flask-restaction.readthedocs.org/zh/latest/
 """
 from setuptools import setup
+from os.path import join, dirname
+version = __import__('flask_restaction').__version__
+
+with open(join(dirname(__file__), 'requires.txt'), 'r') as f:
+    install_requires = f.read().split("\n")
+
 setup(
     name="flask-restaction",
-    version="0.18.1",
+    version=version,
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="guyskk",
@@ -17,11 +23,10 @@ setup(
     packages=["flask_restaction"],
     package_data={'flask_restaction': ['js/res.js', 'html/res_docs.html']},
     zip_safe=False,
-    install_requires=[
-        'flask>=0.10.1',
-        'pyjwt>=1.4',
-        'validater>=0.8.5',
-        'six>=1.10.0',
+    install_requires=install_requires,
+    tests_require=[
+        'pytest',
+        'mock'
     ],
     classifiers=[
         'Framework :: Flask',
