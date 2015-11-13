@@ -20,7 +20,6 @@ def test_base():
         assert 403 == c.get("/user/list").status_code
         assert 400 == c.post("/user/register").status_code
         assert 400 == c.post("/user/login").status_code
-        assert 403 == c.put("/user/setting").status_code
         assert 403 == c.post("/user/logout").status_code
         assert True
 

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
-from flask import Blueprint, request
+from flask import Blueprint, request, abort
 import os
 from os.path import join, exists
 import jwt
@@ -14,9 +14,9 @@ from jinja2 import Template
 from copy import deepcopy
 from collections import namedtuple
 import json
+from validater import add_validater
 from . import Permission
 from . import pattern_action, pattern_endpoint
-from . import abort
 from . import res_js, res_docs
 from . import logger
 
@@ -29,7 +29,8 @@ _default_config = {
     "auth_exp": 1200,
     "resjs_name": "res.js",
     "resdocs_name": "resdocs.html",
-    "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
+    "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
+    "fn_user_role": None
 }
 
 
@@ -47,6 +48,7 @@ class Api(object):
     :param resjs_name: res.js file name
     :param resdocs_name: resdocs.html file name
     :param bootstrap: url for bootstrap.css, used for resdocs
+    :param fn_user_role: a function that return user's role.
 
     default value::
 
@@ -59,8 +61,16 @@ class Api(object):
             "auth_exp": 1200,
             "resjs_name": "res.js",
             "resdocs_name": "resdocs.html",
-            "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css"
+            "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
+            "fn_user_role": None
         }
+
+    fn_user_role::
+
+        def fn_user_role(uid, user):
+            # user is the user in permission.json
+            # query user from database
+            # return user's role
 
     other attrs::
 
@@ -138,6 +148,9 @@ class Api(object):
             self.permission = Permission()
             # allow all request
             self.permission.add("*", "*", None)
+        # add validater
+        for u, v in self.permission.role_validaters.items():
+            add_validater(u, v)
 
     def is_blueprint(self):
         """self.app is_blueprint or not, if self.app is None, return False"""
@@ -250,7 +263,6 @@ class Api(object):
             self.parse_request()
             try:
                 obj = view.view_class(*class_args, **class_kwargs)
-                self.parse_role(obj)
                 return obj.dispatch_request(*args, **kwargs)
             except Exception as ex:
                 if self.handle_error_func:
@@ -298,9 +310,9 @@ class Api(object):
         self.resources[classname] = res
 
     def _normal_validate(self, obj):
-        """change lamada validate to string ``'~'`` """
+        """change lamada validate to string"""
         if not isinstance(obj, six.string_types):
-            return "~"
+            return six.text_type(obj)
 
     def parse_reslist(self):
         """parse_reslist
@@ -451,15 +463,12 @@ class Api(object):
         request.resource = resource
         request.action = meth_name
         request.me = self.parse_me()
-
-    def parse_role(self, view):
-        """exec resource.user_role"""
         try:
-            fn_user_role = getattr(view, "user_role")
-            uid = request.me["id"]
+            user = self.permission.which_user(resource)
             # if uid is None, anonymous user
-            if uid is not None:
-                role = fn_user_role(uid)
+            uid = request.me["id"]
+            if uid is not None and self.fn_user_role is not None:
+                role = self.fn_user_role(uid, user)
             else:
                 role = None
         except Exception as ex:

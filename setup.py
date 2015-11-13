@@ -6,14 +6,13 @@ http://flask-restaction.readthedocs.org/zh/latest/
 """
 from setuptools import setup
 from os.path import join, dirname
-version = __import__('flask_restaction').__version__
 
 with open(join(dirname(__file__), 'requires.txt'), 'r') as f:
     install_requires = f.read().split("\n")
 
 setup(
     name="flask-restaction",
-    version=version,
+    version="0.18.1",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="guyskk",

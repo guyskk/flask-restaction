@@ -12,13 +12,13 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
-from functools import partial
 from flask.views import View
-from flask import request, make_response, current_app
+from flask import request, make_response, current_app, abort
 from werkzeug.wrappers import Response as ResponseBase
+from werkzeug.exceptions import HTTPException
 from validater import validate
 from validater import ProxyDict
-from . import ResourceException, abort, exporters
+from . import exporters
 
 
 class ResourceViewType(type):
@@ -99,18 +99,16 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
 
     @classmethod
     def _handle_error(cls, ex):
-
         if cls.handle_error_func:
             rv = cls.handle_error_func[0](ex)
             if rv is not None:
                 return rv
-        if isinstance(ex, ResourceException):
-            if ex.code >= 500 and not current_app.debug:
-                return {"error": "interal server error"}, ex.code
-            else:
-                return ex.error, ex.code
-        else:
+        if not isinstance(ex, HTTPException):
             return None
+        if ex.code >= 500 and not current_app.debug:
+            return {"error": "interal server error"}, ex.code
+        else:
+            return ex.description, ex.code
 
     @classmethod
     def after_request(cls, f):
@@ -180,7 +178,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
                 data = {}
             (errors, values) = validate(data, inputs)
             if errors:
-                abort(400, dict(errors))
+                return dict(errors), 400
             else:
                 rv = fn(**values)
         else:
@@ -192,7 +190,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
             else:
                 (errors, values) = validate(rv, outputs)
             if errors:
-                abort(500, dict(errors))
+                return dict(errors), 500
             else:
                 rv = values
         return rv, code, headers
@@ -209,4 +207,3 @@ def unpack(rv):
     if isinstance(status, (dict, list)):
         headers, status = status, headers
     return (rv, status, headers)
-

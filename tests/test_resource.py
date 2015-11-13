@@ -103,10 +103,6 @@ def test_file(app):
 def test_user_role():
     class Hello(Resource):
 
-        @staticmethod
-        def user_role(uid):
-            return "role_%s" % uid
-
         def get(self):
             return "hello"
 
@@ -114,9 +110,11 @@ def test_user_role():
             me = {"id": 123}
             return "login", 200, api.gen_auth_header(me)
 
+    def user_role(uid, user):
+        return "role_%s" % uid
     app = Flask(__name__)
     app.debug = True
-    api = Api(app)
+    api = Api(app, fn_user_role=user_role)
     api.add_resource(Hello)
 
     with app.test_client() as c:
@@ -148,6 +146,8 @@ def test_request_content_type():
     api.add_resource(Hello)
     with app.test_client() as c:
         headers = {"Content-Type": "application/json"}
-        assert 200 == c.post("/hello", headers=headers, data='{"name": "hahah"}').status_code
+        assert 200 == c.post("/hello", headers=headers,
+                             data='{"name": "hahah"}').status_code
         headers = {"Content-Type": "application/json;charset=UTF-8"}
-        assert 200 == c.post("/hello", headers=headers, data='{"name": "hahah"}').status_code
+        assert 200 == c.post("/hello", headers=headers,
+                             data='{"name": "hahah"}').status_code

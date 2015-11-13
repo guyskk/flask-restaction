@@ -8,6 +8,11 @@ from datetime import datetime
 from validater import add_validater
 
 
+def user_role(uid, user):
+    if uid == 1:
+        return "user.admin"
+
+
 def iso_datetime_validater(v):
     if isinstance(v, datetime):
         return (True, v.isoformat())
@@ -17,7 +22,7 @@ add_validater("iso_datetime", iso_datetime_validater)
 
 app = Flask(__name__)
 app.debug = True
-api = Api(app)
+api = Api(app, fn_user_role=user_role)
 app.config["JSON_AS_ASCII"] = False
 
 from .users import User

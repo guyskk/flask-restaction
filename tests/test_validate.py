@@ -101,6 +101,7 @@ def test_outputs(app):
 
 
 def test_outputs_not_debug(app):
+    """validate error will not cause HTTPException"""
     app.debug = False
     with app.test_client() as c:
 
@@ -108,16 +109,13 @@ def test_outputs_not_debug(app):
         assert b"hello" in c.get("hello").data
 
         set_out({"hello0": "world"})
-        assert b"required" not in c.get("hello").data
-        assert b"error" in c.get("hello").data
+        assert b"required" in c.get("hello").data
 
         set_out({"hello": 123})
-        assert b"unicode" not in c.get("hello").data
-        assert b"error" in c.get("hello").data
+        assert b"unicode" in c.get("hello").data
 
         set_out({})
-        assert b"required" not in c.get("hello").data
-        assert b"error" in c.get("hello").data
+        assert b"required" in c.get("hello").data
 
         set_out({"hello": "world"})
         assert b"hello" in c.get("hello").data

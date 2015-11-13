@@ -2,14 +2,14 @@
     "*": {
         "photo": ["get"]
     },
-    "admin": {
+    "user.admin": {
         "*": []
     },
-    "userA": {
+    "user.userA": {
         "photo*": [],
         "message": ["get", "post"]
     },
-    "userB": {
+    "user.userB": {
         "photo": ["get_list"],
         "message": ["get", "post"]
     }

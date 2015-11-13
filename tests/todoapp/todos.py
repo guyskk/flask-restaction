@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 from flask_restaction import Resource
-from flask_restaction import abort
+from flask import abort
 from datetime import datetime
 
 

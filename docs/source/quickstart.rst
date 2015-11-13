@@ -441,27 +441,27 @@ by ``api.gen_token(me)`` or ``api.gen_auth_token(me)``.
 
 此外，你需要在用户登录成功后添加 auth 响应头(default ``Authorization``) 到响应中，它的值可以通过 ``api.gen_token(me)`` or ``api.gen_auth_token(me)`` 生成。
 
-**user_role function of Resource (user_role 函数)**
+**fn_user_role param of Api (fn_user_role 函数)**
+
+Flask-Restaction didn't know the role of a user, so you should provide a function that return the role.
 
 .. code-block:: python
 
-    class User(Resource):
+    def user_role(uid, user):
+        # user is the user in permission.json
+        # you may need query user from database
+        return "user.admin"
 
-        @staticmethod
-        def user_role(user_id):
-            return "role of user" or None if user not exists
+    api = Api(app, fn_user_role=user_role)
 
-
-This function must be decorated by ``@staticmethod``, 
-it will be called before request(``if request["id"] is not None``) 
-and it's return value will be in ``request.me["role"]``, 
-then permission system will use it.
-
-这个函数必须用 ``@staticmethod`` 装饰，它会在请求处理之前调用，它的返回值会在 ``request.me["role"]`` 中，权限系统需要使用它。
+This function will not be called if request.me["id"] is None.
+It's return value will be in ``request.me["role"]``, then permission system will use it.
 
 The Usage of user_role（user_role 函数的用处）
 
 A application(website) will be divide into some fields (modules). A user can be different role in different field, and only one role in one field. A field consist of some Resources or only one Resource(user is also a Resource), so this can avoid the effect of user/permission system when add new Resource or new field to you application.
+
+In permission.json, use "user.role" to indicate fields and role in the field.
 
 .. code::
 
@@ -478,6 +478,8 @@ A application(website) will be divide into some fields (modules). A user can be 
 
 一个应用（网站）通常会划分成几个领域（模块）。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource(用户也是 Resource)组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
 
+在 permission.json 中，用 "user.role" 表示领域以及领域中的角色。
+
 **注意 Note:**
 
 res.js will auto add auth header(default ``Authorization``) to request if needed, and will auto save auth token to localstroge when recive auth header
@@ -492,11 +494,11 @@ Permission control 权限控制
 
 By default, ``permission.json`` should be saved in root path of you flask application, you can change to other path, see :ref:`api` .
 
-permission subdivide by role->resource->action
+permission subdivide by user.role->resource->action
 
 默认情况下，``permission.json`` 应当文件放在应用的根目录下，你也可以改成放到其他位置， see :ref:`api` 。
 
-权限按 角色 -> 资源 -> 操作 划分
+权限按 用户.角色 -> 资源 -> 操作 划分
 
 
 JSON struct
@@ -504,7 +506,7 @@ JSON struct
 .. code::
 
     {
-        "role/*": {
+        "user.role/*": {
             "*/resource*": ["get", "post"],
             "resource": ["action", ...]
         },
@@ -519,7 +521,9 @@ JSON struct
 - When resource is ``resource*``, represent the role can access this resource's all action, 
   actions must be ``[]``.
 
-- role and resource must be combine of a-z_0-9 and start with a-z.
+- user.role's format must be "user.role", 
+  and must be combine of a-zA-Z_0-9 and start with a-zA-Z.
+  resource must be combine of a-z_0-9 and start with a-z.
 
 - 当 role 为 ``*`` 时，表示匿名用户的权限。
 
@@ -529,7 +533,9 @@ JSON struct
 - 当 resource 为 ``resource*`` 时，表示该角色可以操作该 resource 的所有 action ，
   此时 actions 必须是 ``[]``。
 
-- role 和 resource 只能由小写字母和下划线组成，并且以小写字母开头。
+- user.role 必须是 "user.role" 这种格式，中间是一个点号，
+  并且只能由字母数字和下划线组成，并且以字母开头。 
+  resource 只能由小写字母数字和下划线组成，并且以小写字母开头。
 
 
 
