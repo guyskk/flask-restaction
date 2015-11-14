@@ -55,3 +55,8 @@ def test_todo():
         assert 200 == c.put("/todo", data=data, headers=headers).status_code
         assert 200 == c.get("/todo/list", headers=headers).status_code
         assert 200 == c.delete("/todo?id=1", headers=headers).status_code
+
+
+def test_validaters():
+    from validater import validaters
+    assert "role_user" in validaters
