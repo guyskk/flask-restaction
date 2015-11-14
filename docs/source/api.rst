@@ -8,16 +8,6 @@ API
 这里涵盖了flask_restaction 提供 的所有接口。
 
 
-flask_restaction
-------------------
-.. automodule:: flask_restaction.__init__
-   :members: ResourceException,abort,abort_if_not_me
-
-resource
-------------------
-.. automodule:: flask_restaction.resource
-   :members: parse_schema,combine_schema,schema
-
 exporters
 -----------------
 .. automodule:: flask_restaction.exporters
@@ -46,5 +36,6 @@ Permission
 .. autoclass:: flask_restaction.Permission
    :members:
    :inherited-members:
+   :undoc-members:
 
 

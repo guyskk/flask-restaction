@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, abort, current_app
 import os
 from os.path import join, exists
 import jwt
@@ -15,6 +15,7 @@ from copy import deepcopy
 from collections import namedtuple
 import json
 from validater import add_validater
+import logging
 from . import Permission
 from . import pattern_action, pattern_endpoint
 from . import res_js, res_docs
@@ -472,7 +473,8 @@ class Api(object):
             else:
                 role = None
         except Exception as ex:
-            logger.info("Error raised when get user_role: %s" % str(ex))
+            current_app.logger.exception(
+                "Error raised when get user_role: %s" % str(ex))
             role = None
         request.me["role"] = role
 

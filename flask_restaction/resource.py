@@ -106,7 +106,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         if not isinstance(ex, HTTPException):
             return None
         if ex.code >= 500 and not current_app.debug:
-            return {"error": "interal server error"}, ex.code
+            return "interal server error", ex.code
         else:
             return ex.description, ex.code
 
