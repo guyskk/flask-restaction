@@ -49,8 +49,10 @@ def export_json(data, code, header):
     # Note that we add '\n' to end of response
     # (see https://github.com/mitsuhiko/flask/pull/1262)
     # https://github.com/Runscope/httpbin/issues/168
+
+    # use str("\n") to avoid exception when dumped can't be implicit decode to unicode on PY2
     dumped = json.dumps(data, indent=2,
-                        ensure_ascii=False, sort_keys=sort_keys) + b"\n"
+                        ensure_ascii=False, sort_keys=sort_keys) + str("\n")
     resp = current_app.response_class(
         dumped, status=code, headers=header, mimetype='application/json')
 
