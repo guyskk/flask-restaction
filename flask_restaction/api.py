@@ -15,7 +15,6 @@ from copy import deepcopy
 from collections import namedtuple
 import json
 from validater import add_validater
-import logging
 from . import Permission
 from . import pattern_action, pattern_endpoint
 from . import res_js, res_docs
@@ -144,7 +143,7 @@ class Api(object):
             self.permission_path = ppath
             self.permission = Permission(filepath=ppath)
         else:
-            logger.info(
+            logger.warning(
                 "permission_path '%s' not exists, allow all request" % ppath)
             self.permission = Permission()
             # allow all request

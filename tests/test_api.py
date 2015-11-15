@@ -82,11 +82,14 @@ def test_api_before_request():
     api.before_request(mk)
 
     with app.test_client() as c:
-        assert b"before_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert b"before_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"before_request" in c.get(
+            "/hello", query_string={"name": "haha"}).data
+        assert b"before_request" in c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).data
         mk.return_value = None
         assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
+        assert 400 == c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).status_code
 
 
 def test_api_after_request():
@@ -95,12 +98,15 @@ def test_api_after_request():
 
     with app.test_client() as c:
         assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert 400 == c.get("/hello", query_string={"name": "ha!@#ha"}).status_code
+        assert 400 == c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).status_code
         mk = Mock()
         mk.return_value = ({"hello": "after_request"}, 200, None)
         api.after_request(mk)
-        assert b"after_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert b"after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"after_request" in c.get(
+            "/hello", query_string={"name": "haha"}).data
+        assert b"after_request" in c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).data
 
 
 def test_befor_after():
@@ -115,8 +121,10 @@ def test_befor_after():
     api.after_request(after)
 
     with app.test_client() as c:
-        assert b"after_request" in c.get("/hello", query_string={"name": "haha"}).data
-        assert b"after_request" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"after_request" in c.get(
+            "/hello", query_string={"name": "haha"}).data
+        assert b"after_request" in c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).data
 
 
 def test_api_error_handler():
@@ -140,7 +148,8 @@ def test_base():
     with app.test_client() as c:
         assert b"world" in c.get("/hello").data
         assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert b"name" in c.get("/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"name" in c.get(
+            "/hello", query_string={"name": "ha!@#ha"}).data
 
 
 def test_config():
@@ -168,3 +177,10 @@ def test_config():
     for k in configs:
         key = "API_" + k.upper()
         assert getattr(api_bp, k) == key
+
+
+def test_log_warning():
+    app = Flask(__name__)
+    api = Api(app)
+    with app.test_client() as c:
+        assert 404 == c.get("/").status_code

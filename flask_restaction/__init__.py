@@ -14,11 +14,17 @@ from __future__ import absolute_import
 """
 import re
 import pkg_resources
+__version__ = "0.19.1"
+
+
 import logging
-
-__version__ = "0.18.1"
-
-logger = logging.getLogger("flask_restaction")
+from logging import Formatter
+LOG_FORMAT = '[Flask-Restaction] %(asctime)s %(levelname)s: %(message)s'
+logger = logging.getLogger(__name__)
+ch = logging.StreamHandler()
+ch.setFormatter(Formatter(LOG_FORMAT))
+ch.setLevel(logging.WARNING)
+logger.addHandler(ch)
 
 pattern_action = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
