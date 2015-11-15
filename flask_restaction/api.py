@@ -467,7 +467,7 @@ class Api(object):
             user = self.permission.which_user(resource)
             # if uid is None, anonymous user
             uid = request.me["id"]
-            if uid is not None and self.fn_user_role is not None:
+            if user is not None and uid is not None and self.fn_user_role is not None:
                 role = self.fn_user_role(uid, user)
             else:
                 role = None

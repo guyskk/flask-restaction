@@ -180,7 +180,10 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
             if errors:
                 return dict(errors), 400
             else:
-                rv = fn(**values)
+                if isinstance(values, dict):
+                    rv = fn(**values)
+                else:
+                    rv = fn(values)
         else:
             rv = fn()
         rv, code, headers = unpack(rv)
