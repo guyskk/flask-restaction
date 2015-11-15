@@ -151,3 +151,54 @@ def test_request_content_type():
         headers = {"Content-Type": "application/json;charset=UTF-8"}
         assert 200 == c.post("/hello", headers=headers,
                              data='{"name": "hahah"}').status_code
+
+
+def test_return_inner_custom_type():
+    class User(object):
+
+        def __init__(self, name):
+            self.name = name
+
+    class Hello(Resource):
+        sche = {
+            "name": {
+                "validate": "str"
+            }
+        }
+        schema_outputs = {
+            "get": sche,
+            "get_list": [sche],
+            "get_dict": {
+                "user": sche
+            },
+        }
+        output_types = [User]
+
+        def get(self):
+            return User("kk")
+
+        def get_list(self):
+            return [User("kk")] * 10
+
+        def get_dict(self):
+            return {"user": User("kk")}
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+    api.add_resource(Hello)
+    with app.test_client() as c:
+        assert 200 == c.get("/hello").status_code
+        assert 200 == c.get("/hello/list").status_code
+        assert 200 == c.get("/hello/dict").status_code
+        user = json.loads(c.get("/hello").data)
+        assert user == {
+            "name": "kk"
+        }
+        userlist = json.loads(c.get("/hello/list").data)
+        assert userlist == [{
+            "name": "kk"
+        }] * 10
+        dd = json.loads(c.get("/hello/dict").data)
+        assert dd["user"] == {
+            "name": "kk"
+        }

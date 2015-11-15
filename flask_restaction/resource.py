@@ -185,10 +185,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
             rv = fn()
         rv, code, headers = unpack(rv)
         if outputs is not None:
-            if output_types and isinstance(rv, tuple(output_types)):
-                (errors, values) = validate(ProxyDict(rv, output_types), outputs)
-            else:
-                (errors, values) = validate(rv, outputs)
+            (errors, values) = validate(rv, outputs, proxy_types=output_types)
             if errors:
                 return dict(errors), 500
             else:
