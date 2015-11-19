@@ -19,73 +19,62 @@
 */
 
 (function(res) {
+
+    function addToken(header){
+        if (header!==null) {
+            if(window.localStorage){
+                _token = window.localStorage.{{apiinfo.auth_token_name}};
+                if(_token){
+                    header["{{apiinfo.auth_token_name}}"]=_token;
+                }
+            }
+        }
+    }
+
+    function saveToken(xhr) {
+        token=xhr.getResponseHeader("{{apiinfo.auth_token_name}}")
+        if (token!==null && window.localStorage) {
+            window.localStorage.{{apiinfo.auth_token_name}} = token;
+        }
+    }
+
+    header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
     
     /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
     res.website_url="";
     res.clear_token=function() {
-        window.localStorage.removeItem("{{auth_token_name}}")
+        window.localStorage.removeItem("{{apiinfo.auth_token_name}}")
     }
-    header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-
-    /*以下为jinja2模板，用于生成js*/
-    {% if blueprint != None and blueprint!="" %}
-    res.{{blueprint}}={};
-    ress=res.{{blueprint}};
-    {% else %}
-    ress=res;
-    {% endif %}
-
-    /*当不需要传递data时，参数顺序是fn,progress,null*/
-    {% for name,doc,actions in reslist %}
-    ress.{{name}}={};
-        {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
-        ress.{{name}}.{{action}}=function(data,fn,progress){
-            if (progress===null && typeof(data)==="function"){
-                progress = fn;
-                fn = data;
-                data = null;
-            }
-            header={accept:header_accept};
-            {% if needtoken %}
-            addToken(header,"{{auth_header}}");
-            {% endif %}
-            var _fn=function(err, data, header, xhr){
-                saveToken(xhr,"{{auth_header}}");
-                if(typeof(fn)==="function"){
-                    fn(err, data, header, xhr);
-                }
-            }
-            res.ajax(res.website_url+"{{url}}",{
-                method:"{{meth}}",
-                data:data,
-                header: header,
-                fn:_fn,
-                progress:progress
-            });
-        };
-        {% endfor %}
-    {% endfor %}
     
-    /*End jinja2模板*/
-
-    function addToken(header, key){
-        if (header!==null&&key!==null) {
-            if(window.localStorage){
-                _token = window.localStorage.{{auth_token_name}};
-                if(_token){
-                    header[key]=_token;
-                }
+    /*当不需要传递数据时，回调函数参数顺序是: fn,progress,null*/
+    function request(url,method,data,fn,progress) {
+        if (progress===null && typeof(data)==="function"){
+            progress = fn;
+            fn = data;
+            data = null;
+        }
+        header={accept:header_accept};
+        addToken(header);
+        var _fn=function(err, data, header, xhr){
+            saveToken(xhr);
+            if(typeof(fn)==="function"){
+                fn(err, data, header, xhr);
             }
         }
+        res.ajax(res.website_url+url,{
+            method:method,
+            data:data,
+            header: header,
+            fn:_fn,
+            progress:progress
+        });
     }
 
-    function saveToken(xhr, key) {
-        if (key!==null) {
-            token=xhr.getResponseHeader(key)
-            if (token!==null && window.localStorage) {
-                window.localStorage.{{auth_token_name}} = token;
-            }
-        }
-    }
-
+    {%- for name,res in resources.items() %}
+    res.{{name}}={};
+        {%- for action in res["actions"] %}
+        res.{{name}}.{{action.action}}=function(data,fn,progress){request("{{apiinfo.url_prefix+action.url}}","{{action.httpmethod}}",data,fn,progress) };
+        {%- endfor %}
+    {%- endfor -%}
+    
 })(res);

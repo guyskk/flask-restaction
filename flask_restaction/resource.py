@@ -13,12 +13,10 @@ from __future__ import absolute_import
 import six
 
 from flask.views import View
-from flask import request, make_response, current_app, abort
-from werkzeug.wrappers import Response as ResponseBase
+from flask import g, current_app, abort
 from werkzeug.exceptions import HTTPException
 from validater import validate
-from validater import ProxyDict
-from . import exporters
+from flask_restaction import unpack
 
 
 class ResourceViewType(type):
@@ -128,54 +126,31 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         cls.handle_error_func = [f]
         return f
 
-    def dispatch_request(self, *args, **kwargs):
+    def dispatch_request(self, data):
         """preproccess request and dispatch request
         """
         try:
-            # before_request
             rv = self._before_request()
             if rv is None:
-                rv = self.full_dispatch_request(*args, **kwargs)
+                rv = self.full_dispatch_request(data)
         except Exception as ex:
             rv = self._handle_error(ex)
             if rv is None:
                 raise
-        # after_request
         rv, code, headers = unpack(rv)
         rv, code, headers = self._after_request(rv, code, headers)
-        if isinstance(rv, (ResponseBase, six.string_types)):
-            return make_response(rv, code, headers)
-        else:
-            if rv is None:
-                rv = {}
-            mediatype = request.accept_mimetypes.best_match(
-                exporters.keys(), default='application/json')
-            export = exporters[mediatype]
-            return export(rv, code, headers)
+        return rv, code, headers
 
-    def full_dispatch_request(self, *args, **kwargs):
+    def full_dispatch_request(self, data):
         """actual dispatch request, validate inputs and outputs
         """
-        fn = getattr(self, request.action, None)
+        fn = getattr(self, g.action, None)
         if fn is None:
-            abort(404, 'Unimplemented action %r' % request.action)
-        inputs = self.__class__.schema_inputs.get(request.action)
-        outputs = self.__class__.schema_outputs.get(request.action)
+            abort(404, 'Unimplemented action %r' % g.action)
+        inputs = self.__class__.schema_inputs.get(g.action)
+        outputs = self.__class__.schema_outputs.get(g.action)
         output_types = self.__class__.output_types
-        method = request.method.lower()
         if inputs is not None:
-            if method in ["get", "delete"]:
-                data = request.args
-            elif method in ["post", "put"]:
-                if request.mimetype == 'application/json':
-                    try:
-                        data = request.get_json()
-                    except:
-                        abort(400, "Invalid json content")
-                else:
-                    data = request.form
-            else:
-                data = {}
             (errors, values) = validate(data, inputs)
             if errors:
                 return dict(errors), 400
@@ -194,16 +169,3 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
             else:
                 rv = values
         return rv, code, headers
-
-
-def unpack(rv):
-    """convert rv to tuple(data, code, headers)
-
-    :param rv: data or tuple that contain code and headers
-    """
-    status = headers = None
-    if isinstance(rv, tuple):
-        rv, status, headers = rv + (None,) * (3 - len(rv))
-    if isinstance(status, (dict, list)):
-        headers, status = status, headers
-    return (rv, status, headers)

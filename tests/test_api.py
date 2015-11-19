@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from flask import Flask, Blueprint, request, url_for
+from flask import Flask, Blueprint, g, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
 import pytest
@@ -24,9 +24,9 @@ def test_parse_request():
     with app.test_client() as c:
         rv = c.get("/api/hello")
         assert b"hello" in rv.data
-        assert request.resource == "hello"
-        assert request.action == "get"
-        assert request.me["id"] is None
+        assert g.resource == "hello"
+        assert g.action == "get"
+        assert g.me["id"] is None
 
 
 def create_api():
@@ -180,7 +180,15 @@ def test_config():
 
 
 def test_log_warning():
+    """if permission_path not exists, should log warning"""
     app = Flask(__name__)
     api = Api(app)
     with app.test_client() as c:
         assert 404 == c.get("/").status_code
+
+
+def test_testclient():
+    api = create_api()
+    with api.test_client() as c:
+        assert 200 == c.hello.get().code
+        assert {"hello": "guyskk"} == c.hello.get({"name": "guyskk"}).rv

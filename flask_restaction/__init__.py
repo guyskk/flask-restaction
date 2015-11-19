@@ -36,11 +36,25 @@ res_js = res_js.decode("utf-8")
 res_docs = res_docs.decode("utf-8")
 
 
+def unpack(rv):
+    """convert rv to tuple(data, code, headers)
+
+    :param rv: data or tuple that contain code and headers
+    """
+    status = headers = None
+    if isinstance(rv, tuple):
+        rv, status, headers = rv + (None,) * (3 - len(rv))
+    if isinstance(status, (dict, list)):
+        headers, status = status, headers
+    return (rv, status, headers)
+
+
 from .exporters import exporters, exporter
 from .permission import Permission
 from .resource import Resource
 from .api import Api
 from validater import schema
+
 
 # __all__ can't be unicode
 __all__ = ["Api", "Resource", "schema", "Permission",

@@ -233,42 +233,17 @@ window.res = (function(window) {
     /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
     res.website_url="";
     res.clear_token=function() {
-        window.localStorage.removeItem("res_token")
+        window.localStorage.removeItem("")
     }
     header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 
     /*以下为jinja2模板，用于生成js*/
     
-    ress=res;
+    res.={};
+    ress=res.;
     
 
     /*当不需要传递data时，参数顺序是fn,progress,null*/
-    
-    ress.hello={};
-        
-        ress.hello.get=function(data,fn,progress){
-            if (progress===null && typeof(data)==="function"){
-                progress = fn;
-                fn = data;
-                data = null;
-            }
-            header={accept:header_accept};
-            
-            var _fn=function(err, data, header, xhr){
-                saveToken(xhr,"Authorization");
-                if(typeof(fn)==="function"){
-                    fn(err, data, header, xhr);
-                }
-            }
-            res.ajax(res.website_url+"/hello",{
-                method:"get",
-                data:data,
-                header: header,
-                fn:_fn,
-                progress:progress
-            });
-        };
-        
     
     
     /*End jinja2模板*/
@@ -276,7 +251,7 @@ window.res = (function(window) {
     function addToken(header, key){
         if (header!==null&&key!==null) {
             if(window.localStorage){
-                _token = window.localStorage.res_token;
+                _token = window.localStorage.;
                 if(_token){
                     header[key]=_token;
                 }
@@ -288,7 +263,7 @@ window.res = (function(window) {
         if (key!==null) {
             token=xhr.getResponseHeader(key)
             if (token!==null && window.localStorage) {
-                window.localStorage.res_token = token;
+                window.localStorage. = token;
             }
         }
     }

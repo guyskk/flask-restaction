@@ -49,8 +49,8 @@ def api():
 
 
 def test_schema_is_dict(api):
-    schema_inputs = api.resources["hello"]["schema_inputs"]
-    schema_outputs = api.resources["hello"]["schema_outputs"]
+    schema_inputs = api.resources["hello"]["class"].schema_inputs
+    schema_outputs = api.resources["hello"]["class"].schema_outputs
     for k, v in schema_inputs.items():
         assert isinstance(v, dict)
     for k, v in schema_outputs.items():

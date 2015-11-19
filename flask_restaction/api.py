@@ -3,18 +3,30 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
+"""
+flask_restaction.api
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-from flask import Blueprint, request, abort, current_app
+.. versionchanged:: 0.19.3
+
+   - ``request.me`` removed, use ``g.me`` instead.
+   - ``request.resource, request.action removed`` removed,
+     use ``g.resource, g.action`` instead.
+   - ``parse_reslist`` removed, use ``api.resources`` instead.
+"""
+from flask import Blueprint, request, abort, current_app, g, make_response
+from werkzeug.wrappers import Response as ResponseBase
 import os
 from os.path import join, exists
 import jwt
 import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
-from copy import deepcopy
 from collections import namedtuple
+from functools import partial
 import json
 from validater import add_validater
+from . import exporters, unpack
 from . import Permission
 from . import pattern_action, pattern_endpoint
 from . import res_js, res_docs
@@ -30,8 +42,61 @@ _default_config = {
     "resjs_name": "res.js",
     "resdocs_name": "resdocs.html",
     "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
-    "fn_user_role": None
+    "fn_user_role": None,
+    "docs": "",
 }
+
+
+def _ensure_unicode(s):
+    """decode s to unicode string by encoding='utf-8'"""
+    if s is not None and not isinstance(s, six.text_type):
+        return six.text_type(s, encoding="utf-8")
+    else:
+        return s
+
+
+def _normal_validate(obj):
+    """change lamada validate to string"""
+    if not isinstance(obj, six.string_types):
+        return six.text_type(obj)
+
+
+def _do_combine(res_cls, schema):
+    """lazy_combine tuple_like schema"""
+    for k, v in schema.items():
+        if six.callable(v):
+            try:
+                schema[k] = v(res_cls.__dict__)
+            except KeyError as ex:
+                raise ValueError("%s not in Resource class: %s" % (
+                    str(ex), res_cls.__name__))
+
+
+def get_request_data():
+    method = request.method.lower()
+    if method in ["get", "delete"]:
+        return request.args
+    elif method in ["post", "put"]:
+        if request.mimetype == 'application/json':
+            try:
+                return request.get_json()
+            except:
+                abort(400, "Invalid json content")
+        else:
+            return request.form
+    else:
+        return {}
+
+
+def export(rv, code, headers):
+    if isinstance(rv, (ResponseBase, six.string_types)):
+        return make_response(rv, code, headers)
+    else:
+        if rv is None:
+            rv = ""
+        mediatype = request.accept_mimetypes.best_match(
+            exporters.keys(), default='application/json')
+        return exporters[mediatype](rv, code, headers)
 
 
 class Api(object):
@@ -49,6 +114,11 @@ class Api(object):
     :param resdocs_name: resdocs.html file name
     :param bootstrap: url for bootstrap.css, used for resdocs
     :param fn_user_role: a function that return user's role.
+    :param docs: api docs
+
+    .. versionadded:: 0.19.3
+        docs: api docs
+        test_client: a test_client
 
     default value::
 
@@ -62,7 +132,8 @@ class Api(object):
             "resjs_name": "res.js",
             "resdocs_name": "resdocs.html",
             "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
-            "fn_user_role": None
+            "fn_user_role": None,
+            "docs": "",
         }
 
     fn_user_role::
@@ -85,7 +156,7 @@ class Api(object):
         self.after_request_funcs = []
         self.handle_error_func = None
         self.app = None
-
+        self.blueprint = None
         if app is not None:
             self.init_app(app)
         self.__config(**config)
@@ -108,6 +179,8 @@ class Api(object):
             if k in config:
                 setattr(self, k, config[k])
 
+        self.docs = _ensure_unicode(self.docs)
+
     def config(self, cfg):
         """config api with cfg
 
@@ -118,6 +191,8 @@ class Api(object):
             if key in cfg:
                 setattr(self, k, cfg[key])
 
+        self.docs = _ensure_unicode(self.docs)
+
     def init_app(self, app, **config):
         """init_app
 
@@ -126,11 +201,14 @@ class Api(object):
         self.app = app
         self.__config(**config)
         self.url_prefix = None
-        if self.is_blueprint():
-            self.app.record(lambda s: self.init_permission(s.app))
-            self.app.record(lambda s: setattr(
+        if isinstance(app, Blueprint):
+            self.blueprint = app
+            self.blueprint.record(lambda s: self.init_permission(s.app))
+            self.blueprint.record(lambda s: setattr(
                 self, "url_prefix", s.url_prefix))
+            self.blueprint.record(lambda s: setattr(self, "app", s.app))
         else:
+            self.blueprint = None
             self.init_permission(app)
 
     def init_permission(self, app):
@@ -157,119 +235,136 @@ class Api(object):
         return isinstance(self.app, Blueprint)
 
     def parse_resource(self, res_cls, name=None):
-        """parse resource class
-
-        :param res_cls: resource class
-        :param name: display resource name, used in url
-        :return:
-
-            info of resource class::
-
-                tuple("classname", {
-                        "name": name,
-                        "docs": res_cls.__doc__,
-                        "meth_act": meth_act,
-                        "actions": actions,
-                        "methods": methods,
-                        "rules": rules,
-                        "schema_inputs": res_cls.schema_inputs
-                        "schema_outputs": res_cls.schema_outputs
-                        "docstrings": docstrings
-                    })
-
-            meth_act is a list of tuple(meth, act)::
-
-                'get' -> ('get', '')
-                'get_list' -> ('get', 'list')
-                'post' -> ('post', '')
-
-            actions is a list of namedtuple(meth, act, url, endpoint, action)::
-
-                meth, act:   the same as meth_act
-                url:         '/name/act' or '/name'
-                endpoint:    'classname@action' or 'classname'
-                action:      resource's method name
-
-            methods is a list of availble httpmethod in resource
-
-            rules is a list of availble tuple(url, endpoint) in resource
         """
+        :param res_cls: resource class
+        :param name: resource name
+        :return: name, res
 
-        def ensure_unicode(s):
-            """decode s to unicode string by encoding='utf-8'"""
-            if s is not None and not isinstance(s, six.text_type):
-                return six.text_type(s, encoding="utf-8")
-            else:
-                return s
+        name:
 
+            resource name
+
+        res:
+
+            {
+                "class": res_cls,
+                "docs": res_cls.__doc__,
+                "actions": actions,
+                "httpmethods": httpmethods,
+                "rules": rules,
+            }
+
+        action:
+
+            namedtuple("Action", "action httpmethod act url endpoint docs inputs outputs")
+
+        .. versionchanged:: 0.19.3
+            the return value changed.
+        """
         if not inspect.isclass(res_cls):
             raise ValueError("%s is not class" % res_cls)
-        classname = res_cls.__name__.lower()
         if name is None:
-            name = classname
+            name = res_cls.__name__.lower()
         else:
             name = name.lower()
-        meth_act = [tuple(pattern_action.findall(x)[0]) for x in dir(res_cls)
-                    if pattern_action.match(x)]
+
+        methods = [x for x in dir(res_cls) if pattern_action.match(x)]
+        meth_act = [pattern_action.findall(x)[0] for x in methods]
+        Action = namedtuple(
+            "Action", "action httpmethod act url endpoint docs inputs outputs")
+
+        _do_combine(res_cls, res_cls.schema_inputs)
+        _do_combine(res_cls, res_cls.schema_outputs)
+
         actions = []
-        docstrings = {}
-        Action = namedtuple("Action", "meth act url endpoint action")
-        for meth, act in meth_act:
+
+        dumps = partial(json.dumps, indent=2, sort_keys=True,
+                        ensure_ascii=False, default=_normal_validate)
+
+        for action, (meth, act) in zip(methods, meth_act):
             if act == "":
-                action = meth
                 url = "/" + name
-                endpoint = classname
+                endpoint = name
             else:
-                action = meth + "_" + act
                 url = "/{0}/{1}".format(name, act)
-                endpoint = "{0}@{1}".format(classname, act)
-            docstrings[action] = ensure_unicode(
-                getattr(res_cls, action).__doc__)
-            actions.append(Action(meth, act, url, endpoint, action))
+                endpoint = "{0}@{1}".format(name, act)
+            docs = _ensure_unicode(getattr(res_cls, action).__doc__)
+            inputs = dumps(res_cls.schema_inputs.get(action))
+            outputs = dumps(res_cls.schema_outputs.get(action))
+            actions.append(Action(action, meth, act, url,
+                                  endpoint, docs, inputs, outputs))
+        httpmethods = set([x.httpmethod for x in actions])
+        rules = set([(x.url, x.endpoint) for x in actions])
 
-        methods = set([x[0] for x in actions])
-        rules = set([(x[2], x[3]) for x in actions])
-
-        # lazy_combine tuple_like schema
-        def do_combine(schema):
-            for k, v in schema.items():
-                if six.callable(v):
-                    try:
-                        schema[k] = v(res_cls.__dict__)
-                    except KeyError as ex:
-                        raise ValueError("%s not in Resource class: %s" % (
-                            str(ex), res_cls.__name__))
-        do_combine(res_cls.schema_inputs)
-        do_combine(res_cls.schema_outputs)
-
-        return (classname, {
+        res = {
             "class": res_cls,
-            "name": name,
-            "docs": ensure_unicode(res_cls.__doc__),
-            "meth_act": meth_act,
+            "docs": _ensure_unicode(res_cls.__doc__),
             "actions": actions,
-            "methods": methods,
+            "httpmethods": httpmethods,
             "rules": rules,
-            "schema_inputs": deepcopy(res_cls.schema_inputs),
-            "schema_outputs": deepcopy(res_cls.schema_outputs),
-            "docstrings": docstrings
-        })
+        }
+        return name, res
 
-    def make_view(self, cls, name, *class_args, **class_kwargs):
+    def make_view(self, cls, name, test_config=None, *class_args, **class_kwargs):
         """Converts the class into an actual view function that can be used
         with the routing system. Copyed from flask.views.py.
+
+        :param cls: resource class
+        :param name: resource name
+        :param test_config: some data used in test
+
+        test_config:
+
+            {
+                "resource":"resource name",
+                "action":"action name",
+                "user_id":"user_id",
+                "data":"a dict of data that will passed to view",
+            }
         """
         def view(*args, **kwargs):
-            self.parse_request()
+            if test_config:
+                resource = test_config["resource"]
+                action = test_config["action"]
+                me = {"id": test_config["user_id"]}
+                role = self.parse_role(me["id"], resource)
+                data = test_config["data"]
+                if data is None:
+                    data = {}
+            else:
+                resource, action = self.parse_request()
+                me = self.parse_me()
+                role = self.parse_role(me["id"], resource)
+                data = get_request_data()
+            g.resource = resource
+            g.action = action
+            g.me = me
+            g.me["role"] = role
+
             try:
-                obj = view.view_class(*class_args, **class_kwargs)
-                return obj.dispatch_request(*args, **kwargs)
+                resp = self._before_request()
+                if resp is None:
+                    # permit
+                    if not self.permission.permit(role, resource, action):
+                        abort(403, "permission deny")
+                    obj = view.view_class(*class_args, **class_kwargs)
+                    # ignore *args, **kwargs and Resource don't need them
+                    resp = obj.dispatch_request(data=data)
             except Exception as ex:
                 if self.handle_error_func:
-                    rv = self.handle_error_func(ex)
-                    if rv is not None:
-                        return rv
-                raise
+                    resp = self.handle_error_func(ex)
+                if resp is None:
+                    raise
+            resp = self._after_request(*unpack(resp))
+            if test_config:
+                ResponseTuple = namedtuple(
+                    "ResponseTuple", "rv code header")
+                rv, code, header = resp
+                if code is None:
+                    code = 200
+                return ResponseTuple(rv, code, header)
+            else:
+                return export(*resp)
 
         if cls.decorators:
             view.__name__ = name
@@ -277,11 +372,6 @@ class Api(object):
             for decorator in cls.decorators:
                 view = decorator(view)
 
-        # We attach the view class to the view function for two reasons:
-        # first of all it allows us to easily figure out what class-based
-        # view this thing came from, secondly it's also used for instantiating
-        # the view class so you can actually replace it with something else
-        # for testing purposes and debugging.
         view.view_class = cls
         view.__name__ = name
         view.__doc__ = cls.__doc__
@@ -297,76 +387,13 @@ class Api(object):
         :param class_args: class_args
         :param class_kwargs: class_kwargs
         """
-        classname, res = self.parse_resource(res_cls, name)
-        res_cls.before_request_funcs.insert(0, self._before_request)
-        res_cls.after_request_funcs.append(self._after_request)
-
+        name, res = self.parse_resource(res_cls, name)
         view = self.make_view(
-            res_cls, res["name"], *class_args, **class_kwargs)
-
+            res_cls, name, *class_args, **class_kwargs)
         for url, end in res["rules"]:
             self.app.add_url_rule(
-                url, endpoint=end, view_func=view, methods=res["methods"])
-        self.resources[classname] = res
-
-    def _normal_validate(self, obj):
-        """change lamada validate to string"""
-        if not isinstance(obj, six.string_types):
-            return six.text_type(obj)
-
-    def parse_reslist(self):
-        """parse_reslist
-
-        :return: resources
-
-        - resources::
-
-            {
-                "auth_header": self.auth_header,
-                "auth_token_name": self.auth_token_name,
-                "blueprint": bp_name,
-                "url_prefix": url_prefix,
-                "reslist": reslist
-            }
-
-        - reslist: list of tuple(res_name, res_doc, actions)
-        - actions: list of namedtuple(url, http_method, action,
-            needtoken, schema_input, schema_output, action_doc)
-
-        """
-        if self.is_blueprint():
-            bp_name = self.app.name
-        else:
-            bp_name = None
-        reslist = []
-        resources = {
-            "auth_header": self.auth_header,
-            "auth_token_name": self.auth_token_name,
-            "blueprint": bp_name,
-            "url_prefix": self.url_prefix,
-            "reslist": reslist
-        }
-        Action = namedtuple(
-            "Action", "url http_method action needtoken schema_input schema_output action_doc")
-        for classname, res in self.resources.items():
-            schema_inputs = res["schema_inputs"]
-            schema_outputs = res["schema_outputs"]
-            docstrings = res["docstrings"]
-            actions = []
-            reslist.append((res["name"], res["docs"], actions))
-            for meth, act, url, endpoint, action in res["actions"]:
-                if self.url_prefix:
-                    url = self.url_prefix + url
-                needtoken = not self.permission.permit(
-                    "*", res["name"], action)
-                dumps = lambda v: json.dumps(v, indent=2, sort_keys=True, ensure_ascii=False,
-                                             default=self._normal_validate)
-                inputs = dumps(schema_inputs.get(action))
-                outputs = dumps(schema_outputs.get(action))
-                actions.append(
-                    Action(url, meth, action, needtoken, inputs, outputs,
-                           docstrings.get(action)))
-        return resources
+                url, endpoint=end, view_func=view, methods=res["httpmethods"])
+        self.resources[name] = res
 
     def _gen_from_template(self, tmpl, name):
         """genarate something and write to static_folder
@@ -375,10 +402,15 @@ class Api(object):
         :param name: file name to write
         """
         template = Template(tmpl)
-        resources = self.parse_reslist()
-        rendered = template.render(
-            resjs_name=self.resjs_name,
-            bootstrap=self.bootstrap, **resources)
+        apiinfo = {
+            "auth_header": self.auth_header,
+            "auth_token_name": self.auth_token_name,
+            "url_prefix": self.url_prefix or "",
+            "docs": self.docs
+        }
+        rendered = template.render(resjs_name=self.resjs_name,
+                                   bootstrap=self.bootstrap, apiinfo=apiinfo,
+                                   resources=self.resources)
         if not exists(self.app.static_folder):
             os.makedirs(self.app.static_folder)
         path = join(self.app.static_folder, name)
@@ -440,52 +472,52 @@ class Api(object):
         try:
             me = jwt.decode(token, self.auth_secret,
                             algorithms=[self.auth_alg], options=options)
-            if "id" in me:
-                return me
+            if "id" not in me:
+                current_app.logger.warning(
+                    "set id to None because it not in me: %s" % me)
+                me["id"] = None
+            return me
         except jwt.InvalidTokenError:
             pass
         except AttributeError:
             # jwt's bug when token is None or int
             # https://github.com/jpadilla/pyjwt/issues/183
             pass
+        current_app.logger.debug("InvalidToken: %s" % token)
         return {"id": None}
 
     def parse_request(self):
+        """parse resource&action"""
         find = pattern_endpoint.findall(request.endpoint)
         if not find:
             abort(500, "invalid endpoint: %s" % request.endpoint)
         blueprint, resource, act = find[0]
         if act:
-            meth_name = request.method.lower() + "_" + act
+            action = request.method.lower() + "_" + act
         else:
-            meth_name = request.method.lower()
+            action = request.method.lower()
 
-        request.resource = resource
-        request.action = meth_name
-        request.me = self.parse_me()
+        return resource, action
+
+    def parse_role(self, uid, resource):
+        """determine user's role"""
         try:
             user = self.permission.which_user(resource)
             # if uid is None, anonymous user
-            uid = request.me["id"]
             if user is not None and uid is not None and self.fn_user_role is not None:
-                role = self.fn_user_role(uid, user)
-            else:
-                role = None
+                return self.fn_user_role(uid, user)
         except Exception as ex:
             current_app.logger.exception(
                 "Error raised when get user_role: %s" % str(ex))
-            role = None
-        request.me["role"] = role
+        return None
 
     def _before_request(self):
         """before_request"""
+
         for fn in self.before_request_funcs:
             rv = fn()
             if rv is not None:
                 return rv
-        if not self.permission.permit(
-                request.me["role"], request.resource, request.action):
-            abort(403, "permission deny")
         return None
 
     def _after_request(self, rv, code, headers):
@@ -508,3 +540,68 @@ class Api(object):
         """decorater"""
         self.handle_error_func = f
         return f
+
+    def test_client(self, user_id=None,):
+        """A api test client, test your api without request context.
+
+        Note that you can't access ``request`` because flask.request context not exist.
+        You can access app context, such ``flask.g``.
+        The return value is namedtuple("ResponseTuple", "rv code header"),
+        while rv is a dict, so it's easy to assert and compare.
+
+        Usage::
+
+            with api.test_client() as c:
+                rv,code,header = c.resource.action(data)
+                assert code == 200
+                assert rv == {"hello":"world"}
+                assert c.resource.action_need_login(data).code == 403
+
+            with api.test_client(user_id) as c:
+                assert c.resource.action_need_login(data).code == 200
+                assert c.resource.action_need_login(data).rv == {"hello":"guyskk"}
+        """
+        return RestactionClient(self, user_id)
+
+
+class RestactionClient(object):
+    """RestactionClient"""
+
+    def __init__(self, api, user_id=None):
+        self.api = api
+        self.user_id = user_id
+        self.app_context = self.api.app.app_context()
+
+    def __getattr__(self, resource):
+        return ResourceClient(resource=resource, api=self.api)
+
+    def __enter__(self):
+        self.app_context.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        return self.app_context.__exit__(exc_type, exc_value, tb)
+
+
+class ResourceClient(object):
+    """ResourceClient"""
+
+    def __init__(self, resource, api, user_id=None):
+        self.resource = resource
+        self.api = api
+        self.user_id = user_id
+
+    def __getattr__(self, action):
+        res_cls = self.api.resources[self.resource]["class"]
+
+        def view_client(data=None):
+            test_config = {
+                "user_id": "user_id",
+                "resource": self.resource,
+                "action": action,
+                "data": data
+            }
+            view = self.api.make_view(
+                res_cls, self.resource, test_config=test_config)
+            return view()
+        return view_client

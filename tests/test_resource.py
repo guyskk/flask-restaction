@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from flask import Flask, request, url_for
+from flask import Flask, request, g, url_for
 from flask_restaction import Api, Resource
 import pytest
 import json
@@ -80,12 +80,12 @@ def test_unimplament_action(app):
 def test_file(app):
 
     with app.test_request_context('/upload'):
-        assert url_for("file") == '/upload'
-        assert url_for("file@login") == '/upload/login'
-        assert request.endpoint == 'file'
+        assert url_for("upload") == '/upload'
+        assert url_for("upload@login") == '/upload/login'
+        assert request.endpoint == 'upload'
 
     with app.test_request_context('/upload/login'):
-        assert request.endpoint == 'file@login'
+        assert request.endpoint == 'upload@login'
 
     with app.test_client() as c:
         assert b'file' == c.get('/upload').data
@@ -123,8 +123,10 @@ def test_user_role():
         assert api.auth_header in rv.headers
         auth = {api.auth_header: rv.headers[api.auth_header]}
         rv2 = c.get("/hello", headers=auth)
-        assert str(request.me["id"]) == "123"
-        assert request.me["role"] == "role_123"
+        assert str(g.me["id"]) == "123"
+        # if permission file not exists, user_role will not be called
+        # assert g.me["role"] == "role_123"
+        assert g.me["role"] == None
 
 
 def test_request_content_type():

@@ -19,43 +19,48 @@
         <h1>Api Documents</h1>
     </div>
     <ul>
-        <li>auth_header: <code>{{auth_header}}</code></li>
-        <li>auth_token_name: <code>{{auth_token_name}}</code></li>
-        <li>blueprint: <code>{{blueprint}}</code></li>
-        <li>url_prefix: <code>{{url_prefix}}</code></li>
-        {% for name,docs,actions in reslist %}
+        <li>auth_header: <code>{{apiinfo.auth_header}}</code></li>
+        <li>auth_token_name: <code>{{apiinfo.auth_token_name}}</code></li>
+        <li>url_prefix: <code>{{apiinfo.url_prefix}}</code></li>
+        <p><pre>{{apiinfo.docs}}</pre></p>
+        {% for name,res in resources.items() %}
         <li>
         <a class="lead" href="#{{name}}">{{name}}</a>
+        <ul>
+            {% for action in res["actions"] %}
+            <li>
+                <a href="#{{name+'.'+action.action}}">
+                {{action.action}} {{action.docs or ''}}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
         </li>
         {% endfor %}
     </ul>
-    {% for name,docs,actions in reslist %}
+    {% for name,res in resources.items() %}
     <div class="resource table-responsive">
         <h2 id="{{name}}">{{name}}</h2>
-        <p><pre>{{docs or 'docs of resource'}}</pre></p>
+        <p><pre>{{res["docs"] or ''}}</pre></p>
         <table class="table table-striped">
             <tr>
                 <th>action / docs</th>
-                <th>url</th>
-                <th>method</th>
+                <th>method / url</th>
                 <th>param</th>
-                <th>auth</th>
                 <th>return</th>
             </tr>
-            {% for url, meth, action, needtoken, inputs, outputs, docs in actions %}
-            <tr>
+            {% for action in res["actions"] %}
+            <tr id="{{name+'.'+action.action}}">
                 <td class="info">
-                <strong>{{action}}</strong>
-                <p>{{docs or ''}}</p>
+                <strong>{{action.action}}</strong>
+                <p>{{action.docs or ''}}</p>
                 </td>
-                <td class="success"><code>{{url}}</code></td>
-                <td class="info"><code>{{meth}}</code></td>
-                <td class="success">
-                <pre>{{inputs}}</pre>
+                <td class="success"><code>{{action.httpmethod.upper()}} {{apiinfo.url_prefix+action.url}}</code></td>
+                <td class="info">
+                <pre>{{action.inputs}}</pre>
                 </td>
-                <td class="info">{{needtoken}}</td>
                 <td class="success">
-                <pre>{{outputs}}</pre>
+                <pre>{{action.outputs}}</pre>
                 </td>
             </tr>
             {% endfor %}

@@ -24,33 +24,38 @@
         <li>blueprint: <code>None</code></li>
         <li>url_prefix: <code>None</code></li>
         
+        
         <li>
         <a class="lead" href="#hello">hello</a>
+        <ul>
+            
+            <li>
+                <a class="lead" href="#hello.get">get</a>
+            </li>
+            
+        </ul>
         </li>
         
     </ul>
     
     <div class="resource table-responsive">
         <h2 id="hello">hello</h2>
-        <p><pre>docstrings Hello</pre></p>
+        <p><pre></pre></p>
         <table class="table table-striped">
             <tr>
                 <th>action / docs</th>
-                <th>url</th>
-                <th>method</th>
+                <th>method / url</th>
                 <th>param</th>
-                <th>auth</th>
                 <th>return</th>
             </tr>
             
-            <tr>
+            <tr id="hello.get">
                 <td class="info">
                 <strong>get</strong>
                 <p>docstrings get</p>
                 </td>
-                <td class="success"><code>/hello</code></td>
-                <td class="info"><code>get</code></td>
-                <td class="success">
+                <td class="success"><code>GET /hello</code></td>
+                <td class="info">
                 <pre>{
   "name": {
     "default": "world", 
@@ -60,7 +65,6 @@
   }
 }</pre>
                 </td>
-                <td class="info">False</td>
                 <td class="success">
                 <pre>null</pre>
                 </td>
