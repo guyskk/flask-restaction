@@ -192,3 +192,6 @@ def test_testclient():
     with api.test_client() as c:
         assert 200 == c.hello.get().code
         assert {"hello": "guyskk"} == c.hello.get({"name": "guyskk"}).rv
+        assert 404 == c.hello.get_asd().code
+        with pytest.raises(ValueError):
+            c.asdfgh.get()

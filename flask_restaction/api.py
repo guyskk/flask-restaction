@@ -573,7 +573,12 @@ class RestactionClient(object):
         self.app_context = self.api.app.app_context()
 
     def __getattr__(self, resource):
-        return ResourceClient(resource=resource, api=self.api)
+        try:
+            api = object.__getattribute__(self, "api")
+            res_cls = api.resources[resource]["class"]
+            return ResourceClient(res_cls=res_cls, resource=resource, api=api)
+        except KeyError:
+            raise ValueError("resource not found: %s" % resource)
 
     def __enter__(self):
         self.app_context.__enter__()
@@ -586,22 +591,25 @@ class RestactionClient(object):
 class ResourceClient(object):
     """ResourceClient"""
 
-    def __init__(self, resource, api, user_id=None):
+    def __init__(self, res_cls, resource, api, user_id=None):
+        self.res_cls = res_cls
         self.resource = resource
         self.api = api
         self.user_id = user_id
 
     def __getattr__(self, action):
-        res_cls = self.api.resources[self.resource]["class"]
 
         def view_client(data=None):
+            res_cls = object.__getattribute__(self, "res_cls")
+            resource = object.__getattribute__(self, "resource")
+            api = object.__getattribute__(self, "api")
+            user_id = object.__getattribute__(self, "user_id")
             test_config = {
-                "user_id": "user_id",
-                "resource": self.resource,
+                "user_id": user_id,
+                "resource": resource,
                 "action": action,
                 "data": data
             }
-            view = self.api.make_view(
-                res_cls, self.resource, test_config=test_config)
+            view = api.make_view(res_cls, resource, test_config=test_config)
             return view()
         return view_client
