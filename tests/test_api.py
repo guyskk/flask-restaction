@@ -195,3 +195,8 @@ def test_testclient():
         assert 404 == c.hello.get_asd().code
         with pytest.raises(ValueError):
             c.asdfgh.get()
+    # api did't inited
+    with pytest.raises(AttributeError):
+        api = Api()
+        with api.test_client() as c:
+            pass

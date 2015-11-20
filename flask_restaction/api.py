@@ -9,10 +9,11 @@ flask_restaction.api
 
 .. versionchanged:: 0.19.3
 
-   - ``request.me`` removed, use ``g.me`` instead.
-   - ``request.resource, request.action removed`` removed,
-     use ``g.resource, g.action`` instead.
-   - ``parse_reslist`` removed, use ``api.resources`` instead.
+   - request.me removed, use g.me instead.
+   - request.resource, request.action removed removed,
+     use g.resource, g.action instead.
+   - parse_reslist removed, use api.resources instead.
+   - is_blueprint removed.
 """
 from flask import Blueprint, request, abort, current_app, g, make_response
 from werkzeug.wrappers import Response as ResponseBase
@@ -168,7 +169,7 @@ class Api(object):
             setattr(self, k, v)
 
         # from app.config
-        if self.app is not None and not self.is_blueprint():
+        if self.app is not None and not isinstance(self.app, Blueprint):
             for k in _default_config:
                 key = "API_" + k.upper()
                 if key in self.app.config:
@@ -229,10 +230,6 @@ class Api(object):
         # add validater
         for u, v in self.permission.role_validaters.items():
             add_validater(u, v)
-
-    def is_blueprint(self):
-        """self.app is_blueprint or not, if self.app is None, return False"""
-        return isinstance(self.app, Blueprint)
 
     def parse_resource(self, res_cls, name=None):
         """
@@ -541,7 +538,7 @@ class Api(object):
         self.handle_error_func = f
         return f
 
-    def test_client(self, user_id=None,):
+    def test_client(self, user_id=None):
         """A api test client, test your api without request context.
 
         Note that you can't access ``request`` because flask.request context not exist.
@@ -570,13 +567,18 @@ class RestactionClient(object):
     def __init__(self, api, user_id=None):
         self.api = api
         self.user_id = user_id
-        self.app_context = self.api.app.app_context()
+        try:
+            self.app_context = self.api.app.app_context()
+        except AttributeError as ex:
+            ex.args += ("api didn't inited!!",)
+            raise
 
     def __getattr__(self, resource):
         try:
             api = object.__getattribute__(self, "api")
+            user_id = object.__getattribute__(self, "user_id")
             res_cls = api.resources[resource]["class"]
-            return ResourceClient(res_cls=res_cls, resource=resource, api=api)
+            return ResourceClient(res_cls=res_cls, resource=resource, api=api, user_id=user_id)
         except KeyError:
             raise ValueError("resource not found: %s" % resource)
 
