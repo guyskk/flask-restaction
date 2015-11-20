@@ -17,7 +17,7 @@ Flask-Restaction 依赖 validater 校验输入输出，欲知详情请移步
 Flask-Restaction 是什么
 --------------------------
 
-Flask-Restaction 是一个用来创建 RESTful API 的强大框架
+Flask-Restaction 是一个为 RESTful API 而生的 Web 框架
 
 You can do this Easily: 
 
@@ -27,9 +27,11 @@ You can do this Easily:
     
 - Authorize and Permission control
 
-- Auto generate res.js
+- Easy to test
+
+- Auto generate res.js and documents
     
-- Auto generate documents
+- Support py3
 
 
 Install

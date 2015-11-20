@@ -230,7 +230,7 @@ Then you inputs will be escape to avoid attack:
     });
 
 
-You can use ``res.resource.action(data, function(err, value))`` to access resources provided by rest api.
+You can use ``res.resource.action(data, function(err, value), function(progress))`` to access resources provided by rest api.
 
 你可以用 ``res.resource.action(data, function(err, value))`` 调用 api.
 
@@ -241,7 +241,9 @@ You can use ``res.resource.action(data, function(err, value))`` to access resour
   not only http method, ``get_list`` , ``post_upload`` is ok, 
   just make sure start with http method and ``_`` .
 
-- ``function(err, value)`` is callback function
+- ``function(err, value)`` is callback function called when request finish
+
+- ``function(progress)`` is callback used for upload
 
 - If you use blueprint, then You should use 
   ``res.blueprint.resource.action(data, function(err, value))`` to access resources.
@@ -252,11 +254,9 @@ You can use ``res.resource.action(data, function(err, value))`` to access resour
 - ``action`` 是 ... 例如 ``get`` , ``post`` ... 不仅仅是 http method, 
   ``get_list`` , ``post_upload`` 也可以，只要是以 http method 加 下划线 ``_`` 开头就行。
 
-- ``function(err, value)`` 是回调函数
+- ``function(err, value)`` 是请求完成回调函数
 
-- 如果用的是蓝图（``blueprint``），就要用 
-  ``res.blueprint.resource.action(data, function(err, value))`` 调用 api 。
-
+- ``function(progress)`` 是上传文件时的回调函数
 
 URL 构建 Use url_for 
 --------------------
@@ -266,7 +266,7 @@ endpoint 名称是 ``resource@action_lastpart`` 。
 
 The endpoint is ``resource@action_lastpart``::
     
-    resource -> resource class name, lowcase
+    resource -> resource name or resource's class name, lowcase
     action   -> action's last part name, lowcase
 
 格式 format::
@@ -425,9 +425,9 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
 **你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``, see :class:`~flask_restaction.Api` for detail。
 
-You can access auth info by ``request.me``, it's struct is:
+You can access auth info by ``g.me``, it's struct is:
 
-你可以通过 ``request.me`` 获取用户的身份信息，它的结构如下:
+你可以通过 ``g.me`` 获取用户的身份信息，它的结构如下:
 
 .. code::
 
@@ -454,8 +454,8 @@ Flask-Restaction didn't know the role of a user, so you should provide a functio
 
     api = Api(app, fn_user_role=user_role)
 
-This function will not be called if request.me["id"] is None.
-It's return value will be in ``request.me["role"]``, then permission system will use it.
+This function will not be called if g.me["id"] is None.
+It's return value will be in ``g.me["role"]``, then permission system will use it.
 
 The Usage of user_role（user_role 函数的用处）
 
@@ -482,9 +482,9 @@ In permission.json, use "user.role" to indicate fields and role in the field.
 
 **注意 Note:**
 
-res.js will auto add auth header(default ``Authorization``) to request if needed, and will auto save auth token to localstroge when recive auth header
+res.js will auto add auth header(default ``Authorization``) to request, and will auto save auth token to localstroge when recive auth header
 
-在访问需要权限的资源时，res.js 会自动添加 auth 请求头 (default ``Authorization``) 到请求中。
+res.js 会自动添加 auth 请求头 (default ``Authorization``) 到请求中。
 并且当收到 auth 响应头时，会自动将 auth token 保存到浏览器 localstroge 中。
 
 Permission control 权限控制
@@ -599,12 +599,48 @@ configs and default value:
     API_RESDOCS_NAME = "resdocs.html", #resdocs.html文件名
     API_BOOTSTRAP = "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css" 
                                        #用于resdocs.html中
+    API_DOCS = "", # docs of api
 
 You can also add params when app init, the params will used as config and override config in ``app.config``.
 
 你也可以在 api 初始化的时候传递参数，这些参数也会被当作配置，并且会覆盖 ``app.config`` 中的配置。
 
 see :class:`~flask_restaction.Api`
+
+Test 测试
+------------------------
+
+For example:
+
+.. code-block:: python
+
+    with api.test_client() as c:
+        rv,code,header = c.resource.action(data)
+        assert code == 200
+        assert rv == {"hello":"world"}
+        assert c.resource.action_need_login(data).code == 403
+
+    with api.test_client(user_id) as c:
+        assert c.resource.action_need_login(data).code == 200
+        assert c.resource.action_need_login(data).rv == {"hello":"guyskk"}
+
+**Note**
+
+测试中可以访问 flask.g 但是不能访问 flask.request ,因为只有应用环境而没有请求环境。
+c.resource.action(data) 的返回值是 namedtuple("ResponseTuple", "rv code header"),
+其中 rv 是一个 dict。
+
+如果 flask 的完整请求的流程是::
+
+    1. 创建请求环境 应用环境
+    2. 解析请求 获取请求数据 
+    3. 校验请求数据 调用相应的action 校验返回值
+    4. 将返回值转化成响应
+
+那么 1 是 flask 处理的， 2,4 是由 api 处理的，3 是 resource 中处理的。
+第 2 步会将解析结果保存到 g.resource g.action g.me 中，这样在 resource 中就能使用解析结果。
+
+测试的时候先创建应用环境，伪造 2，执行 3，直接返回 3 的结果而不执行4。
 
 
 Process Flow 请求处理流程
