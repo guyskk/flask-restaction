@@ -6,9 +6,7 @@
 一个最小的应用
 -------------------
 
-A minimal Flask-Restaction API:
-
-.. code-block :: python
+.. code-block:: python
 
     from flask import Flask
     from flask.ext.restaction import Resource, Api, schema
@@ -36,35 +34,27 @@ A minimal Flask-Restaction API:
     if __name__ == '__main__':
         app.run(debug=True)
 
-Save this as ``hello.py``, then run it: 
-
 保存为 ``hello.py``, 然后运行：
 
-.. code ::
+.. code::
 
     $ python hello.py
      * Running on http://127.0.0.1:5000/
      * Restarting with reloader
 
-Then open browser, visit ``http://127.0.0.1:5000/hello``
+打开浏览器，访问 http://127.0.0.1:5000/hello
 
-打开浏览器，访问 ``http://127.0.0.1:5000/hello``
-
-You will see: 
-
-.. code ::
+.. code::
 
     {
       "hello": "world"
     }
 
-Visit ``http://127.0.0.1:5000/hello?name=kk``
+再访问 http://127.0.0.1:5000/hello?name=kk
 
-再访问 ``http://127.0.0.1:5000/hello?name=kk``
+你将会看到 
 
-You will see: 
-
-.. code ::
+.. code::
 
     {
       "hello": "kk"
@@ -73,18 +63,15 @@ You will see:
 那么，这些代码是什么意思呢？
 
 1. 首先导入了 :class:`~flask_restaction.Resource` 和 :class:`~flask_restaction.Api` 类
-2. 创建了一个 ``Api`` 类的实例，把 ``Flask`` 类的一个实例作为参数
-3. 创建了一个 ``Hello`` 类，继承自 ``Resource`` 类
+2. 创建了一个 Api 类的实例，把 Flask 类的一个实例作为参数
+3. 创建了一个 Hello 类，继承自 Resource 类
 4. 定义 schema_inputs，它指定了输入参数及格式
 5. 调用 api.add_resource(Hello) ，把 Hello 添加到 api 资源中
-6. 生成 res.js 和 resdocs.html 文件, Visit ``http://127.0.0.1:5000/static/resdocs.html``
+6. 生成 res.js 和 resdocs.html 文件, Visit http://127.0.0.1:5000/static/resdocs.html
 
 
-schema 的用法
+校验输入输出
 -------------------
-
-Since v0.18.0, flask_restaction support tuple_like schema, 
-which can reduce 2/3 of schema code.
 
 从 v0.18.0 开始，flask_restaction 使用 tuple_like schema，它可以少写2/3的 schema 代码。
 
@@ -92,7 +79,7 @@ tuple_like schema::
 
     name = "safestr&required", "world", "you name"
 
-== 等价于::
+等价于::
 
     {
         "desc": "you name",
@@ -102,13 +89,54 @@ tuple_like schema::
     }
 
 
-required 是否是必需的，输入的空字符串和None视作缺少
+*desc*
+    描述
+*required*
+    是否是必需的，输入的空字符串和None视作缺少
 
-validate 指定校验器，比如：int,str,url,email
+*validate*
+    指定校验器，比如：int,str,url,email
 
-default 指定默认值，也可以是一个函数，比如：datetime.now
+*default*
+     指定默认值，也可以是一个函数，比如：datetime.now
 
-schema function is used for combine schemas. Run the code below and you will understand it.
+Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定如何验证输入输出。
+*output_types* 是一个 list，里面的元素是你要返回的自定义类型对象的类型，
+这样返回的对象会被包装成一个 dict。
+
+你可以把 schema 分成几个小零件 ，然后用 schema 函数将它们组合。
+
+.. code-block:: python
+    
+    from flask.ext.restaction import schema
+
+    class Hello(Resource):
+
+        name = "name&required", "world", "name"
+        date = "datetime&required"
+        hello = "str&required", None, "hello"
+
+        schema_inputs = {
+            "get": schema("name"),
+            "post_login": schema("name", "date"),
+        }
+        schema_outputs = {
+            "get": schema("hello"),
+            "post_login": schema("hello", "date")
+        }
+
+        # if you return a custom type object
+        # output_types = [custom_type]
+
+        def get(self, name):
+            return {"hello": name}
+
+        def post_login(self, name, date):
+            return {
+                "hello": name,
+                "date":date,
+            }
+
 
 schema 函数用于将 schema 组合，生成一个新的 schema。运行一下下面的代码你就明白了。
 
@@ -147,21 +175,59 @@ schema 函数用于将 schema 组合，生成一个新的 schema。运行一下�
     pp(park(scope))
 
 
-For more information:
+建议你看一下内置的 validater 
+`built-in validater <https://github.com/guyskk/validater#schema-format>`_
 
-`tuple_like-schema <https://github.com/guyskk/validater#tuple_like-schema-1>`_
+想要了解更多，请移步 `validater <https://github.com/guyskk/validater>`_
 
-If you need different schema with the same name, see 
-https://github.com/guyskk/validater#tuple_like-with_name-schema
 
-Use res.js
+使用 res.js
 -----------
 
-Use res.js to access api is very simple, and you can also use jquery or other libs.
+使用 res.js 可以方便的调用 api ，使用其他的 js 方式调用也是完全可以的。
 
-使用 res.js 可以方便的调用 api ，当然了，使用 jquery 或者其他一些库也是完全可以的。
+使用方式:
 
-Let's write hello.html and save it in static folder
+.. code-block:: javascript
+    
+    #引用 res.js 文件
+    <script type="text/javascript" src="/static/res.js"></script>
+
+    #调用 api
+    res.hello.get(data, function(err, value) {
+        if (!err){
+            document.getElementById("message").innerText = value.hello;
+        }else{
+            alert(err)
+        }
+    });
+
+
+调用 api 的语法为::
+
+    res.resource.action(data, function(err, value), function(progress))
+
+*resource*
+    资源的名称，例如 ``hello``。
+
+*action* 
+    执行的操作，例如 get, post, delete, get_list, post_upload。只要是 httpmethod 或 httpmethod 加下划线 _ 开头就行。
+
+*function(err, value)*
+    请求完成回调函数。
+
+*function(progress)*
+    上传文件进度的回调函数。
+
+*data*
+    请求数据
+
+    - 当 data 是 formdata: 表示上传文件, method 必须是 POST。
+
+    - 当 data 是 string: 表示 input 控件 id, 会从其中获取要上传的文件, method 必须是 POST。
+
+    - 其余情况下 data 是普通 js 对象
+
 
 现在来写一个 hello.html 并保存到 static 目录
 
@@ -193,90 +259,37 @@ Let's write hello.html and save it in static folder
     </body>
     </html>
 
-Then open browser, visit ``http://127.0.0.1:5000/static/hello.html``
+打开浏览器，访问 http://127.0.0.1:5000/static/hello.html
 
-Have a try, and notice schema_inputs's ``"validate": "safestr"``
+尝试一下，注意 schema_inputs 中的 ``"validate": "safestr"``
 
-打开浏览器，访问 ``http://127.0.0.1:5000/static/hello.html``
+你如果输入一些不安全的字符（黑客攻击），例如::
 
-尝试一下，注意 ``schema_inputs`` 中的 ``"validate": "safestr"``
+    <script type="text/javascript">alert("haha")</script>
 
-If you input some unsafe strings (hacker attack), such as: 
+你输入的字符串会被转义成如下内容::
 
-你如果输入一些不安全的字符（黑客攻击），例如：
-
-``<script type="text/javascript">alert("haha")</script>``
-
-Then you inputs will be escape to avoid attack:
-
-你输入的字符串会被转义成如下内容：
-
-``&lt;script type=&#34;text/javascript&#34;&gt;alert(&#34;haha&#34;)&lt;/script&gt;``
-
-**注意 look at this:**
-
-.. code-block:: javascript
-    
-    #引用 res.js 文件
-    <script type="text/javascript" src="/static/res.js"></script>
-
-    #调用 api
-    res.hello.get(data, function(err, value) {
-        if (!err){
-            document.getElementById("message").innerText = value.hello;
-        }else{
-            alert(err)
-        }
-    });
+    &lt;script type=&#34;text/javascript&#34;&gt;alert(&#34;haha&#34;)&lt;/script&gt;
 
 
-You can use ``res.resource.action(data, function(err, value), function(progress))`` to access resources provided by rest api.
+构建 URL
+---------------------------
 
-你可以用 ``res.resource.action(data, function(err, value))`` 调用 api.
+可以使用 flask 中的 url_for() 函数构建指定 action 的 URL。
 
-- ``resource`` is resource's name, such as ``hello``, is not always resource's classname, 
-  depends on :meth:`flask_restaction.Api.add_resource` 
-
-- ``action`` is ... such as ``get`` , ``post`` ... 
-  not only http method, ``get_list`` , ``post_upload`` is ok, 
-  just make sure start with http method and ``_`` .
-
-- ``function(err, value)`` is callback function called when request finish
-
-- ``function(progress)`` is callback used for upload
-
-- If you use blueprint, then You should use 
-  ``res.blueprint.resource.action(data, function(err, value))`` to access resources.
-
-- ``resource`` 是 resource 的名称，例如 ``hello``，不一定是 resource 的 classname ，
-  取决于 :meth:`flask_restaction.Api.add_resource` 。
-
-- ``action`` 是 ... 例如 ``get`` , ``post`` ... 不仅仅是 http method, 
-  ``get_list`` , ``post_upload`` 也可以，只要是以 http method 加 下划线 ``_`` 开头就行。
-
-- ``function(err, value)`` 是请求完成回调函数
-
-- ``function(progress)`` 是上传文件时的回调函数
-
-URL 构建 Use url_for 
---------------------
-
-可以使用 flask 中的 url_for() 函数构建指定 action 的 URL，
-endpoint 名称是 ``resource@action_lastpart`` 。
-
-The endpoint is ``resource@action_lastpart``::
+endpoint 名称是resource@action_lastpart::
     
     resource -> resource name or resource's class name, lowcase
     action   -> action's last part name, lowcase
 
-格式 format::
+格式::
 
     Resource.action_lastpart -> url_for("resource@lastpart") -> /resource/lastpart
 
 For example::
     
     Hello.get -> url_for("hello") -> /hello
-    # suppose Hello.get_list exists
+    # 假设 Hello.get_list 存在
     Hello.get_list -> url_for("hello@list") -> /hello/list
     Hello.post_login -> url_for("hello@login") -> /hello/login
 
@@ -284,18 +297,8 @@ For example::
 Py2&py3
 ---------
 
-Flask-restaction support py3 since v0.17.0, tested on py27 and py34.
-and more tests is required to make it more stable.
-
-Also, you should use the latest version of flask.
-
-You'd better put statements below to the head of all modules if you use py2. 
-It will reduce you work of transfer to py3.
-
 Flask-restaction 从 v0.17.0 开始支持 py3，在 py27 和 py34 上测试通过。
-但是还需要更多测试来使它更稳定。
-
-同时，你要使用最新版的 flask 。
+但是还需要更多测试来使它更稳定。同时，你要使用最新版的 flask 。
 
 如果你使用 py2 ，最好将下面几句加到每个模块的开头。这样在你以后迁移到 py3 的时候会容易的多。
 
@@ -307,127 +310,18 @@ Flask-restaction 从 v0.17.0 开始支持 py3，在 py27 和 py34 上测试通�
     from __future__ import absolute_import
 
 
-Validater 验证输入输出
-------------------------
-
-Resource class use ``schema_inputs``, ``schema_outputs``, ``output_types`` 
-to validate inputs and outputs.
-
-The ``output_types`` is a list of class that you want to return, 
-then the return value will be proxy as a dict.
-
-You can split schema dict into some tuples and combine them into 
-``schema_inputs`` and ``schema_outputs``.
-
-Resource 类使用 ``schema_inputs``, ``schema_outputs``, ``output_types`` 来指定如何验证输入输出。
-
-``output_types`` 是一个 list ，列表中的元素是你返回的自定义类型对象的类型，
-这样返回的对象会被包装成一个 dict 。
-
-你可以把 schema 分成几个 tuple ，然后在 ``schema_inputs`` and ``schema_outputs`` 中合并。
-
-For example:
-
-.. code-block:: python
-
-    class Hello(Resource):
-
-        schema_name = ("name", {
-            "desc": "name",
-            "required": True,
-            "validate": "name",
-            "default": "world"
-        })
-        schema_date = ("date", {
-            "required": True,
-            "validate": "datetime",
-        })
-        schema_hello = ("hello", {
-            "desc": "hello",
-            "required": True,
-            "validate": "str",
-        })
-        schema_inputs = {
-            "get": dict([schema_name]),
-            "post_login": dict([schema_name, schema_date]),
-        }
-        schema_outputs = {
-            "get": dict([schema_hello]),
-            "post_login": dict([schema_hello, schema_date])
-        }
-
-        # if you return a custom type object
-        # output_types = [custom_type]
-
-        def get(self, name):
-            return {"hello": name}
-
-        def post_login(self, name, date):
-            return {
-                "hello": name,
-                "date":date,
-            }
-
-也可以使用 tuple_like schema:
-
-.. code-block:: python
-    
-    from flask.ext.restaction import schema
-
-    class Hello(Resource):
-
-        name = "name&required", "world", "name"
-        date = "datetime&required"
-        hello = "str&required", None, "hello"
-
-        schema_inputs = {
-            "get": schema("name"),
-            "post_login": schema("name", "date"),
-        }
-        schema_outputs = {
-            "get": schema("hello"),
-            "post_login": schema("hello", "date")
-        }
-
-        # if you return a custom type object
-        # output_types = [custom_type]
-
-        def get(self, name):
-            return {"hello": name}
-
-        def post_login(self, name, date):
-            return {
-                "hello": name,
-                "date":date,
-            }
-
-For more information, see `validater <https://github.com/guyskk/validater>`_
-
-I suggest you have a look at 
-`built-in validater <https://github.com/guyskk/validater#schema-format>`_
-
-想要了解更多，请移步 `validater <https://github.com/guyskk/validater>`_
-
-建议你看一下内置的 validater 
-`built-in validater <https://github.com/guyskk/validater#schema-format>`_
 
 
-Authorize 身份验证
+身份验证
 -------------------
 
-flask_restaction use ``json web token`` for authorize.
-
-flask_restaction 使用 ``json web token`` 作为身份验证工具。
+flask_restaction 使用 *json web token* 作为身份验证工具。
 
 see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
-**You should add you own auth_secret to api**, default auth_secret is ``"SECRET"``, see :class:`~flask_restaction.Api` for detail
+**你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``。
 
-**你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``, see :class:`~flask_restaction.Api` for detail。
-
-You can access auth info by ``g.me``, it's struct is:
-
-你可以通过 ``g.me`` 获取用户的身份信息，它的结构如下:
+你可以通过 ``flask.g.me`` 获取用户的身份信息，它的结构如下:
 
 .. code::
 
@@ -436,14 +330,11 @@ You can access auth info by ``g.me``, it's struct is:
         "role":user_role
     }
 
-And you should add auth header(default ``Authorization``) to response after user login, it's value can be generate
-by ``api.gen_token(me)`` or ``api.gen_auth_token(me)``.
+此外，你需要在用户登录成功后返回 auth 响应头(default ``Authorization``) 到响应中，它的值可以通过 ``api.gen_token(me)`` or ``api.gen_auth_token(me)`` 生成。
 
-此外，你需要在用户登录成功后添加 auth 响应头(default ``Authorization``) 到响应中，它的值可以通过 ``api.gen_token(me)`` or ``api.gen_auth_token(me)`` 生成。
+**fn_user_role 函数**
 
-**fn_user_role param of Api (fn_user_role 函数)**
-
-Flask-Restaction didn't know the role of a user, so you should provide a function that return the role.
+Flask-Restaction 不知道用户是什么角色, 所有需要你提供一个能返回用户角色的函数
 
 .. code-block:: python
 
@@ -454,14 +345,15 @@ Flask-Restaction didn't know the role of a user, so you should provide a functio
 
     api = Api(app, fn_user_role=user_role)
 
-This function will not be called if g.me["id"] is None.
-It's return value will be in ``g.me["role"]``, then permission system will use it.
+如果 ``g.me["id"] is None``，那么不会调用 fn_user_role。
 
-The Usage of user_role（user_role 函数的用处）
+fn_user_role 的返回值会保存在 ``g.me["role"]`` 中，权限系统需要用到它。
 
-A application(website) will be divide into some fields (modules). A user can be different role in different field, and only one role in one field. A field consist of some Resources or only one Resource(user is also a Resource), so this can avoid the effect of user/permission system when add new Resource or new field to you application.
+**为何这样设计？**
 
-In permission.json, use "user.role" to indicate fields and role in the field.
+一个应用（网站）通常会划分成几个领域。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource(用户本身也是 Resource)组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
+
+在 permission.json 中，用 user.role 表示领域以及领域中的角色。
 
 .. code::
 
@@ -476,27 +368,15 @@ In permission.json, use "user.role" to indicate fields and role in the field.
             - module2_resource
             - ...
 
-一个应用（网站）通常会划分成几个领域（模块）。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource(用户也是 Resource)组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
 
-在 permission.json 中，用 "user.role" 表示领域以及领域中的角色。
-
-**注意 Note:**
-
-res.js will auto add auth header(default ``Authorization``) to request, and will auto save auth token to localstroge when recive auth header
-
-res.js 会自动添加 auth 请求头 (default ``Authorization``) 到请求中。
+res.js 会自动添加 auth 请求头 (``Authorization``) 到请求中。
 并且当收到 auth 响应头时，会自动将 auth token 保存到浏览器 localstroge 中。
 
-Permission control 权限控制
+
+权限控制
 ------------------------------
 
-``permission.json`` permission table
-
-By default, ``permission.json`` should be saved in root path of you flask application, you can change to other path, see :ref:`api` .
-
-permission subdivide by user.role->resource->action
-
-默认情况下，``permission.json`` 应当文件放在应用的根目录下，你也可以改成放到其他位置， see :ref:`api` 。
+默认情况下，permission.json 应当文件放在应用的根目录下，你也可以改成放到其他位置。
 
 权限按 用户.角色 -> 资源 -> 操作 划分
 
@@ -513,33 +393,23 @@ JSON struct
         ...
     }
 
-- When role is ``*``, represent anonymous user.
+当 role 为 ``*`` 时
+    表示匿名用户的权限。
 
-- When resource is ``*``, represent the role can access all resources all actions, 
-  actions must be ``[]`` and can't has other resource.
+当 resource 为 ``*`` 时
+    表示该角色可以操作所有 resource 的所有 action ， 此时 actions 必须是 ``[]`` 并且不能有其他 resource。
 
-- When resource is ``resource*``, represent the role can access this resource's all action, 
-  actions must be ``[]``.
+当 resource 为 ``resource*`` 时
+    表示该角色可以操作该 resource 的所有 action ， 此时 actions 必须是 ``[]``。
 
-- user.role's format must be "user.role", 
-  and must be combine of a-zA-Z_0-9 and start with a-zA-Z.
-  resource must be combine of a-z_0-9 and start with a-z.
+user.role
+    必须是 user.role 这种格式，中间是一个点号， 并且只能由字母数字和下划线组成，并且以字母开头。
 
-- 当 role 为 ``*`` 时，表示匿名用户的权限。
-
-- 当 resource 为 ``*`` 时，表示该角色可以操作所有 resource 的所有 action ，
-  此时 actions 必须是 ``[]`` 并且不能有其他 resource。
-
-- 当 resource 为 ``resource*`` 时，表示该角色可以操作该 resource 的所有 action ，
-  此时 actions 必须是 ``[]``。
-
-- user.role 必须是 "user.role" 这种格式，中间是一个点号，
-  并且只能由字母数字和下划线组成，并且以字母开头。 
-  resource 只能由小写字母数字和下划线组成，并且以小写字母开头。
+resource
+    只能由小写字母数字和下划线组成，并且以小写字母开头。
 
 
-
-Work with Blueprint 使用蓝图
+使用蓝图
 -----------------------------
 
 .. code-block:: python
@@ -565,49 +435,67 @@ Work with Blueprint 使用蓝图
     api.gen_resdocs()
 
 
-- You should add ``static_folder='something'`` to Blueprint if you need gen_resjs or gen_resdocs, because res.js and resdocs.html is save in Blueprint's static_folder.
+如果你需要 gen_resjs 或 gen_resdocs ，你应当添加 ``static_folder='something'`` 到 Blueprint 中，因为生成的 res.js 和 resdocs.html 都要保存到 Blueprint 的 static 目录中。
 
-- You should do #1, #2, #3, #4 orderly, otherwise will cause error, because Resource urls was registered when register_blueprint and permission was inited after register_blueprint.
-
-- 如果你需要 gen_resjs 或 gen_resdocs ，你应当添加 ``static_folder='something'`` 到 Blueprint 中，因为生成的 res.js 和 resdocs.html 都要保存到 Blueprint 的 static 目录中。
-
-- 你必须按 #1, #2, #3, #4 的顺序组织代码，否则会造成错误。因为 Resource urls 在 register_blueprint 时绑定，permission 在 register_blueprint 之后初始化。
+你必须按 #1, #2, #3, #4 的顺序组织代码，否则会造成错误。因为 Resource urls 在 register_blueprint 时绑定，permission 在 register_blueprint 之后初始化。
 
 
-Config 配置
+配置
 -----------------------------
 
-You can load config to ``app.config`` (from config file or any other ways), and when api init with app other than blueprint, it will load configs from ``app.config``.
-
-If api init with blueprint, you can use :meth:`~flask_restaction.Api.config` and pass ``app.config`` to it.
-
-你可以把配置加载到 ``app.config`` （从配置文件中或其他方式），当 api 初始化接收参数是 app 而不是 blueprint 的时候它会从 ``app.config`` 从加载配置。
+你可以把配置加载到 app.config （从配置文件中或其他方式），当 api 初始化接收参数是 app 而不是 blueprint 的时候它会从 app.config 从加载配置。
 
 如果 api 接收参数是 blueprint ，你可以使用 :meth:`~flask_restaction.Api.config` 并传递 ``app.config`` 给它。
 
-configs and default value:
+配置项:
 
-.. code-block:: python
+.. list-table:: 
+  :widths: 20 20 30
+  :header-rows: 1
 
-    API_PERMISSION_PATH = "permission.json", #权限配置文件的路径
-    API_AUTH_HEADER = "Authorization", #身份验证请求头
-    API_AUTH_TOKEN_NAME = "res_token", #身份验证token保存在localstorage中的名称
-    API_AUTH_SECRET = "SECRET", #用于加密身份验证token的密钥
-    API_AUTH_ALG = "HS256", #用于加密身份验证token的算法
-    API_AUTH_EXP = 1200, #身份验证token的过期时间，单位是秒
-    API_RESJS_NAME = "res.js", #res.js文件名
-    API_RESDOCS_NAME = "resdocs.html", #resdocs.html文件名
-    API_BOOTSTRAP = "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css" 
-                                       #用于resdocs.html中
-    API_DOCS = "", # docs of api
+  * - 名称
+    - 默认值
+    - 说明
+  * - API_PERMISSION_PATH
+    - permission.json
+    - 权限配置文件的路径
+  * - API_PERMISSION_PATH
+    - permission.json
+    - 权限配置文件的路径
+  * - API_AUTH_HEADER
+    - Authorization
+    - 身份验证请求头
+  * - API_AUTH_TOKEN_NAME
+    - res_token
+    - 身份验证token保存在localstorage中的名称
+  * - API_AUTH_SECRET
+    - SECRET
+    - 用于加密身份验证token的密钥
+  * - API_AUTH_ALG
+    - HS256
+    - 用于加密身份验证token的算法
+  * - API_AUTH_EXP
+    - 1200
+    - 身份验证token的过期时间，单位是秒
+  * - API_RESJS_NAME
+    - res.js
+    - res.js文件名
+  * - API_RESDOCS_NAME
+    - resdocs.html
+    - resdocs.html文件名
+  * - API_BOOTSTRAP
+    - ``http://apps.bdimg.com/libs/
+      bootstrap/3.3.4/css/bootstrap.css``
+    - 用于resdocs.html中
+  * - API_DOCS
+    - 
+    - docs of api
 
-You can also add params when app init, the params will used as config and override config in ``app.config``.
-
-你也可以在 api 初始化的时候传递参数，这些参数也会被当作配置，并且会覆盖 ``app.config`` 中的配置。
-
+你也可以在 api 初始化的时候传递参数，这些参数也会被当作配置，并且会覆盖 app.config 中的配置。
 see :class:`~flask_restaction.Api`
 
-Test 测试
+
+测试
 ------------------------
 
 For example:
@@ -643,7 +531,7 @@ c.resource.action(data) 的返回值是 namedtuple("ResponseTuple", "rv code hea
 测试的时候先创建应用环境，伪造 2，执行 3，直接返回 3 的结果而不执行4。
 
 
-Process Flow 请求处理流程
+请求处理流程
 -----------------------------
 
 .. image:: _static/flask-restaction.svg

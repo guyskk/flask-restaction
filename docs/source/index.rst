@@ -19,25 +19,23 @@ Flask-Restaction 是什么
 
 Flask-Restaction 是一个为 RESTful API 而生的 Web 框架
 
-You can do this Easily: 
-
-- Create restful api 
+- 创建 RESTful API
     
-- Validate inputs and Convert outputs
+- 校验用户输入以及将输出转化成合适的响应格式
     
-- Authorize and Permission control
+- 身份验证和权限控制
 
-- Easy to test
+- 易于测试
 
-- Auto generate res.js and documents
+- 自动生成 res.js 和 API 文档
     
-- Support py3
+- 支持 python3
 
 
-Install
+安装
 -------
 
-.. code :: python
+.. code:: python
 
     pip install flask-restaction
 
@@ -49,7 +47,6 @@ Install
    :maxdepth: 2
 
    quickstart
-   validater
    resjs
 
 
@@ -59,3 +56,4 @@ API参考
    :maxdepth: 2   
 
    api
+   validater

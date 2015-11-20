@@ -8,12 +8,6 @@ API
 这里涵盖了flask_restaction 提供 的所有接口。
 
 
-exporters
------------------
-.. automodule:: flask_restaction.exporters
-   :members:
-   :undoc-members:
-
 Api
 ------------------
 
@@ -39,3 +33,8 @@ Permission
    :undoc-members:
 
 
+exporters
+-----------------
+.. automodule:: flask_restaction.exporters
+   :members:
+   :undoc-members:
