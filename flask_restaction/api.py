@@ -240,11 +240,11 @@ class Api(object):
         :param name: resource name
         :return: name, res
 
-        name:
+        name::
 
             resource name
 
-        res:
+        res::
 
             {
                 "class": res_cls,
@@ -254,7 +254,7 @@ class Api(object):
                 "rules": rules,
             }
 
-        action:
+        action::
 
             namedtuple("Action", "action httpmethod act url endpoint docs inputs outputs")
 
@@ -313,7 +313,7 @@ class Api(object):
         :param name: resource name
         :param test_config: some data used in test
 
-        test_config:
+        test_config::
 
             {
                 "resource":"resource name",

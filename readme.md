@@ -1,14 +1,16 @@
 # Flask-Restaction
 
-### you can do this Easily
+Flask-Restaction is a web framwork born to create RESTful API
+
+### You can do this Easily
 
 - Create restful api 
 - Validate inputs and Convert outputs
 - Authorize and Permission control
-- Auto generate res.js
-- Auto generate documents
+- Easy to test
+- Auto generate res.js and documents
+- Support py3
 
-**Support py3 since v0.17.0**
 
 ### Install
     
@@ -25,6 +27,13 @@
 http://flask-restaction.readthedocs.org/zh/latest/
 
 ### Test
+
+First, install test tools:
+
+    pip install pytest
+    pip install tox
+
+Then, run tests
 
     py.test
 
