@@ -334,7 +334,7 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
 **fn_user_role 函数**
 
-Flask-Restaction 不知道用户是什么角色, 所有需要你提供一个能返回用户角色的函数
+Flask-Restaction 不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
 
 .. code-block:: python
 
@@ -456,9 +456,6 @@ resource
   * - 名称
     - 默认值
     - 说明
-  * - API_PERMISSION_PATH
-    - permission.json
-    - 权限配置文件的路径
   * - API_PERMISSION_PATH
     - permission.json
     - 权限配置文件的路径
