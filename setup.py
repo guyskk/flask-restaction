@@ -12,7 +12,7 @@ with open(join(dirname(__file__), 'requires.txt'), 'r') as f:
 
 setup(
     name="flask-restaction",
-    version="0.19.3",
+    version="0.19.4",
     description="a powerful flask ext for create restful api",
     long_description=__doc__,
     author="guyskk",

@@ -14,7 +14,7 @@ from __future__ import absolute_import
 """
 import re
 import pkg_resources
-__version__ = "0.19.1"
+__version__ = "0.19.4"
 
 
 import logging
