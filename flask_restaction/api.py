@@ -526,12 +526,10 @@ class Api(object):
             rv = self.handle_error_func(ex)
             if rv is not None:
                 return rv
-        if not isinstance(ex, HTTPException):
-            return None
-        if ex.code >= 500 and not current_app.debug:
-            return "interal server error", ex.code
-        else:
+        if isinstance(ex, HTTPException):
             return ex.description, ex.code
+        else:
+            return None
 
     def after_request(self, f):
         """decorater"""
