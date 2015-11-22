@@ -13,8 +13,7 @@ from __future__ import absolute_import
 import six
 
 from flask.views import View
-from flask import g, current_app, abort
-from werkzeug.exceptions import HTTPException
+from flask import g, abort
 from validater import validate
 from flask_restaction import unpack
 
@@ -101,12 +100,6 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
             rv = cls.handle_error_func[0](ex)
             if rv is not None:
                 return rv
-        if not isinstance(ex, HTTPException):
-            return None
-        if ex.code >= 500 and not current_app.debug:
-            return "interal server error", ex.code
-        else:
-            return ex.description, ex.code
 
     @classmethod
     def after_request(cls, f):

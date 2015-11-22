@@ -200,3 +200,18 @@ def test_testclient():
         api = Api()
         with api.test_client() as c:
             pass
+
+
+def test_testclient_not_exception():
+    app = Flask(__name__)
+    api = Api(app)
+    api.permission.remove("*")
+
+    class Hello(Resource):
+
+        def get(self):
+            return "hello"
+
+    api.add_resource(Hello)
+    with api.test_client() as c:
+        assert c.hello.get().code == 403

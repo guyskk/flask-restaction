@@ -23,6 +23,7 @@ import jwt
 import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
+from werkzeug.exceptions import HTTPException
 from collections import namedtuple
 from functools import partial
 import json
@@ -324,15 +325,14 @@ class Api(object):
                 resource = test_config["resource"]
                 action = test_config["action"]
                 me = {"id": test_config["user_id"]}
-                role = self.parse_role(me["id"], resource)
                 data = test_config["data"]
                 if data is None:
                     data = {}
             else:
                 resource, action = self.parse_request()
                 me = self.parse_me()
-                role = self.parse_role(me["id"], resource)
                 data = get_request_data()
+            role = self.parse_role(me["id"], resource)
             g.resource = resource
             g.action = action
             g.me = me
@@ -348,14 +348,12 @@ class Api(object):
                     # ignore *args, **kwargs and Resource don't need them
                     resp = obj.dispatch_request(data=data)
             except Exception as ex:
-                if self.handle_error_func:
-                    resp = self.handle_error_func(ex)
+                resp = self._handle_error(ex)
                 if resp is None:
                     raise
             resp = self._after_request(*unpack(resp))
             if test_config:
-                ResponseTuple = namedtuple(
-                    "ResponseTuple", "rv code header")
+                ResponseTuple = namedtuple("ResponseTuple", "rv code header")
                 rv, code, header = resp
                 if code is None:
                     code = 200
@@ -523,6 +521,18 @@ class Api(object):
             rv, code, headers = fn(rv, code, headers)
         return rv, code, headers
 
+    def _handle_error(self, ex):
+        if self.handle_error_func:
+            rv = self.handle_error_func(ex)
+            if rv is not None:
+                return rv
+        if not isinstance(ex, HTTPException):
+            return None
+        if ex.code >= 500 and not current_app.debug:
+            return "interal server error", ex.code
+        else:
+            return ex.description, ex.code
+
     def after_request(self, f):
         """decorater"""
         self.after_request_funcs.append(f)
@@ -589,6 +599,9 @@ class RestactionClient(object):
     def __exit__(self, exc_type, exc_value, tb):
         return self.app_context.__exit__(exc_type, exc_value, tb)
 
+    def __repr__(self):
+        return "<RestactionClient user_id=%s>" % self.user_id
+
 
 class ResourceClient(object):
     """ResourceClient"""
@@ -601,11 +614,12 @@ class ResourceClient(object):
 
     def __getattr__(self, action):
 
+        resource = object.__getattribute__(self, "resource")
+        user_id = object.__getattribute__(self, "user_id")
+
         def view_client(data=None):
             res_cls = object.__getattribute__(self, "res_cls")
-            resource = object.__getattribute__(self, "resource")
             api = object.__getattribute__(self, "api")
-            user_id = object.__getattribute__(self, "user_id")
             test_config = {
                 "user_id": user_id,
                 "resource": resource,
@@ -614,4 +628,9 @@ class ResourceClient(object):
             }
             view = api.make_view(res_cls, resource, test_config=test_config)
             return view()
+        view_client.__doc__ = "user_id=%s resource=%s action=%s" % (
+            user_id, resource, action)
         return view_client
+
+    def __repr__(self):
+        return "<ResourceClient user_id=%s, resource=%s>" % (self.user_id, self.resource)
