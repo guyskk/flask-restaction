@@ -206,6 +206,7 @@ window.res = (function(window) {
     return res;
 
 })(window);
+
 /*
 用法：
     res.resource.action(data,fn,progress)
@@ -233,14 +234,14 @@ window.res = (function(window) {
             if(window.localStorage){
                 _token = window.localStorage.{{apiinfo.auth_token_name}};
                 if(_token){
-                    header["{{apiinfo.auth_token_name}}"]=_token;
+                    header["{{apiinfo.auth_header}}"]=_token;
                 }
             }
         }
     }
 
     function saveToken(xhr) {
-        token=xhr.getResponseHeader("{{apiinfo.auth_token_name}}")
+        token=xhr.getResponseHeader("{{apiinfo.auth_header}}")
         if (token!==null && window.localStorage) {
             window.localStorage.{{apiinfo.auth_token_name}} = token;
         }
