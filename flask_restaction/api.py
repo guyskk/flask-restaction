@@ -21,11 +21,12 @@ import os
 from os.path import join, exists
 import jwt
 import inspect
+import time
 from datetime import datetime, timedelta
 from jinja2 import Template
 from werkzeug.exceptions import HTTPException
 from collections import namedtuple
-from functools import partial
+import functools
 import json
 from validater import add_validater
 from . import exporters, unpack
@@ -33,6 +34,7 @@ from . import Permission
 from . import pattern_action, pattern_endpoint
 from . import res_js, res_docs
 from . import logger
+from . import profiler
 
 _default_config = {
     "permission_path": "permission.json",
@@ -46,6 +48,7 @@ _default_config = {
     "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
     "fn_user_role": None,
     "docs": "",
+    "enable_profiler": False,
 }
 
 
@@ -117,10 +120,14 @@ class Api(object):
     :param bootstrap: url for bootstrap.css, used for resdocs
     :param fn_user_role: a function that return user's role.
     :param docs: api docs
+    :param enable_profiler: enable profiler
 
     .. versionadded:: 0.19.3
         docs: api docs
         test_client: a test_client
+
+    .. versionadded:: 0.19.4
+        enable_profiler: enable profiler
 
     default value::
 
@@ -136,6 +143,7 @@ class Api(object):
             "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
             "fn_user_role": None,
             "docs": "",
+            "enable_profiler": False,
         }
 
     fn_user_role::
@@ -159,27 +167,25 @@ class Api(object):
         self.handle_error_func = None
         self.app = None
         self.blueprint = None
+        self.profiler = Profiler()
         if app is not None:
             self.init_app(app)
-        self.__config(**config)
+        self._config(**config)
 
-    def __config(self, **config):
+    def _config(self, **config):
 
-        # default config
         for k, v in _default_config.items():
-            setattr(self, k, v)
-
-        # from app.config
-        if self.app is not None and not isinstance(self.app, Blueprint):
-            for k in _default_config:
+            if k in config:
+                # from params
+                setattr(self, k, config[k])
+            elif self.app is not None and not isinstance(self.app, Blueprint):
+                # from app.config
                 key = "API_" + k.upper()
                 if key in self.app.config:
                     setattr(self, k, self.app.config[key])
-
-        # from params
-        for k in _default_config:
-            if k in config:
-                setattr(self, k, config[k])
+            if not hasattr(self, k):
+                # don't set to default value if already hasattr k
+                setattr(self, k, v)
 
         self.docs = _ensure_unicode(self.docs)
 
@@ -188,12 +194,13 @@ class Api(object):
 
         :param cfg: a dict
         """
+        c = {}
         for k in _default_config:
             key = "API_" + k.upper()
             if key in cfg:
-                setattr(self, k, cfg[key])
+                c[k] = cfg[key]
 
-        self.docs = _ensure_unicode(self.docs)
+        self._config(**c)
 
     def init_app(self, app, **config):
         """init_app
@@ -201,7 +208,7 @@ class Api(object):
         :param app: Flask or Blueprint
         """
         self.app = app
-        self.__config(**config)
+        self._config(**config)
         self.url_prefix = None
         if isinstance(app, Blueprint):
             self.blueprint = app
@@ -276,8 +283,8 @@ class Api(object):
 
         actions = []
 
-        dumps = partial(json.dumps, indent=2, sort_keys=True,
-                        ensure_ascii=False, default=_normal_validate)
+        dumps = functools.partial(json.dumps, indent=2, sort_keys=True,
+                                  ensure_ascii=False, default=_normal_validate)
 
         for action, (meth, act) in zip(methods, meth_act):
             if act == "":
@@ -321,6 +328,7 @@ class Api(object):
             }
         """
         def view(*args, **kwargs):
+
             if test_config:
                 resource = test_config["resource"]
                 action = test_config["action"]
@@ -337,7 +345,6 @@ class Api(object):
             g.action = action
             g.me = me
             g.me["role"] = role
-
             try:
                 resp = self._before_request()
                 if resp is None:
@@ -352,6 +359,7 @@ class Api(object):
                 if resp is None:
                     raise
             resp = self._after_request(*unpack(resp))
+
             if test_config:
                 ResponseTuple = namedtuple("ResponseTuple", "rv code header")
                 rv, code, header = resp
@@ -372,6 +380,8 @@ class Api(object):
         view.__doc__ = cls.__doc__
         view.__module__ = cls.__module__
         view.methods = cls.methods
+        if self.enable_profiler:
+            view = self.profiler.measure(view)
         return view
 
     def add_resource(self, res_cls, name=None, *class_args, **class_kwargs):
@@ -389,6 +399,10 @@ class Api(object):
             self.app.add_url_rule(
                 url, endpoint=end, view_func=view, methods=res["httpmethods"])
         self.resources[name] = res
+
+    def add_profiler_resource(self):
+        """add profiler.Profiler to resources"""
+        self.add_resource(profiler.Profiler, profiler_data=self.profiler.data)
 
     def _gen_from_template(self, tmpl, name):
         """genarate something and write to static_folder
@@ -632,3 +646,31 @@ class ResourceClient(object):
 
     def __repr__(self):
         return "<ResourceClient user_id=%s, resource=%s>" % (self.user_id, self.resource)
+
+
+class Profiler(object):
+    """docstring for Profiler"""
+
+    def __init__(self):
+        self.data = {}
+
+    def put(self, resource, action, elapsed):
+        self.data.setdefault(resource, {})
+        self.data[resource].setdefault(
+            action, {"max": 0, "min": 0, "avg": 0, "count": 0, })
+        act = self.data[resource][action]
+        act["max"] = max(act["max"], elapsed)
+        act["min"] = min(act["min"] or elapsed, elapsed)
+        act["count"] += 1
+        p = 1.0 / float(act["count"])
+        act["avg"] = act["avg"] * (1 - p) + elapsed * p
+
+    def measure(self, fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            time_begin = time.time()
+            ret = fn(*args, **kwargs)
+            time_end = time.time()
+            self.put(g.resource, g.action, time_end - time_begin)
+            return ret
+        return wrapper
