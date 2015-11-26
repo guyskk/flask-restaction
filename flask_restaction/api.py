@@ -657,11 +657,9 @@ class Profiler(object):
     def put(self, resource, action, elapsed):
         self.data.setdefault(resource, {})
         self.data[resource].setdefault(
-            action, {"max": 0, "min": 0, "avg": 0, "count": 0, })
+            action, {"max": elapsed, "min": elapsed, "avg": elapsed, "count": 0})
         act = self.data[resource][action]
         act["max"] = max(act["max"], elapsed)
-        if act["min"] == 0:
-            act["min"] = elapsed
         act["min"] = min(act["min"], elapsed)
         act["count"] += 1
         p = 1.0 / float(act["count"])
