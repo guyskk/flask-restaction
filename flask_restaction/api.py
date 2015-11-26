@@ -126,7 +126,7 @@ class Api(object):
         docs: api docs
         test_client: a test_client
 
-    .. versionadded:: 0.19.4
+    .. versionadded:: 0.19.6
         enable_profiler: enable profiler
 
     default value::
