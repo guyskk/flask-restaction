@@ -660,7 +660,9 @@ class Profiler(object):
             action, {"max": 0, "min": 0, "avg": 0, "count": 0, })
         act = self.data[resource][action]
         act["max"] = max(act["max"], elapsed)
-        act["min"] = min(act["min"] or elapsed, elapsed)
+        if act["min"] == 0:
+            act["min"] = elapsed
+        act["min"] = min(act["min"], elapsed)
         act["count"] += 1
         p = 1.0 / float(act["count"])
         act["avg"] = act["avg"] * (1 - p) + elapsed * p
