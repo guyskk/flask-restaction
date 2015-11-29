@@ -7,313 +7,225 @@ permission
 permission.json struct:
 
     {
-        "*": {
-            "user": ["get"]
-        }
-        "user.admin": {
-            "*": []
+        "user_role": {
+            "resource": "res_role"
         },
-        "user.super": {
-            "bloguser*": [],
-            "userinfo*": []
+        "user_role": {
+            "resource": "owner"
         },
-        "user.normal": {
-            "comment": ["post", "post_by3", "put"],
-            "user": ["get_me", "delete", "put_password"],
-            "userinfo": ["get_me", "put"]
-        },
-        "monkey.king": {
-            "monkey*": [],
-            "fruit*": []
+        "user_role": {
+            "resource": "other"
         }
     }
 
-- the key's format is: ``user.role``.
-- resource must be in lowercase.
-- a resource can't belong to more than one user
+resource.json struct::
+
+    {
+        "resource": {
+            "other": ["actions"],
+            "res_role": ["action"]
+        }
+    }
+
+- resource is lowercase
+- resource.json is for programer
+- permission.json is for website manager, and can be changed via UI
+- owner, other are special res_role, owner means all actions
+- every one can access other actions, needn't add that ctions to every res_role
 """
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import json
-import re
 import copy
-from flask_restaction import pattern_action
-pattern_role = re.compile(r"^([A-Za-z_][A-Za-z_0-9]+)\.([A-Za-z][A-Za-z_0-9]+)$")
-pattern_res = re.compile(r"^([a-z_][a-z_0-9]+)$")
+from flask import abort
+from flask_restaction import pattern_action, Resource, schema
 
 
-def validate(obj):
-    """验证 permission 数据格式是否正确
+def load_config(resource_json, permission_json):
+    """load resource.json and permission.json
 
-    :param obj: 从 json 文件读取进来的dict对象
+    :param resource_json: path of resource.json
+    :param permission_json: path of permission.json
     """
-    assert isinstance(obj, dict), \
-        "invalid obj, obj must be a dict: '%s'" % obj
-    for role, perm in obj.items():
-        assert role == "*" or pattern_role.match(role),\
-            "invalid role: '%s'" % role
-        assert isinstance(perm, dict), \
-            "invalid permission, permission must be a dict: '%s'" % perm
-        for res, actions in perm.items():
-            if res == "*":
-                assert len(perm) == 1, \
-                    "invalid resource, '*' resource must be the only resource"
-                assert actions == [], \
-                    "invalid resource, '*' resource's actions must be []"
-            elif res[-1:] == "*":
-                assert pattern_res.match(res[:-1]),\
-                    "invalid resource: '%s'" % res
-                assert actions == [], \
-                    "invalid resource, actions must be []: '%s'" % res
-            else:
-                assert pattern_res.match(res), \
-                    "invalid resource: '%s'" % res
-                assert isinstance(
-                    actions, list), \
-                    "invalid actions, actions must be a list: '%s'" % actions
-                for act in actions:
-                    assert pattern_action.match(act), \
-                        "invalid action: '%s'" % act
+    try:
+        with open(resource_json) as f_resource, open(permission_json) as f_permission:
+            resource = json.load(f_resource, encoding="utf-8")
+            permission = json.load(f_permission, encoding="utf-8")
+    except IOError as e:
+        e.strerror = 'Unable to load configuration file (%s)' % e.strerror
+        raise
+    return resource, permission
 
 
-def parse_userroles(permission):
-    """parse {user: [roles]} from permission
+def parse_config(resource, permission):
+    """parse resource and permission, make it easy to use
 
-    For example:
-
-        {
-            "bloguser.admin": {
-                "*": []
-            },
-            "bloguser.normal": {
-                "githooks": ["post", "post_update"]
-            }
-        }
-
-    will return:
-
-        {
-            "bloguser": ["admin", "normal"]
-        }
-
+    :param resource: dict from resource.json
+    :param permission: dict from permission.json
     :return:
 
         {
-            "user": ["role1","role2"...],
-            ...
+            (user_role, resource): (res_role, ["actions"])
         }
     """
-    d = {}
-    for k in permission:
-        if k == "*":
-            continue
-        user, role = pattern_role.findall(k)[0]
-        d.setdefault(user, set())
-        d[user].add(role)
-    return d
+    result = {}
+    for user_role in permission:
+        for resource_name, res_role in permission[user_role].items():
+            assert resource_name.islower(), \
+                "resource should in lowercase: %s" % resource_name
+            res = resource[resource_name]
+            if res_role != "owner" and res_role != "other":
+                assert res_role in res, \
+                    "res_role %s.%s not exists" % (resource_name, res_role)
+            actions = list(set(res.get(res_role, []) + res.get("other", [])))
+            for action in actions:
+                assert pattern_action.match(action), \
+                    "invalid action: %s.%s" % (resource_name, action)
+            result[(user_role, resource_name)] = (res_role, actions)
+    # user_role is None, for anonymous user
+    for resource_name in resource:
+        result[(None, resource_name)] = \
+            ("other", resource[resource_name].get("other", []))
+    return result
 
 
-def parse_resource_user(permission):
-    """parse {resource: user} from permission"""
-    d = {}
-    for k in permission:
-        if k == "*":
-            continue
-        user, role = pattern_role.findall(k)[0]
-        ress = set(permission[k])
-        for r in ress:
-            if r != "*" and r[-1] == "*":
-                r = r[:-1]
-            if r not in d:
-                d[r] = user
-            elif d[r] != user:
-                err = "a resource can't belong to more than one user"\
-                    ": %s -> %s,%s" % (r, d[r], user)
-                raise ValueError(err)
-    return d
+def permit(config, user_role, resource, action):
+    """
+    :return: (permit, res_role)
+    """
+    result = config.get((user_role, resource))
+    if result is None:
+        # get res_role of anonymous user
+        result = config.get((None, resource))
+    if result is None:
+        return (False, None)
+    res_role, actions = result
+    if res_role == "owner":
+        return (True, res_role)
+    else:
+        return (action in actions, res_role)
 
 
-def make_all_role_validaters(userroles):
-    """get all role_validater"""
-    def make_role_validater(roles):
-        def validater(v):
-            if v in roles:
-                return (True, v)
-            else:
-                return (False, "")
-
-        return validater
-
-    validaters = {}
-    for user, roles in userroles.items():
-        roles = ["%s.%s" % (user, r) for r in roles]
-        validaters["role_%s" % user] = make_role_validater(roles)
-    return validaters
-
-
-class Permission(object):
+class Permission(Resource):
 
     """Permission
 
-    :param filepath: path of permission.json
-    :param jsonstr: json string
-    :param pdict: python dict
+    res_role中owner权限最高，other权限最低
     """
+    user_role = "unicode&required", None, "角色"
+    resource = "unicode&required"
+    action = "unicode&required"
 
-    def __init__(self, filepath=None, jsonstr=None, pdict=None):
-
-        if filepath is not None:
-            try:
-                with open(filepath) as f:
-                    jsonstr = f.read()
-            except IOError as e:
-                e.strerror = 'Unable to load configuration file (%s)' % e.strerror
-                raise
-        if jsonstr is not None:
-            pdict = json.loads(jsonstr)
-        if pdict is not None:
-            self._parse_permission(pdict)
-        else:
-            self.permission = {}
-
-    def _parse_permission(self, p):
-        """validate permission and parse permission"""
-        validate(p)
-        userroles = parse_userroles(p)
-        role_validaters = make_all_role_validaters(userroles)
-        resource_user = parse_resource_user(p)
-        self.userroles = userroles
-        self.role_validaters = role_validaters
-        self.resource_user = resource_user
-        self.permission = p
-
-    def permit(self, role, resource, action):
-        """判断角色是否有对应的权限
-
-        :param role: 角色, '*' 或 None 表示 anonymous user
-        :param resource: 资源
-        :param action: 操作
-        """
-        if role is None:
-            role = "*"
-        if role in self.permission:
-            perm = self.permission[role]
-            for r, a in perm.items():
-                if r == "*" or resource == r[:-1]:
-                    return True
-                elif resource == r:
-                    return action in a
-            return False
-        elif "*" in self.permission:
-            return self.permit("*", resource, action)
-        else:
-            return False
-
-    def which_user(self, resource):
-        """return resource belong to which user"""
-        if resource not in self.resource_user:
-            return self.resource_user.get("*")
-        return self.resource_user.get(resource)
-
-    def dumps(self):
-        """将权限分配表导出为 json 格式字符串
-        """
-        return json.dumps(self.permission, indent=4)
-
-    def dump(self, filepath):
-        """将权限分配表用 json 格式保存到文件
-
-        :param filepath: 文件路径
-        """
-        with open(filepath, "w") as f:
-            f.write(self.dumps())
-
-    def add(self, role, resource, action=None):
-        """给角色添加权限，可以使用 ``'*'`` 符号。
-
-        当 role, resource, action 不存在时会自动创建。
-
-        :param role: 角色
-        :param resource: 资源
-        :param action: 操作
-
-        例如::
-
-            permission.add("user.admin", "*")
-            permission.add("user.poster", "photo*")
-            permission.add("*", "photo", "get")
-        """
-        p = copy.deepcopy(self.permission)
-        if role not in p:
-            p[role] = {}
-        r = p[role]
-        if resource == "*":
-            r.clear()
-            r[resource] = []
-        elif resource[-1:] == "*":
-            if resource[:-1] in r:
-                del r[resource[:-1]]
-            r[resource] = []
-        elif "*" not in r and (resource + "*") not in r:
-            if resource not in r:
-                r[resource] = []
-            if action not in r[resource]:
-                r[resource].append(action)
-
-        if p != self.permission:
-            try:
-                self._parse_permission(p)
-            except Exception as ex:
-                ex.message = "%s" % ex.message
-                raise
-
-    def remove(self, role, resource=None, action=None):
-        """移除权限
-
-        :param role: 角色
-        :param resource: 资源
-        :param action: 操作
-
-        - 当 ``role!=None, resource==None`` , 删除 role
-        - 当 ``role!=None, resource!=None,action==None`` , 删除 resource
-        - 当 ``role, resource, action`` 不存在时不进行操作也不抛 Exception
-        """
-        if role in self.permission:
-            r = self.permission[role]
-            if resource is None:
-                del self.permission[role]
-            elif resource in r:
-                if action is None:
-                    del r[resource]
-                elif action in r[resource]:
-                    r[resource].remove(action)
-
-    def __repr__(self):
-        return repr(self.permission)
-
-    def __str__(self):
-        return str(self.permission)
-
-if __name__ == '__main__':
-    pdict = {
-        "user.admin": {
-            "*": []
+    permit = "bool&required"
+    message = "unicode&required"
+    permission_item = {
+        "user_role": {
+            "validate": "unicode",
+            "desc": "user_role",
+            "required": True
         },
-        "user.super": {
-            "bloguser*": [],
-            "userinfo*": [],
-        },
-        "user.normal": {
-            "comment": ["post", "post_by3", "put"],
-            "user": ["get_me", "delete", "put_password"],
-            "userinfo": ["get_me", "put"],
-        },
-        "monkey.king": {
-            "monkey*": [],
-            "fruit*": [],
-        }
+        "resources": [{
+            "resource": {
+                "validate": "unicode",
+                "desc": "resource name",
+                "required": True
+            },
+            "res_role": {
+                "validate": "unicode",
+                "desc": "res_role",
+                "required": True
+            },
+        }]
     }
-    p = Permission(pdict=pdict)
-    from pprint import pprint as pp
-    pp(p.resource_user)
+    schema_inputs = {
+        "get_permit": schema("user_role", "resource", "action"),
+        "get_permission": None,
+        "get_resource": None,
+        "post": permission_item,
+        "delete": schema("user_role"),
+    }
+    schema_outputs = {
+        "get_permit": schema("permit"),
+        "get_permission": [permission_item],
+        "get_resource": [{
+            "resource": {
+                "validate": "unicode",
+                "desc": "resource name",
+                "required": True
+            },
+            "res_roles": [{
+                "validate": "unicode",
+                "desc": "res_role",
+                "required": True
+            }]
+        }],
+        "post": schema("message"),
+        "delete": schema("message"),
+    }
+
+    def __init__(self, api):
+        self.api = api
+
+    def get_permit(self, user_role, resource, action):
+        """判断角色是否有对应的权限
+        """
+        return {"permit": permit(self.api.permission_config, user_role, resource, action)}
+
+    def get_permission(self):
+        """获取permission配置信息
+        """
+        result = []
+        for user_role, resources in self.api.permission_permission.items():
+            result_resources = []
+            for resource, res_role in resources.items():
+                result_resources.append({
+                    "resource": resource,
+                    "res_role": res_role
+                })
+            result.append({
+                "user_role": user_role,
+                "resources": result_resources
+            })
+        return result
+
+    def get_resource(self):
+        """获取resource配置信息
+        """
+        result = []
+        for resource, res_roles in self.api.permission_resource.items():
+            result.append({
+                "resource": resource,
+                "res_roles": list(set(list(res_roles) + ["owner"]))
+            })
+        return result
+
+    def post(self, user_role, resources):
+        """添加角色或修改角色"""
+        permission = copy.deepcopy(self.api.permission_permission)
+        permission.setdefault(user_role, {})
+        items = {res["resource"]: res["res_role"] for res in resources}
+        permission[user_role].update(items)
+        self._save_permission(permission)
+        return {"message": "OK"}
+
+    def delete(self, user_role):
+        """删除角色
+        """
+        if user_role in self.api.permission_permission:
+            permission = copy.deepcopy(self.api.permission_permission)
+            del permission[user_role]
+            self._save_permission(permission)
+        return {"message": "OK"}
+
+    def _save_permission(self, permission):
+        try:
+            config = parse_config(self.api.permission_resource, permission)
+            with open(self.api.permission_json, "w") as f:
+                json.dump(permission, f, indent=4)
+            self.api.permission_permission = permission
+            self.api.permission_config = config
+        except IOError as ex:
+            abort(400, "can't save permission to file: %s" % ex)
+        except AssertionError as ex:
+            abort(400, ex.message)

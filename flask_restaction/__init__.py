@@ -46,17 +46,17 @@ def unpack(rv):
         rv, status, headers = rv + (None,) * (3 - len(rv))
     if isinstance(status, (dict, list)):
         headers, status = status, headers
+    if status is None:
+        status = 200
     return (rv, status, headers)
 
-
 from .exporters import exporters, exporter
-from .permission import Permission
+from .views import View
+from validater import schema
 from .resource import Resource
 from .api import Api
-from validater import schema
 
 
 # __all__ can't be unicode
-__all__ = ["Api", "Resource", "schema", "Permission",
-           "exporters", "exporter", "__version__"]
+__all__ = ["Api", "Resource", "schema", "exporters", "exporter", "__version__"]
 __all__ = [str(x) for x in __all__]

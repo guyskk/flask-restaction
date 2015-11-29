@@ -1,12 +1,10 @@
 {
-    "user.admin":{
-        "*":[]
+    "admin":{
+        "user":"owner",
+        "todo":"owner"
     },
-    "user.user":{
-        "todo*":[],
-        "user":["get","delete","post_register","post_login","post_logout"]
-    },
-    "*":{
-        "user":["post_register","post_login"]
+    "user":{
+        "user":"other",
+        "todo":"owner"
     }
 }

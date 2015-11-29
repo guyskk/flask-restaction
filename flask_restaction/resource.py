@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
-from flask.views import View
+from . import View
 from flask import g, abort
 from validater import validate
 from flask_restaction import unpack
@@ -119,13 +119,13 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         cls.handle_error_func = [f]
         return f
 
-    def dispatch_request(self, data):
+    def dispatch_request(self, *args, **kwargs):
         """preproccess request and dispatch request
         """
         try:
             rv = self._before_request()
             if rv is None:
-                rv = self.full_dispatch_request(data)
+                rv = self.full_dispatch_request()
         except Exception as ex:
             rv = self._handle_error(ex)
             if rv is None:
@@ -134,7 +134,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         rv, code, headers = self._after_request(rv, code, headers)
         return rv, code, headers
 
-    def full_dispatch_request(self, data):
+    def full_dispatch_request(self):
         """actual dispatch request, validate inputs and outputs
         """
         fn = getattr(self, g.action, None)
@@ -144,7 +144,7 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         outputs = self.__class__.schema_outputs.get(g.action)
         output_types = self.__class__.output_types
         if inputs is not None:
-            (errors, values) = validate(data, inputs)
+            (errors, values) = validate(g.request_data, inputs)
             if errors:
                 return dict(errors), 400
             else:

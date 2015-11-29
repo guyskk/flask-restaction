@@ -8,9 +8,9 @@ from datetime import datetime
 from validater import add_validater
 
 
-def user_role(uid, user):
+def user_role(uid):
     if uid == 1:
-        return "user.admin"
+        return "admin"
 
 
 def iso_datetime_validater(v):

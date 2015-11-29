@@ -21,32 +21,30 @@ import os
 from os.path import join, exists
 import jwt
 import inspect
-import time
 from datetime import datetime, timedelta
 from jinja2 import Template
 from werkzeug.exceptions import HTTPException
 from collections import namedtuple
 import functools
 import json
-from validater import add_validater
-from . import exporters, unpack
-from . import Permission
+from .permission import Permission, load_config, parse_config, permit
+from . import exporters, unpack, logger
 from . import pattern_action, pattern_endpoint
 from . import res_js, res_docs
-from . import logger
-from . import profiler
+from .testing import RestactionClient
 
 _default_config = {
-    "permission_path": "permission.json",
     "auth_header": "Authorization",
     "auth_token_name": "res_token",
     "auth_secret": "SECRET",
     "auth_alg": "HS256",
     "auth_exp": 1200,
+    "resource_json": "resource.json",
+    "permission_json": "permission.json",
+    "fn_user_role": None,
     "resjs_name": "res.js",
     "resdocs_name": "resdocs.html",
     "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
-    "fn_user_role": None,
     "docs": "",
     "enable_profiler": False,
 }
@@ -84,13 +82,104 @@ def get_request_data():
     elif method in ["post", "put"]:
         if request.mimetype == 'application/json':
             try:
-                return request.get_json()
+                data = request.get_json()
+                if data is not None:
+                    return data
+                else:
+                    return {}
             except:
                 abort(400, "Invalid json content")
         else:
             return request.form
     else:
         return {}
+
+
+def parse_request():
+    """parse resource&action"""
+    find = pattern_endpoint.findall(request.endpoint)
+    if not find:
+        abort(500, "invalid endpoint: %s" % request.endpoint)
+    blueprint, resource, act = find[0]
+    if act:
+        action = request.method.lower() + "_" + act
+    else:
+        action = request.method.lower()
+
+    return resource, action
+
+
+def parse_resource(res_cls, name=None):
+    """
+    :param res_cls: resource class
+    :param name: resource name
+    :return: name, res
+
+    name::
+
+        resource name
+
+    res::
+
+        {
+            "class": res_cls,
+            "docs": res_cls.__doc__,
+            "actions": actions,
+            "httpmethods": httpmethods,
+            "rules": rules,
+        }
+
+    action::
+
+        namedtuple(
+            "Action", "action httpmethod act url endpoint docs inputs outputs")
+
+    .. versionchanged:: 0.19.3
+        the return value changed.
+    """
+    if not inspect.isclass(res_cls):
+        raise ValueError("%s is not class" % res_cls)
+    if name is None:
+        name = res_cls.__name__.lower()
+    else:
+        name = name.lower()
+
+    methods = [x for x in dir(res_cls) if pattern_action.match(x)]
+    meth_act = [pattern_action.findall(x)[0] for x in methods]
+    Action = namedtuple(
+        "Action", "action httpmethod act url endpoint docs inputs outputs")
+
+    _do_combine(res_cls, res_cls.schema_inputs)
+    _do_combine(res_cls, res_cls.schema_outputs)
+
+    actions = []
+
+    dumps = functools.partial(json.dumps, indent=2, sort_keys=True,
+                              ensure_ascii=False, default=_normal_validate)
+
+    for action, (meth, act) in zip(methods, meth_act):
+        if act == "":
+            url = "/" + name
+            endpoint = name
+        else:
+            url = "/{0}/{1}".format(name, act)
+            endpoint = "{0}@{1}".format(name, act)
+        docs = _ensure_unicode(getattr(res_cls, action).__doc__)
+        inputs = dumps(res_cls.schema_inputs.get(action))
+        outputs = dumps(res_cls.schema_outputs.get(action))
+        actions.append(Action(action, meth, act, url,
+                              endpoint, docs, inputs, outputs))
+    httpmethods = set([x.httpmethod for x in actions])
+    rules = set([(x.url, x.endpoint) for x in actions])
+
+    res = {
+        "class": res_cls,
+        "docs": _ensure_unicode(res_cls.__doc__),
+        "actions": actions,
+        "httpmethods": httpmethods,
+        "rules": rules,
+    }
+    return name, res
 
 
 def export(rv, code, headers):
@@ -109,7 +198,8 @@ class Api(object):
     """Api is a manager of resources
 
     :param app: Flask or Blueprint
-    :param permission_path: permission file path
+    :param resource_json: resource.json,
+    :param permission_json: permission.json,
     :param auth_header: http header name
     :param auth_token_name: token_name for saving auth_token in local_storge
     :param auth_secret: jwt secret
@@ -129,27 +219,31 @@ class Api(object):
     .. versionadded:: 0.19.6
         enable_profiler: enable profiler
 
+    .. versionchanged:: 0.19.6
+        permission_path removed, resource_json, permission_json added.
+        fn_user_role's param 'user' removed.
+
     default value::
 
         {
-            "permission_path": "permission.json",
             "auth_header": "Authorization",
             "auth_token_name": "res_token",
             "auth_secret": "SECRET",
             "auth_alg": "HS256",
             "auth_exp": 1200,
+            "resource_json": "resource.json",
+            "permission_json": "permission.json",
+            "fn_user_role": None,
             "resjs_name": "res.js",
             "resdocs_name": "resdocs.html",
             "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
-            "fn_user_role": None,
             "docs": "",
-            "enable_profiler": False,
+            "enable_profiler": False
         }
 
     fn_user_role::
 
-        def fn_user_role(uid, user):
-            # user is the user in permission.json
+        def fn_user_role(user_id):
             # query user from database
             # return user's role
 
@@ -167,7 +261,6 @@ class Api(object):
         self.handle_error_func = None
         self.app = None
         self.blueprint = None
-        self.profiler = Profiler()
         if app is not None:
             self.init_app(app)
         self._config(**config)
@@ -212,10 +305,10 @@ class Api(object):
         self.url_prefix = None
         if isinstance(app, Blueprint):
             self.blueprint = app
-            self.blueprint.record(lambda s: self.init_permission(s.app))
             self.blueprint.record(lambda s: setattr(
                 self, "url_prefix", s.url_prefix))
             self.blueprint.record(lambda s: setattr(self, "app", s.app))
+            self.blueprint.record(lambda s: self.init_permission(s.app))
         else:
             self.blueprint = None
             self.init_permission(app)
@@ -225,92 +318,66 @@ class Api(object):
 
         :param app: Flask or Blueprint
         """
-        ppath = join(app.root_path, self.permission_path)
-        if exists(ppath):
-            self.permission_path = ppath
-            self.permission = Permission(filepath=ppath)
+        if not os.path.isabs(self.resource_json):
+            self.resource_json = join(app.root_path, self.resource_json)
+        if not os.path.isabs(self.permission_json):
+            self.permission_json = join(app.root_path, self.permission_json)
+
+        try:
+            resource, permission = load_config(
+                self.resource_json, self.permission_json)
+            config = parse_config(resource, permission)
+            self.permission_resource = resource
+            self.permission_permission = permission
+            self.permission_config = config
+        except IOError as ex:
+            logger.warning(ex)
+            self.permission_resource = None
+            self.permission_permission = None
+            self.permission_config = None
+
+    def _permit(self, user_role, resource, action):
+        if self.permission_config is None:
+            # allow all requests
+            return True, None
         else:
-            logger.warning(
-                "permission_path '%s' not exists, allow all request" % ppath)
-            self.permission = Permission()
-            # allow all request
-            self.permission.add("*", "*", None)
-        # add validater
-        for u, v in self.permission.role_validaters.items():
-            add_validater(u, v)
+            return permit(self.permission_config, user_role, resource, action)
 
-    def parse_resource(self, res_cls, name=None):
-        """
-        :param res_cls: resource class
-        :param name: resource name
-        :return: name, res
+    def _before_resource_init(self):
 
-        name::
+        if not getattr(g, "_restaction_test", False):
+            resource, action = parse_request()
+            me = self.parse_auth_header()
+            request_data = get_request_data()
+            g.resource = resource
+            g.action = action
+            g.me = me
+            g.request_data = request_data
 
-            resource name
-
-        res::
-
-            {
-                "class": res_cls,
-                "docs": res_cls.__doc__,
-                "actions": actions,
-                "httpmethods": httpmethods,
-                "rules": rules,
-            }
-
-        action::
-
-            namedtuple("Action", "action httpmethod act url endpoint docs inputs outputs")
-
-        .. versionchanged:: 0.19.3
-            the return value changed.
-        """
-        if not inspect.isclass(res_cls):
-            raise ValueError("%s is not class" % res_cls)
-        if name is None:
-            name = res_cls.__name__.lower()
-        else:
-            name = name.lower()
-
-        methods = [x for x in dir(res_cls) if pattern_action.match(x)]
-        meth_act = [pattern_action.findall(x)[0] for x in methods]
-        Action = namedtuple(
-            "Action", "action httpmethod act url endpoint docs inputs outputs")
-
-        _do_combine(res_cls, res_cls.schema_inputs)
-        _do_combine(res_cls, res_cls.schema_outputs)
-
-        actions = []
-
-        dumps = functools.partial(json.dumps, indent=2, sort_keys=True,
-                                  ensure_ascii=False, default=_normal_validate)
-
-        for action, (meth, act) in zip(methods, meth_act):
-            if act == "":
-                url = "/" + name
-                endpoint = name
+        user_role = self._fn_user_role(g.me["id"])
+        permit, res_role = self._permit(user_role, g.resource, g.action)
+        g.me["role"] = res_role
+        if not permit:
+            if g.me["id"] is None:
+                abort(403, "permission deny: your token is invalid")
             else:
-                url = "/{0}/{1}".format(name, act)
-                endpoint = "{0}@{1}".format(name, act)
-            docs = _ensure_unicode(getattr(res_cls, action).__doc__)
-            inputs = dumps(res_cls.schema_inputs.get(action))
-            outputs = dumps(res_cls.schema_outputs.get(action))
-            actions.append(Action(action, meth, act, url,
-                                  endpoint, docs, inputs, outputs))
-        httpmethods = set([x.httpmethod for x in actions])
-        rules = set([(x.url, x.endpoint) for x in actions])
+                abort(403, "You don't have permission: user_role=%s" % user_role)
 
-        res = {
-            "class": res_cls,
-            "docs": _ensure_unicode(res_cls.__doc__),
-            "actions": actions,
-            "httpmethods": httpmethods,
-            "rules": rules,
-        }
-        return name, res
+    def _fn_user_role(self, user_id):
+        """exec fn_user_role"""
+        if self.fn_user_role:
+            try:
+                return self.fn_user_role(user_id)
+            except Exception as ex:
+                current_app.logger.exception(
+                    "Error raised when get user_role: %s" % str(ex))
+        return None
 
-    def make_view(self, cls, name, test_config=None, *class_args, **class_kwargs):
+    def add_permission_resource(self, name=None):
+        """add_resource Permission"""
+        self.add_resource(Permission, name=name, api=self)
+
+    def make_view(self, view):
         """Converts the class into an actual view function that can be used
         with the routing system. Copyed from flask.views.py.
 
@@ -327,62 +394,24 @@ class Api(object):
                 "data":"a dict of data that will passed to view",
             }
         """
-        def view(*args, **kwargs):
-
-            if test_config:
-                resource = test_config["resource"]
-                action = test_config["action"]
-                me = {"id": test_config["user_id"]}
-                data = test_config["data"]
-                if data is None:
-                    data = {}
-            else:
-                resource, action = self.parse_request()
-                me = self.parse_me()
-                data = get_request_data()
-            role = self.parse_role(me["id"], resource)
-            g.resource = resource
-            g.action = action
-            g.me = me
-            g.me["role"] = role
+        @functools.wraps(view)
+        def wrapper(*args, **kwargs):
             try:
                 resp = self._before_request()
                 if resp is None:
-                    # permit
-                    if not self.permission.permit(role, resource, action):
-                        abort(403, "permission deny")
-                    obj = view.view_class(*class_args, **class_kwargs)
-                    # ignore *args, **kwargs and Resource don't need them
-                    resp = obj.dispatch_request(data=data)
+                    resp = view(*args, **kwargs)
             except Exception as ex:
                 resp = self._handle_error(ex)
                 if resp is None:
                     raise
             resp = self._after_request(*unpack(resp))
-
-            if test_config:
+            if getattr(g, "_restaction_test", False):
                 ResponseTuple = namedtuple("ResponseTuple", "rv code header")
-                rv, code, header = resp
-                if code is None:
-                    code = 200
-                return ResponseTuple(rv, code, header)
+                return ResponseTuple(*resp)
             else:
                 return export(*resp)
 
-        if cls.decorators:
-            view.__name__ = name
-            view.__module__ = cls.__module__
-            for decorator in cls.decorators:
-                view = decorator(view)
-
-        view.view_class = cls
-        view.__name__ = name
-        view.__doc__ = cls.__doc__
-        view.__module__ = cls.__module__
-        view.methods = cls.methods
-        if self.enable_profiler:
-            view = self.profiler.measure(view)
-        return view
+        return wrapper
 
     def add_resource(self, res_cls, name=None, *class_args, **class_kwargs):
         """add_resource
@@ -392,17 +421,15 @@ class Api(object):
         :param class_args: class_args
         :param class_kwargs: class_kwargs
         """
-        name, res = self.parse_resource(res_cls, name)
-        view = self.make_view(
-            res_cls, name, *class_args, **class_kwargs)
+        name, res = parse_resource(res_cls, name)
+        view = res_cls.as_view(name, before_init=self._before_resource_init,
+                               *class_args, **class_kwargs)
+        view = self.make_view(view)
+        res["view_func"] = view
         for url, end in res["rules"]:
-            self.app.add_url_rule(
-                url, endpoint=end, view_func=view, methods=res["httpmethods"])
+            self.app.add_url_rule(url, endpoint=end, view_func=view,
+                                  methods=res["httpmethods"])
         self.resources[name] = res
-
-    def add_profiler_resource(self):
-        """add profiler.Profiler to resources"""
-        self.add_resource(profiler.Profiler, profiler_data=self.profiler.data)
 
     def _gen_from_template(self, tmpl, name):
         """genarate something and write to static_folder
@@ -461,7 +488,7 @@ class Api(object):
         auth = {self.auth_header: self.gen_token(me)}
         return auth
 
-    def parse_me(self):
+    def parse_auth_header(self):
         """parse http header auth token
 
         :return:
@@ -494,31 +521,6 @@ class Api(object):
             pass
         current_app.logger.debug("InvalidToken: %s" % token)
         return {"id": None}
-
-    def parse_request(self):
-        """parse resource&action"""
-        find = pattern_endpoint.findall(request.endpoint)
-        if not find:
-            abort(500, "invalid endpoint: %s" % request.endpoint)
-        blueprint, resource, act = find[0]
-        if act:
-            action = request.method.lower() + "_" + act
-        else:
-            action = request.method.lower()
-
-        return resource, action
-
-    def parse_role(self, uid, resource):
-        """determine user's role"""
-        try:
-            user = self.permission.which_user(resource)
-            # if uid is None, anonymous user
-            if user is not None and uid is not None and self.fn_user_role is not None:
-                return self.fn_user_role(uid, user)
-        except Exception as ex:
-            current_app.logger.exception(
-                "Error raised when get user_role: %s" % str(ex))
-        return None
 
     def _before_request(self):
         """before_request"""
@@ -581,96 +583,3 @@ class Api(object):
                 assert c.resource.action_need_login(data).rv == {"hello":"guyskk"}
         """
         return RestactionClient(self, user_id)
-
-
-class RestactionClient(object):
-    """RestactionClient"""
-
-    def __init__(self, api, user_id=None):
-        self.api = api
-        self.user_id = user_id
-        try:
-            self.app_context = self.api.app.app_context()
-        except AttributeError as ex:
-            ex.args += ("api didn't inited!!",)
-            raise
-
-    def __getattr__(self, resource):
-        try:
-            api = object.__getattribute__(self, "api")
-            user_id = object.__getattribute__(self, "user_id")
-            res_cls = api.resources[resource]["class"]
-            return ResourceClient(res_cls=res_cls, resource=resource, api=api, user_id=user_id)
-        except KeyError:
-            raise ValueError("resource not found: %s" % resource)
-
-    def __enter__(self):
-        self.app_context.__enter__()
-        return self
-
-    def __exit__(self, exc_type, exc_value, tb):
-        return self.app_context.__exit__(exc_type, exc_value, tb)
-
-    def __repr__(self):
-        return "<RestactionClient user_id=%s>" % self.user_id
-
-
-class ResourceClient(object):
-    """ResourceClient"""
-
-    def __init__(self, res_cls, resource, api, user_id=None):
-        self.res_cls = res_cls
-        self.resource = resource
-        self.api = api
-        self.user_id = user_id
-
-    def __getattr__(self, action):
-
-        resource = object.__getattribute__(self, "resource")
-        user_id = object.__getattribute__(self, "user_id")
-
-        def view_client(data=None):
-            res_cls = object.__getattribute__(self, "res_cls")
-            api = object.__getattribute__(self, "api")
-            test_config = {
-                "user_id": user_id,
-                "resource": resource,
-                "action": action,
-                "data": data
-            }
-            view = api.make_view(res_cls, resource, test_config=test_config)
-            return view()
-        view_client.__doc__ = "user_id=%s resource=%s action=%s" % (
-            user_id, resource, action)
-        return view_client
-
-    def __repr__(self):
-        return "<ResourceClient user_id=%s, resource=%s>" % (self.user_id, self.resource)
-
-
-class Profiler(object):
-    """docstring for Profiler"""
-
-    def __init__(self):
-        self.data = {}
-
-    def put(self, resource, action, elapsed):
-        self.data.setdefault(resource, {})
-        self.data[resource].setdefault(
-            action, {"max": elapsed, "min": elapsed, "avg": elapsed, "count": 0})
-        act = self.data[resource][action]
-        act["max"] = max(act["max"], elapsed)
-        act["min"] = min(act["min"], elapsed)
-        act["count"] += 1
-        p = 1.0 / float(act["count"])
-        act["avg"] = act["avg"] * (1 - p) + elapsed * p
-
-    def measure(self, fn):
-        @functools.wraps(fn)
-        def wrapper(*args, **kwargs):
-            time_begin = time.time()
-            ret = fn(*args, **kwargs)
-            time_end = time.time()
-            self.put(g.resource, g.action, time_end - time_begin)
-            return ret
-        return wrapper

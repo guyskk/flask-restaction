@@ -1,16 +1,14 @@
 {
-    "*": {
-        "photo": ["get"]
+    "roleA": {
+        "photo": "other",
+        "article": "writer"
     },
-    "user.admin": {
-        "*": []
+    "roleB": {
+        "photo": "other",
+        "article": "owner"
     },
-    "user.userA": {
-        "photo*": [],
-        "message": ["get", "post"]
-    },
-    "user.userB": {
-        "photo": ["get_list"],
-        "message": ["get", "post"]
+    "roleC": {
+        "photo": "owner",
+        "article": "other"
     }
 }

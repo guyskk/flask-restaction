@@ -156,8 +156,9 @@ def test_config():
     app = Flask(__name__)
     app.config.from_object("config_data")
     app.debug = True
-    configs = ["permission_path", "auth_header", "auth_token_name", "auth_secret",
-               "auth_alg", "auth_exp", "resjs_name", "resdocs_name", "bootstrap"]
+    configs = ["resource_json", "permission_json", "auth_header",
+               "auth_token_name", "auth_secret", "auth_alg", "auth_exp",
+               "resjs_name", "resdocs_name", "bootstrap"]
     bp = Blueprint("blueprint", __name__)
     api_bp = Api(bp)
     api_app = Api(app)
@@ -200,18 +201,3 @@ def test_testclient():
         api = Api()
         with api.test_client() as c:
             pass
-
-
-def test_testclient_not_exception():
-    app = Flask(__name__)
-    api = Api(app)
-    api.permission.remove("*")
-
-    class Hello(Resource):
-
-        def get(self):
-            return "hello"
-
-    api.add_resource(Hello)
-    with api.test_client() as c:
-        assert c.hello.get().code == 403

@@ -1,0 +1,9 @@
+{
+    "photo": {
+        "other": ["get"]
+    },
+    "article": {
+        "other": ["get"],
+        "writer": ["post","put"]
+    }
+}
