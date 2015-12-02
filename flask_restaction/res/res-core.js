@@ -48,7 +48,7 @@
     
     /*当不需要传递数据时，回调函数参数顺序是: fn,progress,null*/
     function request(url,method,data,fn,progress) {
-        if (progress===null && typeof(data)==="function"){
+        if (progress==null && typeof(data)==="function"){
             progress = fn;
             fn = data;
             data = null;
