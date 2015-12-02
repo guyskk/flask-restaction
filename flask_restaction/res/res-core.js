@@ -75,6 +75,6 @@
         {%- for action in res["actions"] %}
         res.{{name}}.{{action.action}}=function(data,fn,progress){request("{{apiinfo.url_prefix+action.url}}","{{action.httpmethod}}",data,fn,progress) };
         {%- endfor %}
-    {%- endfor -%}
+    {%- endfor %}
     
 })(res);

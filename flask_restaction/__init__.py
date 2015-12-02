@@ -13,9 +13,7 @@ from __future__ import absolute_import
    ``Resource.userrole`` removed, use Api.fn_user_role instead.
 """
 import re
-import pkg_resources
 __version__ = "0.19.6"
-
 
 import logging
 from logging import Formatter
@@ -29,11 +27,6 @@ logger.addHandler(ch)
 pattern_action = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
 pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
-res_js = pkg_resources.resource_string(__name__, "js/res.js")
-res_docs = pkg_resources.resource_string(__name__, "html/res_docs.html")
-
-res_js = res_js.decode("utf-8")
-res_docs = res_docs.decode("utf-8")
 
 
 def unpack(rv):

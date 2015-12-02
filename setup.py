@@ -1,3 +1,5 @@
+# coding:utf-8
+
 """
 Flask-Restaction
 ----------------
@@ -20,7 +22,7 @@ setup(
     url="https://github.com/guyskk/flask-restaction",
     license="MIT",
     packages=["flask_restaction"],
-    package_data={'flask_restaction': ['js/res.js', 'html/res_docs.html']},
+    include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
     tests_require=[

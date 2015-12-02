@@ -27,10 +27,10 @@ from werkzeug.exceptions import HTTPException
 from collections import namedtuple
 import functools
 import json
+from pkg_resources import resource_string
 from .permission import Permission, load_config, parse_config, permit
 from . import exporters, unpack, logger
 from . import pattern_action, pattern_endpoint
-from . import res_js, res_docs
 from .testing import RestactionClient
 
 _default_config = {
@@ -459,11 +459,20 @@ class Api(object):
     def gen_resjs(self):
         """genarate res.js, should be called after added all resources
         """
+        res_ajax = resource_string(__name__, 'res/res-ajax.js')
+        res_core = resource_string(__name__, 'res/res-core.js')
+        if six.PY2:
+            res_ajax = res_ajax.decode("utf-8")
+            res_core = res_core.decode("utf-8")
+        res_js = res_ajax + os.linesep + res_core
         self._gen_from_template(res_js, self.resjs_name)
 
     def gen_resdocs(self):
         """genarate resdocs.html, should be called after added all resources
         """
+        res_docs = resource_string(__name__, 'res/resdocs.html')
+        if six.PY2:
+            res_docs = res_docs.decode("utf-8")
         self._gen_from_template(res_docs, self.resdocs_name)
 
     def gen_token(self, me, auth_exp=None):
