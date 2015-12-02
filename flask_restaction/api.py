@@ -399,6 +399,7 @@ class Api(object):
             try:
                 resp = self._before_request()
                 if resp is None:
+                    self._before_resource_init()
                     resp = view(*args, **kwargs)
             except Exception as ex:
                 resp = self._handle_error(ex)
@@ -422,8 +423,7 @@ class Api(object):
         :param class_kwargs: class_kwargs
         """
         name, res = parse_resource(res_cls, name)
-        view = res_cls.as_view(name, before_init=self._before_resource_init,
-                               *class_args, **class_kwargs)
+        view = res_cls.as_view(name, *class_args, **class_kwargs)
         view = self.make_view(view)
         res["view_func"] = view
         for url, end in res["rules"]:

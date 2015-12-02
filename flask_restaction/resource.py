@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import six
 
-from . import View
+from flask.views import View
 from flask import g, abort
 from validater import validate
 from flask_restaction import unpack

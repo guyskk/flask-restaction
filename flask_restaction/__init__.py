@@ -44,7 +44,6 @@ def unpack(rv):
     return (rv, status, headers)
 
 from .exporters import exporters, exporter
-from .views import View
 from validater import schema
 from .resource import Resource
 from .api import Api
