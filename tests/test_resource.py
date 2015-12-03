@@ -6,12 +6,19 @@ from flask import Flask, request, g, url_for
 from flask_restaction import Api, Resource
 import pytest
 import json
+import six
 """
 blueprint.resource@action
 resource@action
 blueprint.resource
 resource
 """
+
+
+def loads(data):
+    if six.PY3:
+        data = data.decode("utf-8")
+    return json.loads(data)
 
 
 @pytest.fixture(scope="module")
@@ -192,15 +199,15 @@ def test_return_inner_custom_type():
         assert 200 == c.get("/hello").status_code
         assert 200 == c.get("/hello/list").status_code
         assert 200 == c.get("/hello/dict").status_code
-        user = json.loads(c.get("/hello").data)
+        user = loads(c.get("/hello").data)
         assert user == {
             "name": "kk"
         }
-        userlist = json.loads(c.get("/hello/list").data)
+        userlist = loads(c.get("/hello/list").data)
         assert userlist == [{
             "name": "kk"
         }] * 10
-        dd = json.loads(c.get("/hello/dict").data)
+        dd = loads(c.get("/hello/dict").data)
         assert dd["user"] == {
             "name": "kk"
         }

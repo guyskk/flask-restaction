@@ -24,6 +24,7 @@ import inspect
 from datetime import datetime, timedelta
 from jinja2 import Template
 from werkzeug.exceptions import HTTPException
+import codecs
 from collections import namedtuple
 import functools
 import json
@@ -450,29 +451,22 @@ class Api(object):
         if not exists(self.app.static_folder):
             os.makedirs(self.app.static_folder)
         path = join(self.app.static_folder, name)
-        with open(path, "w") as f:
-            if six.PY2:
-                f.write(rendered.encode("utf-8"))
-            else:
-                f.write(rendered)
+        with codecs.open(path, "w", encoding="utf-8") as f:
+            f.write(rendered)
 
     def gen_resjs(self):
         """genarate res.js, should be called after added all resources
         """
-        res_ajax = resource_string(__name__, 'res/res-ajax.js')
-        res_core = resource_string(__name__, 'res/res-core.js')
-        if six.PY2:
-            res_ajax = res_ajax.decode("utf-8")
-            res_core = res_core.decode("utf-8")
+        res_ajax = resource_string(__name__, 'res/res-ajax.js').decode("utf-8")
+        res_core = resource_string(__name__, 'res/res-core.js').decode("utf-8")
         res_js = res_ajax + os.linesep + res_core
         self._gen_from_template(res_js, self.resjs_name)
 
     def gen_resdocs(self):
         """genarate resdocs.html, should be called after added all resources
         """
-        res_docs = resource_string(__name__, 'res/resdocs.html')
-        if six.PY2:
-            res_docs = res_docs.decode("utf-8")
+        res_docs = resource_string(
+            __name__, 'res/resdocs.html').decode("utf-8")
         self._gen_from_template(res_docs, self.resdocs_name)
 
     def gen_token(self, me, auth_exp=None):
