@@ -37,6 +37,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import json
+import codecs
 import copy
 from flask import abort
 from flask_restaction import pattern_action, Resource, schema
@@ -112,6 +113,32 @@ class Permission(Resource):
     """Permission
 
     res_role中owner权限最高，other权限最低
+
+    json struct of get::
+
+        {
+            "permission": {
+                "user_role": {
+                    "resource": "res_role",
+                    ...
+                },
+                ...
+            }
+            "resources": {
+                "resource": ["res_role", ...],
+                ...
+            }
+        }
+
+    json struct of post::
+
+        {
+            "user_role": "user_role"
+            "resources": {
+                "resource": "res_role",
+                ...
+            }
+        }
     """
     user_role = "unicode&required", None, "角色"
     resource = "unicode&required"
@@ -125,41 +152,20 @@ class Permission(Resource):
             "desc": "user_role",
             "required": True
         },
-        "resources": [{
-            "resource": {
-                "validate": "unicode",
-                "desc": "resource name",
-                "required": True
-            },
-            "res_role": {
-                "validate": "unicode",
-                "desc": "res_role",
-                "required": True
-            },
-        }]
+        "resources": {
+            "validate": "any",
+            "desc": "resource:res_role",
+            "required": True
+        }
     }
+
     schema_inputs = {
         "get_permit": schema("user_role", "resource", "action"),
-        "get_permission": None,
-        "get_resource": None,
         "post": permission_item,
         "delete": schema("user_role"),
     }
     schema_outputs = {
         "get_permit": schema("permit"),
-        "get_permission": [permission_item],
-        "get_resource": [{
-            "resource": {
-                "validate": "unicode",
-                "desc": "resource name",
-                "required": True
-            },
-            "res_roles": [{
-                "validate": "unicode",
-                "desc": "res_role",
-                "required": True
-            }]
-        }],
         "post": schema("message"),
         "delete": schema("message"),
     }
@@ -170,42 +176,30 @@ class Permission(Resource):
     def get_permit(self, user_role, resource, action):
         """判断角色是否有对应的权限
         """
-        return {"permit": permit(self.api.permission_config, user_role, resource, action)}
+        p, res_role = permit(self.api.permission_config,
+                             user_role, resource, action)
+        return {"permit": p}
 
-    def get_permission(self):
+    def get(self):
         """获取permission配置信息
         """
-        result = []
-        for user_role, resources in self.api.permission_permission.items():
-            result_resources = []
-            for resource, res_role in resources.items():
-                result_resources.append({
-                    "resource": resource,
-                    "res_role": res_role
-                })
-            result.append({
-                "user_role": user_role,
-                "resources": result_resources
-            })
-        return result
-
-    def get_resource(self):
-        """获取resource配置信息
-        """
-        result = []
-        for resource, res_roles in self.api.permission_resource.items():
-            result.append({
-                "resource": resource,
-                "res_roles": list(set(list(res_roles) + ["owner"]))
-            })
-        return result
+        resources = {
+            resource: list(set(list(res_roles) + ["owner", "other"]))
+            for resource, res_roles in self.api.permission_resource.items()
+        }
+        return {
+            "resources": resources,
+            "permission": self.api.permission_permission
+        }
 
     def post(self, user_role, resources):
         """添加角色或修改角色"""
         permission = copy.deepcopy(self.api.permission_permission)
         permission.setdefault(user_role, {})
-        items = {res["resource"]: res["res_role"] for res in resources}
-        permission[user_role].update(items)
+        try:
+            permission[user_role].update(resources)
+        except Exception as ex:
+            abort(400, ex.message)
         self._save_permission(permission)
         return {"message": "OK"}
 
@@ -221,8 +215,8 @@ class Permission(Resource):
     def _save_permission(self, permission):
         try:
             config = parse_config(self.api.permission_resource, permission)
-            with open(self.api.permission_json, "w") as f:
-                json.dump(permission, f, indent=4)
+            with codecs.open(self.api.permission_json, "w", encoding="utf-8") as f:
+                json.dump(permission, f, indent=4, ensure_ascii=False)
             self.api.permission_permission = permission
             self.api.permission_config = config
         except IOError as ex:
