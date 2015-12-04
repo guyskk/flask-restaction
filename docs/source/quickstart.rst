@@ -532,11 +532,73 @@ c.resource.action(data) 的返回值是 namedtuple("ResponseTuple", "rv code hea
 测试的时候先创建应用环境，伪造 2，执行 3，直接返回 3 的结果而不执行4。
 
 
+对比其它框架
+--------------------
+
+**flask-restful**
+~~~~~~~~~~~~~~~~~~~~
+
+flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
+
+- restaction 更灵活。
+
+    restful 的方法只能是 http method，就是 get, post, put, delete 那几个，而 restaction 的方法除了 http method，还可以是任何以 http method 加下划线开头的方法。
+
+- 输入输出校验
+
+    restaction 是声明式的，简单明确::
+        
+        from flask.ext.restaction import reqparse
+
+        name = "safestr&required", "world", "you name"
+        schema_inputs = {
+            "get": schema("name")
+        }
+
+    在 reslful 中叫做 Request Parsing::
+
+        from flask_restful import reqparse
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('rate', type=int, help='Rate cannot be converted')
+        parser.add_argument('name')
+        args = parser.parse_args()
+
+    Request Parsing 很繁琐，并且不能很好的重用代码。
+
+    restaction 的输出校验和输入校验差不多，不同的是可以校验自定义的 python 对象。
+    https://github.com/guyskk/validater#proxydict-validate-custome-type
+
+    而 reslful 校验输出更加繁琐！
+
+- 自动生成 res.js 和 自动生成 documents
+
+    用 res.js 可以方便的调用 api，不用记 url，还可以直接上传文件。
+
+    如果你喜欢 angular 或者 vue.js，那你一定会喜欢 res.js。
+
+    *vue-resource* 
+        https://github.com/vuejs/vue-resource
+    *angular-resource*
+        https://docs.angularjs.org/api/ngResource/service/$resource
+
+- 方便测试
+
+    flask 中的测试最终返回结果是字符串，在测试 API 的时候很难验证结构化的数据。
+    restaction 提供 api.test_client，测试这些结构化的数据会方便的多。
+
+- 身份验证及权限控制
+    
+    restaction 提供一个灵活的权限系统，身份验证基于 jwt(json web token)，
+    权限验证是通过json配置文件，而不是散布在代码中的装饰器(decorator)，
+    并且角色本身也是 resource，客户端可以通过 API 进行操作。
+
+
 kkblog 介绍
 -----------------------------
 
-KkBloG 是一套基于 Python 的多人博客系统，你可以用 markdown 格式写文章，保存到 github ，然后就可以在上面展示自己的博客，别人还可以评论你的文章。
+KkBloG 是一套基于 Python 的多人博客系统，你可以用 markdown 格式写文章，保存到 github ，然后就可以在上面展示自己的博客，别人也可以评论你的文章。
 
-这个项目是对flask-restaction框架的一次尝试。
+这个项目是对 flask-restaction 框架的一次尝试。
 
-see `https://github.com/guyskk/kkblog <https://github.com/guyskk/kkblog>`_
+see https://github.com/guyskk/kkblog
