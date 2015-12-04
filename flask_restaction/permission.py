@@ -1,10 +1,7 @@
 # coding:utf-8
 
 """
-permission
-~~~~~~~~~~~~~~~~
-
-permission.json struct:
+permission.json struct::
 
     {
         "user_role": {
@@ -65,6 +62,7 @@ def parse_config(resource, permission):
     :param resource: dict from resource.json
     :param permission: dict from permission.json
     :return:
+    permission_config::
 
         {
             (user_role, resource): (res_role, ["actions"])

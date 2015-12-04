@@ -126,7 +126,7 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
         }
 
         # if you return a custom type object
-        # output_types = [custom_type]
+        # output_types = [CustomType]
 
         def get(self, name):
             return {"hello": name}
@@ -311,15 +311,23 @@ Flask-restaction 从 v0.17.0 开始支持 py3，在 py27 和 py34 上测试通�
 
 
 
-
-身份验证
+身份验证&权限控制
 -------------------
+
+版本 v0.19.6 重写了权限系统。
 
 flask_restaction 使用 *json web token* 作为身份验证工具。
 
 see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
-**你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``。
+权限系统中有两个重要的概念:
+
+*user_role*
+    用户角色，这是随时可以变动，可以通过UI界面编辑设定的，对应的配置文件为 permission.json
+
+*res_role*
+    资源角色，这是与程序逻辑密切相关，由程序设计者确定的，对应的配置文件为 resource.json
+
 
 你可以通过 ``flask.g.me`` 获取用户的身份信息，它的结构如下:
 
@@ -327,86 +335,79 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
     {
         "id":user_id, 
-        "role":user_role
+        "role":res_role
     }
 
 此外，你需要在用户登录成功后返回 auth 响应头(default ``Authorization``) 到响应中，它的值可以通过 ``api.gen_token(me)`` or ``api.gen_auth_token(me)`` 生成。
 
-**fn_user_role 函数**
-
-Flask-Restaction 不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
-
-.. code-block:: python
-
-    def user_role(uid, user):
-        # user is the user in permission.json
-        # you may need query user from database
-        return "user.admin"
-
-    api = Api(app, fn_user_role=user_role)
-
-如果 ``g.me["id"] is None``，那么不会调用 fn_user_role。
-
-fn_user_role 的返回值会保存在 ``g.me["role"]`` 中，权限系统需要用到它。
-
-**为何这样设计？**
-
-一个应用（网站）通常会划分成几个领域。一个用户在不同的领域会担任不同的角色，但是在一个领域只应当承担一个角色。一个领域由一些 Resource(用户本身也是 Resource)组成，这样划分可以可以避免在添加新领域，新功能的时候影响原有的用户和权限系统。
-
-在 permission.json 中，用 user.role 表示领域以及领域中的角色。
-
-.. code::
-
-    - user
-        - resource1
-        - resource2
-        - ...
-        - module1_user
-            - module1_resource
-            - ...
-        - module2_user
-            - module2_resource
-            - ...
-
-
 res.js 会自动添加 auth 请求头 (``Authorization``) 到请求中。
 并且当收到 auth 响应头时，会自动将 auth token 保存到浏览器 localstroge 中。
 
+**你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``。
 
-权限控制
-------------------------------
+auth 响应头中的 token 是未加密的，不要把敏感信息保存在里面。
+默认情况下里面仅保存 user_id 和过期时间。
+api 会用 auth_secret 对 token 进行签名，客户端无法篡改 token。
 
-默认情况下，permission.json 应当文件放在应用的根目录下，你也可以改成放到其他位置。
+**fn_user_role 函数**
 
-权限按 用户.角色 -> 资源 -> 操作 划分
+flask-restaction 不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
+
+.. code-block:: python
+
+    def fn_user_role(user_id):
+        # you may need query user from database
+        return "user_role"
+
+    api = Api(app, fn_user_role=fn_user_role)
+
+如果 ``g.me["id"] is None``，那么不会调用 fn_user_role。
+
+api 会在程序初始化的时候解析 permission.json 和 resource.json，
+请求到来时，根据请求的 resource, action 和 user_role，可以快速确定 res_role 以及是否许可此次请求。
+如果不许可此次请求，返回 403 状态码。res_role 会保存在 ``g.me["role"]`` 中。
+
+**为何这样设计？**
+
+在 RESTful 架构中，应用（网站）由一系列的资源（resource）组成，每个资源包含一系列操作（action）。
+每个资源都是一个独立的组件，这些资源和它们包含的操作一起组成 API 供客户端调用，用户界面以及交互逻辑完全由客户端完成。资源之间需要保持独立，避免修改或添加新资源时产生相互影响，因此把角色分为用户角色（user_role） 和 资源角色（res_role）。用户角色是整个 API 范围的，资源角色只在 resource 内起作用，同时用户角色本身也是 resource，客户端可以通过 API 对它操作，但资源角色是固定的。
 
 
-JSON struct
+将用户角色本身做为 resource 
+
+.. code::
+    
+    api.add_permission_resource()
+
+
+permission.json 结构
 
 .. code::
 
     {
-        "user.role/*": {
-            "*/resource*": ["get", "post"],
-            "resource": ["action", ...]
+        "user_role": {
+            "resource": "res_role",
+            ...
         },
         ...
     }
 
-当 role 为 ``*`` 时
-    表示匿名用户的权限。
+resource.json 结构
+    
+.. code::
 
-当 resource 为 ``*`` 时
-    表示该角色可以操作所有 resource 的所有 action ， 此时 actions 必须是 ``[]`` 并且不能有其他 resource。
+    {
+        "resource": {
+            "res_role": ["action", ...],
+            ...
+        },
+        ...
+    }
 
-当 resource 为 ``resource*`` 时
-    表示该角色可以操作该 resource 的所有 action ， 此时 actions 必须是 ``[]``。
 
-user.role
-    必须是 user.role 这种格式，中间是一个点号， 并且只能由字母数字和下划线组成，并且以字母开头。
+默认情况下，api 会去应用的根目录下找 permission.json 和 resource.json，如果这两个文件都不存在，则允许所有请求进行所有操作。
+你也可以把这两个文件放到其他位置，此时需要设置 API_RESOURCE_JSON 和 API_PERMISSION_JSON。
 
-resource
-    只能由小写字母数字和下划线组成，并且以小写字母开头。
 
 
 使用蓝图
@@ -456,9 +457,12 @@ resource
   * - 名称
     - 默认值
     - 说明
-  * - API_PERMISSION_PATH
+  * - API_RESOURCE_JSON
+    - resource.json
+    - resource.json文件的路径
+  * - API_PERMISSION_JSON
     - permission.json
-    - 权限配置文件的路径
+    - permission.json文件的路径
   * - API_AUTH_HEADER
     - Authorization
     - 身份验证请求头
@@ -523,15 +527,9 @@ c.resource.action(data) 的返回值是 namedtuple("ResponseTuple", "rv code hea
     4. 将返回值转化成响应
 
 那么 1 是 flask 处理的， 2,4 是由 api 处理的，3 是 resource 中处理的。
-第 2 步会将解析结果保存到 g.resource g.action g.me 中，这样在 resource 中就能使用解析结果。
+第 2 步会将解析结果保存到 g.resource, g.action, g.me 中，这样在 resource 中就能使用解析结果。
 
 测试的时候先创建应用环境，伪造 2，执行 3，直接返回 3 的结果而不执行4。
-
-
-请求处理流程
------------------------------
-
-.. image:: _static/flask-restaction.svg
 
 
 kkblog 介绍

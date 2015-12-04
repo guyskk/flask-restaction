@@ -24,13 +24,11 @@ Resource
    :undoc-members:
 
 
-Permission
+permission
 ------------------
 
-.. autoclass:: flask_restaction.Permission
+.. automodule:: flask_restaction.permission
    :members:
-   :inherited-members:
-   :undoc-members:
 
 
 exporters
@@ -38,3 +36,11 @@ exporters
 .. automodule:: flask_restaction.exporters
    :members:
    :undoc-members:
+
+
+testing
+-----------------
+.. automodule:: flask_restaction.testing
+   :members:
+   :undoc-members:
+

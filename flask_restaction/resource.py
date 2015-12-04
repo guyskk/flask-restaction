@@ -68,11 +68,6 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         def fn(ex):
             return (rv, [code, headers])
 
-    - user_role is function that return user_role::
-
-        @staticmethod
-        def user_role(user_id):
-            return "role of user or None"
     """
 
     schema_inputs = {}
