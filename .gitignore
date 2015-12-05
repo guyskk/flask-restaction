@@ -7,6 +7,8 @@ resdocs.html
 !flask_restaction/js/res.js
 !flask_restaction/html/res_docs.html
 
+*.db
+
 # pkg resource
 MANIFEST
 

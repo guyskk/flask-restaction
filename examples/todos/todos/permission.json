@@ -1,0 +1,10 @@
+{
+    "admin": {
+        "user":"owner",
+        "todos":"owner"
+    },
+    "normal":{
+        "user":"owner",
+        "todos":"owner"
+    }
+}
