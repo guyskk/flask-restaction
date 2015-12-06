@@ -4,8 +4,7 @@ tests/static
 
 res.js
 resdocs.html
-!flask_restaction/js/res.js
-!flask_restaction/html/res_docs.html
+!flask_restaction/res/resdocs.html
 
 *.db
 
