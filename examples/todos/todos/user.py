@@ -69,6 +69,7 @@ class User(Resource):
 
     def put(self, **info):
         """修改个人信息"""
+        info = {k: v for k, v in info.items() if v != ""}
         email = g.me["id"]
         g.db[email] = dict(g.db[email], **info)
         g.db.commit()
@@ -77,6 +78,7 @@ class User(Resource):
     def delete(self):
         """删除账号"""
         email = g.me["id"]
-        del g.db[email]
-        g.db.commit()
+        if email in g.db:
+            del g.db[email]
+            g.db.commit()
         return {"message": "OK"}

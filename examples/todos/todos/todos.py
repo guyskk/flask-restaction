@@ -11,7 +11,7 @@ class Todos(Resource):
     pagenum = "+int", 1
     pagesize = "+int", 10
     todo_id = "int&required"
-    content = "unicode&required"
+    content = "safestr&required"
     message = "unicode"
     todo = schema("todo_id", "content")
     schema_inputs = {

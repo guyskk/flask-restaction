@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>注册新账号</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <script type="text/javascript" src="/static/res.js"></script>
+    <script type="text/javascript" src="/static/vue.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>Welcome to Todos</h1>
+        </div>
+        <div id="app" class="panel panel-default">
+            <div class="panel-heading">注册新账号</div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="exampleInputEmail1">Email address</label>
+                    <input v-model="user.email" type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">Password</label>
+                    <input v-model="user.password" type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+                </div>
+                <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
+                <button @click="signup(user)" class="btn btn-success">立即注册</button>
+                <button @click="goto_login()" class="btn btn-info">已有账号，去登录</button>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        data: {
+            user: {},
+            message: ""
+        },
+        methods: {
+            signup: function(user) {
+                res.user.post(user, function(err, data) {
+                    if (!err) {
+                        location.href = "/"
+                    } else {
+                        app.message = err
+                    }
+                })
+            },
+            goto_login: function() {
+                location.href = "/login"
+            }
+        }
+    })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>角色管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="/static/res.js"></script>
+    <script type="text/javascript" src="/static/vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div id="app" class="container">
+        <div class="page-header">
+            <h1>Welcome to Todos</h1>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th>模块</th>
+                    <th v-for="(resource,res_roles) in resources">{{resource|transate}}</th>
+                    <th>操作</th>
+                </tr>
+                <tr v-for="(user_role, perm) in permission" track-by="$index">
+                    <td>{{user_role|transate}}</td>
+                    <td v-for="(resource, res_roles) in resources">
+                        <select v-on:change="change_role(user_role, resource, $event)">
+                            <option v-bind:value="res_role" v-bind:selected="(perm[resource]||'other')==res_role" v-for="res_role in res_roles">{{res_role|transate}}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button v-on:click="save_role(user_role)">保存</button>
+                        <button v-on:click="delete_role(user_role)">删除</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input v-model="new_user_role" type="text" size="6" placeholder="新角色">
+                    </td>
+                    <td v-for="(resource, res_roles) in resources">
+                        <select v-on:change="change_new_role(resource, $event)">
+                            <option v-bind:selected="'other'==res_role" v-bind:value="res_role" v-for="res_role in res_roles">{{res_role|transate}}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button v-on:click="save_new_role()">保存</button>
+                    </td>
+                </tr>
+            </table>
+            <p>{{ message | json 4 }}</p>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var transate_table = {
+        admin: "管理员",
+        owner: "所有者",
+        other: "其他人",
+        permission: "角色管理",
+        user: "人员管理",
+        normal: "普通用户"
+    }
+    Vue.filter('transate', function(value) {
+        return transate_table[value] || value
+    })
+    var app = new Vue({
+        el: '#app',
+        data: {
+            permission: null,
+            resources: null,
+            new_user_role: null,
+            new_resources: {},
+            message: ""
+        },
+        methods: {
+            delete_role: function(user_role) {
+                console.log("delete: " + user_role)
+                res.permission.delete({
+                    user_role: user_role
+                }, function(err, data) {
+                    if (err) {
+                        app.message = err
+                    } else {
+                        Vue.delete(app.permission, user_role)
+                    }
+                })
+            },
+            change_role: function(user_role, resource, event) {
+                res_role = event.srcElement.value
+                app.permission[user_role][resource] = res_role;
+            },
+            save_role: function(user_role) {
+                console.log("save: " + user_role)
+                res.permission.post({
+                    user_role: user_role,
+                    resources: app.permission[user_role]
+                }, function(err, data) {
+                    app.message = err || ""
+                })
+            },
+            change_new_role: function(resource, event) {
+                res_role = event.srcElement.value
+                app.new_resources[resource] = res_role;
+            },
+            save_new_role: function() {
+                if (!app.new_user_role) {
+                    return
+                }
+                data = {
+                    user_role: app.new_user_role,
+                    resources: JSON.parse(JSON.stringify(app.new_resources))
+                }
+                console.log("save_new_role: " + JSON.stringify(data))
+                res.permission.post(data, function(err) {
+                    if (err) {
+                        app.message = err
+                    } else {
+                        Vue.set(app.permission, data.user_role, data.resources)
+                        app.new_user_role = null
+                    }
+                })
+            }
+        }
+    });
+    res.permission.get(function(err, data) {
+        if (err) {
+            alert(err)
+        } else {
+            app.permission = data.permission
+            app.resources = data.resources
+        }
+    });
+    </script>
+</body>
+
+</html>
