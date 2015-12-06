@@ -41,7 +41,7 @@ Then, run tests
 
     tox
 
-### Todo
+### Todos
 
 - more tests
 - more documents
