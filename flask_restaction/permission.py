@@ -1,4 +1,6 @@
-# coding:utf-8
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function
 
 """
 permission.json struct::
@@ -30,14 +32,12 @@ resource.json struct::
 - owner, other are special res_role, owner means all actions
 - every one can access other actions, needn't add that ctions to every res_role
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
 
 import json
 import codecs
 import copy
 from flask import abort
-from flask_restaction import pattern_action, Resource, schema
+from flask_restaction import pattern_action, Resource
 
 
 def load_config(resource_json, permission_json):
@@ -138,34 +138,24 @@ class Permission(Resource):
             }
         }
     """
-    user_role = "unicode&required", None, "角色"
-    resource = "unicode&required"
-    action = "unicode&required"
+    user_role = "unicode&required", "角色"
 
-    permit = "bool&required"
-    message = "unicode&required"
     permission_item = {
-        "user_role": {
-            "validate": "unicode",
-            "desc": "user_role",
-            "required": True
-        },
-        "resources": {
-            "validate": "any",
-            "desc": "resource:res_role",
-            "required": True
-        }
+        "user_role": "unicode&required",
+        "resources": {"validate": ("any&required", "resource:res_role")}
     }
 
     schema_inputs = {
-        "get_permit": schema("user_role", "resource", "action"),
+        "get_permit": {"user_role": user_role,
+                       "resource": "unicode&required",
+                       "action": "unicode&required"},
         "post": permission_item,
-        "delete": schema("user_role"),
+        "delete": {"user_role": user_role},
     }
     schema_outputs = {
-        "get_permit": schema("permit"),
-        "post": schema("message"),
-        "delete": schema("message"),
+        "get_permit": {"permit": "bool&required"},
+        "post": {"message": "unicode&required"},
+        "delete": {"message": "unicode&required"}
     }
 
     def __init__(self, api):

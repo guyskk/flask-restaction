@@ -39,7 +39,7 @@ def app():
             return "login"
 
     @Hello.error_handler
-    def error_handler(ex):
+    def error_handler(self, ex):
         return {"ok": "error_hander"}
 
     class File(Resource):
@@ -139,11 +139,7 @@ def test_user_role():
 def test_request_content_type():
     class Hello(Resource):
         schema_inputs = {
-            "post": {
-                "name": {
-                    "validate": "str"
-                }
-            }
+            "post": {"name": "str"}
         }
 
         def post(self, name):
@@ -169,17 +165,11 @@ def test_return_inner_custom_type():
             self.name = name
 
     class Hello(Resource):
-        sche = {
-            "name": {
-                "validate": "str"
-            }
-        }
+        sche = {"name": "str"}
         schema_outputs = {
             "get": sche,
             "get_list": [sche],
-            "get_dict": {
-                "user": sche
-            },
+            "get_dict": {"user": sche}
         }
         output_types = [User]
 
@@ -200,14 +190,8 @@ def test_return_inner_custom_type():
         assert 200 == c.get("/hello/list").status_code
         assert 200 == c.get("/hello/dict").status_code
         user = loads(c.get("/hello").data)
-        assert user == {
-            "name": "kk"
-        }
+        assert user == {"name": "kk"}
         userlist = loads(c.get("/hello/list").data)
-        assert userlist == [{
-            "name": "kk"
-        }] * 10
-        dd = loads(c.get("/hello/dict").data)
-        assert dd["user"] == {
-            "name": "kk"
-        }
+        assert userlist == [{"name": "kk"}] * 10
+        userdict = loads(c.get("/hello/dict").data)
+        assert userdict["user"] == {"name": "kk"}

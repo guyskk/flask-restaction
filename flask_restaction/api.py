@@ -1,7 +1,6 @@
-# coding:utf-8
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function
 import six
 """
 flask_restaction.api
@@ -30,9 +29,10 @@ import functools
 import json
 from pkg_resources import resource_string
 from .permission import Permission, load_config, parse_config, permit
-from . import exporters, unpack, logger
-from . import pattern_action, pattern_endpoint
+from . import exporters, unpack, logger, pattern_action, pattern_endpoint
 from .testing import RestactionClient
+import validater
+import types
 
 _default_config = {
     "auth_header": "Authorization",
@@ -59,21 +59,14 @@ def _ensure_unicode(s):
         return s
 
 
-def _normal_validate(obj):
+def _schema_to_json(obj):
     """change lamada validate to string"""
-    if not isinstance(obj, six.string_types):
+    if isinstance(obj, validater.Schema):
+        return obj.data
+    elif isinstance(obj, (types.FunctionType, types.LambdaType)):
+        return obj.__name__
+    else:
         return six.text_type(obj)
-
-
-def _do_combine(res_cls, schema):
-    """lazy_combine tuple_like schema"""
-    for k, v in schema.items():
-        if six.callable(v):
-            try:
-                schema[k] = v(res_cls.__dict__)
-            except KeyError as ex:
-                raise ValueError("%s not in Resource class: %s" % (
-                    str(ex), res_cls.__name__))
 
 
 def get_request_data():
@@ -89,7 +82,7 @@ def get_request_data():
                 else:
                     return {}
             except:
-                abort(400, "Invalid json content")
+                abort(400, "invalid json content")
         else:
             return request.form
     else:
@@ -150,13 +143,18 @@ def parse_resource(res_cls, name=None):
     Action = namedtuple(
         "Action", "action httpmethod act url endpoint docs inputs outputs")
 
-    _do_combine(res_cls, res_cls.schema_inputs)
-    _do_combine(res_cls, res_cls.schema_outputs)
-
+    for action, sche in \
+            res_cls.schema_inputs.items() + res_cls.schema_outputs.items():
+        if sche is not None:
+            try:
+                validater.parse(sche)
+            except Exception as ex:
+                ex.args += (res_cls, action)
+                raise
     actions = []
 
     dumps = functools.partial(json.dumps, indent=2, sort_keys=True,
-                              ensure_ascii=False, default=_normal_validate)
+                              ensure_ascii=False, default=_schema_to_json)
 
     for action, (meth, act) in zip(methods, meth_act):
         if act == "":

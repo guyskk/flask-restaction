@@ -31,30 +31,15 @@ def test_parse_request():
 
 def create_api():
     class Hello(Resource):
-        schema_name = ("name", {
-            "desc": "name",
-            "required": True,
-            "validate": "name",
-            "default": "world"
-        })
-        schema_date = ("date", {
-            "desc": "date",
-            "required": True,
-            "validate": "datetime",
-        })
-        schema_hello = ("hello", {
-            "desc": "hello",
-            "required": True,
-            "validate": "unicode",
-        })
         schema_inputs = {
-            "get": dict([schema_name]),
-            "post_login": dict([schema_date]),
+            "get": {"name": ("name&required&default='world'", "name")},
+            "post_login": {"date": ("date&required", "date")},
         }
+        hello = {"hello": "unicode&required"}
         schema_outputs = {
-            "get": dict([schema_hello]),
-            "get_error": dict([schema_hello]),
-            "post_login": dict([schema_hello]),
+            "get": hello,
+            "get_error": hello,
+            "post_login": hello,
         }
 
         def get(self, name):

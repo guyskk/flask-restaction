@@ -1,7 +1,6 @@
-# coding:utf-8
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import absolute_import, print_function
 
 """Flask-Restaction is a powerful flask ext for creat restful api
 
@@ -16,11 +15,10 @@ import re
 __version__ = "0.19.6"
 
 import logging
-from logging import Formatter
 LOG_FORMAT = '[Flask-Restaction] %(asctime)s %(levelname)s: %(message)s'
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
-ch.setFormatter(Formatter(LOG_FORMAT))
+ch.setFormatter(logging.Formatter(LOG_FORMAT))
 ch.setLevel(logging.WARNING)
 logger.addHandler(ch)
 
@@ -44,11 +42,7 @@ def unpack(rv):
     return (rv, status, headers)
 
 from .exporters import exporters, exporter
-from validater import schema
 from .resource import Resource
 from .api import Api
 
-
-# __all__ can't be unicode
-__all__ = ["Api", "Resource", "schema", "exporters", "exporter", "__version__"]
-__all__ = [str(x) for x in __all__]
+__all__ = ["Api", "Resource", "exporters", "exporter", "__version__"]

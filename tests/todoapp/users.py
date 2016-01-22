@@ -13,38 +13,30 @@ users = {
 
 
 class User(Resource):
-    schema_id = ("id", {
-        "required": True, "validate": "int"
-    })
-    schema_username = ("username", {
-        "desc": "4-16个字符, 不能有特殊字符",
-        "required": True, "validate": "name"
-    })
-    schema_password = ("password", {
-        "desc": "6-20个字符",
-        "required": True, "validate": "password"
-    })
+    userid = "int&required"
+    username = "name&required", "4-16个字符, 不能有特殊字符"
+    password = "password&required", "6-20个字符"
     schema_inputs = {
-        "get": dict([schema_id]),
-        "get_list": dict(),
-        "post": dict([schema_username, schema_password]),
-        "put": dict([schema_id, schema_username, schema_password]),
-        "delete": dict([schema_id]),
-        "post_register": dict([schema_username, schema_password]),
-        "post_login": dict([schema_username, schema_password]),
-        "post_logout": dict(),
+        "get": {"id": userid},
+        "get_list": None,
+        "post": {"username": username, "password": password},
+        "put": {"id": userid, "username": username, "password": password},
+        "delete": {"id": userid},
+        "post_register": {"username": username, "password": password},
+        "post_login": {"username": username, "password": password},
+        "post_logout": None,
     }
 
-    schema_userinfo = dict([schema_id, schema_username])
+    userinfo = {"id": userid, "username": username}
     schema_outputs = {
-        "get": schema_userinfo,
-        "get_list": [schema_userinfo],
-        "post": schema_userinfo,
-        "put": schema_userinfo,
-        "delete": dict(),
-        "post_register": schema_userinfo,
-        "post_login": schema_userinfo,
-        "post_logout": dict(),
+        "get": userinfo,
+        "get_list": [userinfo],
+        "post": userinfo,
+        "put": userinfo,
+        "delete": None,
+        "post_register": userinfo,
+        "post_login": userinfo,
+        "post_logout": None,
     }
 
     def get(self):

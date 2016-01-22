@@ -1,21 +1,22 @@
-# coding:utf-8
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function
 
 """
     flask_restaction.resource
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. versionadded:: 0.18.0
-       Support tuple_like schema, The ``schema,parse_schema,combine_schema`` function was added.
+       Support tuple_like schema, The ``schema,parse_schema,combine_schema``
+       function was added.
 """
 
-from __future__ import unicode_literals
-from __future__ import absolute_import
 import six
 
 from flask.views import View
 from flask import g, abort
 from validater import validate
-from flask_restaction import unpack
+from . import unpack
 
 
 class ResourceViewType(type):
@@ -75,24 +76,24 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
     output_types = []
 
     @classmethod
-    def _before_request(cls):
+    def _before_request(cls, self):
         """before_request"""
         for fn in cls.before_request_funcs:
-            rv = fn()
+            rv = fn(self)
             if rv is not None:
                 return rv
         return None
 
     @classmethod
-    def _after_request(cls, rv, code, headers):
+    def _after_request(cls, self, rv, code, headers):
         for fn in cls.after_request_funcs:
-            rv, code, headers = fn(rv, code, headers)
+            rv, code, headers = fn(self, rv, code, headers)
         return rv, code, headers
 
     @classmethod
-    def _handle_error(cls, ex):
+    def _handle_error(cls, self, ex):
         if cls.handle_error_func:
-            rv = cls.handle_error_func[0](ex)
+            rv = cls.handle_error_func[0](self, ex)
             if rv is not None:
                 return rv
 
@@ -118,15 +119,15 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         """preproccess request and dispatch request
         """
         try:
-            rv = self._before_request()
+            rv = self._before_request(self)
             if rv is None:
                 rv = self.full_dispatch_request()
         except Exception as ex:
-            rv = self._handle_error(ex)
+            rv = self._handle_error(self, ex)
             if rv is None:
                 raise
         rv, code, headers = unpack(rv)
-        rv, code, headers = self._after_request(rv, code, headers)
+        rv, code, headers = self._after_request(self, rv, code, headers)
         return rv, code, headers
 
     def full_dispatch_request(self):

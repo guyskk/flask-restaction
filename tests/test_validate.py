@@ -22,28 +22,12 @@ def app():
     api = Api(app)
 
     class Hello(Resource):
-        schema_name = ("name", {
-            "desc": "name",
-            "required": True,
-            "validate": "name",
-            "default": "world"
-        })
-        schema_date = ("date", {
-            "desc": "date",
-            "required": True,
-            "validate": "datetime",
-        })
-        schema_hello = ("hello", {
-            "desc": "hello",
-            "required": True,
-            "validate": "unicode",
-        })
         schema_inputs = {
-            "get": dict([schema_name]),
-            "post_login": dict([schema_date]),
+            "get": {"name": ("name&required&default='world'", "name")},
+            "post_login": {"date": ("date&required", "date")},
         }
         schema_outputs = {
-            "get": dict([schema_hello])
+            "get": {"hello": ("unicode&required", "hello")}
         }
 
         def get(self, name):
@@ -70,7 +54,7 @@ def test_inputs(app):
         assert b"hello" in c.get("hello").data
         assert b"world" in c.get("hello").data
         assert b"hello" in c.post("hello/login", data={
-            "date": datetime.now().isoformat()
+            "date": datetime.utcnow().date().isoformat()
         }).data
         assert 400 == c.post("hello/login").status_code
         assert 400 == c.post("hello/login", data={

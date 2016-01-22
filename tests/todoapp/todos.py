@@ -13,47 +13,30 @@ class Todo(Resource):
 
     """docstring for Todo"""
 
-    schema_id = ("id", {
-        "desc": "todo's id",
+    todoid = "int&required", "todo's id"
+    name = "name&required", "名称"
+    date_out = "datetime&required&output", "时间"
+    date_in = {
+        "validater": "datetime",
         "required": True,
-        "validate": "int",
-    })
-    schema_name = ("name", {
-        "desc": "名称",
-        "required": True,
-        "validate": "name",
-    })
-    schema_date_out = ("date", {
-        "desc": "时间",
-        "required": True,
-        "validate": "iso_datetime",
-    })
-    schema_date_in = ("date", {
-        "desc": "时间",
-        "required": True,
-        "validate": "datetime",
-        "default": datetime.now
-    })
-    schema_finish = ("finish", {
-        "desc": "是否已完成",
-        "required": True,
-        "validate": "bool",
-        "default": False
-    })
+        "default": datetime.now,
+        "desc": "时间"
+    }
+    finish = "bool&required&default=False", "是否已完成"
     schema_inputs = {
-        "get": dict([schema_id]),
-        "post": dict([schema_name, schema_date_in, schema_finish]),
-        "put": dict([schema_id, schema_name, schema_date_in, schema_finish]),
-        "delete": dict([schema_id]),
+        "get": {"id": todoid},
+        "post": {"name": name, "date": date_in, "finish": finish},
+        "put": {"id": todoid, "name": name, "date": date_in, "finish": finish},
+        "delete": {"id": todoid}
     }
-    schema_out = dict([schema_id, schema_name, schema_date_out, schema_finish])
+    info = {"name": name, "date": date_out, "finish": finish}
     schema_outputs = {
-        "get": schema_out,
-        "get_list": [schema_out],
-        "post": schema_out,
-        "put": schema_out,
+        "get": info,
+        "get_list": [info],
+        "post": info,
+        "put": info,
     }
-    types = []
+    output_types = []
 
     @staticmethod
     def user_role(uid):
