@@ -9,22 +9,21 @@
 .. code-block:: python
 
     from flask import Flask
-    from flask.ext.restaction import Resource, Api, schema
+    from flask_restaction import Resource, Api
 
     app = Flask(__name__)
     api = Api(app)
 
-
-
     class Hello(Resource):
-        """docstrings Hello"""
-        name = "safestr&required", "world", "you name"
+        """Hello world"""
+
+        name = "safestr&required&default='world'", "your name"
         schema_inputs = {
-            "get": schema("name")
+            "get": {"name": name}
         }
 
         def get(self, name):
-            """docstrings get"""
+            """Welcome to flask-restaction"""
             return {"hello": name}
 
     api.add_resource(Hello)
@@ -60,125 +59,43 @@
       "hello": "kk"
     }
 
+访问 http://127.0.0.1:5000/static/resdocs.html 可以查看自动生成的文档
+
 那么，这些代码是什么意思呢？
 
-1. 首先导入了 :class:`~flask_restaction.Resource` 和 :class:`~flask_restaction.Api` 类
-2. 创建了一个 Api 类的实例，把 Flask 类的一个实例作为参数
-3. 创建了一个 Hello 类，继承自 Resource 类
+1. 首先导入 Resource 和 Api 类
+2. 创建一个 Api 对象，把 app 作为参数
+3. 创建一个 Hello 类，继承自 Resource 类并定义 get 方法
 4. 定义 schema_inputs，它指定了输入参数及格式
 5. 调用 api.add_resource(Hello) ，把 Hello 添加到 api 资源中
-6. 生成 res.js 和 resdocs.html 文件, Visit http://127.0.0.1:5000/static/resdocs.html
+6. 生成 res.js 和 resdocs.html
+
+
+.. glossary:: 两个概念
+
+    *resource*
+        资源，比如这里的 Hello 类
+
+    *action* 
+        操作，例如 get, post, delete, get_list, post_login。只要是 HTTP 方法或 HTTP 方法加下划线 _ 开头就行
 
 
 校验输入输出
 -------------------
 
-从 v0.18.0 开始，flask_restaction 使用 tuple_like schema，它可以少写2/3的 schema 代码。
-
-tuple_like schema::
-
-    name = "safestr&required", "world", "you name"
-
-等价于::
-
-    {
-        "desc": "you name",
-        "required": True,
-        "validate": "safestr",
-        "default": "world"
-    }
-
-
-*desc*
-    描述
-*required*
-    是否是必需的，输入的空字符串和None视作缺少
-
-*validate*
-    指定校验器，比如：int,str,url,email
-
-*default*
-     指定默认值，也可以是一个函数，比如：datetime.now
-
 Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定如何验证输入输出。
-*output_types* 是一个 list，里面的元素是你要返回的自定义类型对象的类型，
-这样返回的对象会被包装成一个 dict。
 
-你可以把 schema 分成几个小零件 ，然后用 schema 函数将它们组合。
+*schema_inputs*
+    输入格式，action 作为 key, schema 作为 value
 
-.. code-block:: python
-    
-    from flask.ext.restaction import schema
+*schema_outputs*
+    输出格式，同 schema_inputs
 
-    class Hello(Resource):
+*output_types* ，
+    输出类型，是一个 list，里面的元素是你要返回的自定义类型对象的类型，
+    这样返回的对象会被包装成一个 dict
 
-        name = "name&required", "world", "name"
-        date = "datetime&required"
-        hello = "str&required", None, "hello"
-
-        schema_inputs = {
-            "get": schema("name"),
-            "post_login": schema("name", "date"),
-        }
-        schema_outputs = {
-            "get": schema("hello"),
-            "post_login": schema("hello", "date")
-        }
-
-        # if you return a custom type object
-        # output_types = [CustomType]
-
-        def get(self, name):
-            return {"hello": name}
-
-        def post_login(self, name, date):
-            return {
-                "hello": name,
-                "date":date,
-            }
-
-
-schema 函数用于将 schema 组合，生成一个新的 schema。运行一下下面的代码你就明白了。
-
-.. code-block:: python
-
-    from flask.ext.restaction import schema
-    import json
-
-    leaf1 = "+int&required", 1, "leaf1 desc"
-    leaf2 = "unicode&required"
-    leaf3 = "unicode", None, "article table of content"
-
-    branch1 = schema("leaf1", "leaf2")
-    branch2 = schema("branch1", "leaf3")
-
-    flower = schema(["branch1"])
-    tree = schema(["branch2"])
-
-    forest1 = schema(["tree"])
-    forest2 = schema([["branch2"]])
-    park = schema("tree", "flower")
-
-    scope = locals()
-
-    def pp(obj):
-        print json.dumps(obj, ensure_ascii=False, indent=4)
-
-    pp(branch1(scope))
-    pp(branch2(scope))
-
-    pp(flower(scope))
-    pp(tree(scope))
-
-    pp(forest1(scope))
-    pp(forest2(scope))
-    pp(park(scope))
-
-
-建议你看一下内置的 validater 
-`built-in validater <https://github.com/guyskk/validater#schema-format>`_
-
-想要了解更多，请移步 `validater <https://github.com/guyskk/validater>`_
+关于 validater, 请移步 `validater <https://github.com/guyskk/validater>`_
 
 
 使用 res.js
@@ -207,12 +124,6 @@ schema 函数用于将 schema 组合，生成一个新的 schema。运行一下�
 
     res.resource.action(data, function(err, value), function(progress))
 
-*resource*
-    资源的名称，例如 ``hello``。
-
-*action* 
-    执行的操作，例如 get, post, delete, get_list, post_upload。只要是 httpmethod 或 httpmethod 加下划线 _ 开头就行。
-
 *function(err, value)*
     请求完成回调函数。
 
@@ -229,104 +140,44 @@ schema 函数用于将 schema 组合，生成一个新的 schema。运行一下�
     - 其余情况下 data 是普通 js 对象
 
 
-现在来写一个 hello.html 并保存到 static 目录
-
-.. code-block:: html
-
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>hello res.js</title>
-        <script type="text/javascript" src="/static/res.js"></script>
-        <script type="text/javascript">
-        function send() {
-            var name = document.getElementById("name").value;
-            res.hello.get({name: name}, function(err, value) {
-                if (!err){
-                    document.getElementById("message").innerText = value.hello;
-                }else{
-                    alert(err)
-                }
-            });
-        }
-        </script>
-    </head>
-    <body>
-        <input id="name" type="text" placeholder="you name">
-        <p id="message"></p>
-        <button onclick="send()">GetHello</button>
-    </body>
-    </html>
-
-打开浏览器，访问 http://127.0.0.1:5000/static/hello.html
-
-尝试一下，注意 schema_inputs 中的 ``"validate": "safestr"``
-
-你如果输入一些不安全的字符（黑客攻击），例如::
-
-    <script type="text/javascript">alert("haha")</script>
-
-你输入的字符串会被转义成如下内容::
-
-    &lt;script type=&#34;text/javascript&#34;&gt;alert(&#34;haha&#34;)&lt;/script&gt;
-
-
 构建 URL
 ---------------------------
 
 可以使用 flask 中的 url_for() 函数构建指定 action 的 URL。
 
-endpoint 名称是resource@action_lastpart::
+endpoint (url_for 的参数) 是 ``resource@action_lastpart``
     
-    resource -> resource name or resource's class name, lowcase
-    action   -> action's last part name, lowcase
+*resource*
+    resource name or resource's class name, lowcase
+
+*action_lastpart*
+    action's last part name, lowcase
 
 格式::
 
-    Resource.action_lastpart -> url_for("resource@lastpart") -> /resource/lastpart
+    url_for("resource@lastpart") -> /resource/lastpart
 
-For example::
+示例::
     
-    Hello.get -> url_for("hello") -> /hello
-    # 假设 Hello.get_list 存在
-    Hello.get_list -> url_for("hello@list") -> /hello/list
-    Hello.post_login -> url_for("hello@login") -> /hello/login
-
-
-Py2&py3
----------
-
-Flask-restaction 从 v0.17.0 开始支持 py3，在 py27 和 py34 上测试通过。
-但是还需要更多测试来使它更稳定。同时，你要使用最新版的 flask 。
-
-如果你使用 py2 ，最好将下面几句加到每个模块的开头。这样在你以后迁移到 py3 的时候会容易的多。
-
-.. code-block:: python
-
-    # coding:utf-8
-
-    from __future__ import unicode_literals
-    from __future__ import absolute_import
-
+    url_for("hello") -> /hello
+    url_for("hello@list") -> /hello/list
+    url_for("hello@login") -> /hello/login
 
 
 身份验证&权限控制
 -------------------
 
-版本 v0.19.6 重写了权限系统。
-
 flask_restaction 使用 *json web token* 作为身份验证工具。
 
 see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
-权限系统中有两个重要的概念:
+.. glossary:: 两个概念
 
-*user_role*
-    用户角色，这是随时可以变动，可以通过UI界面编辑设定的，对应的配置文件为 permission.json
+    *user_role*
+        用户角色，这是随时可以变动，可以通过UI界面编辑设定的，对应的配置文件为 permission.json
 
-*res_role*
-    资源角色，这是与程序逻辑密切相关，由程序设计者确定的，对应的配置文件为 resource.json
+    *res_role*
+        资源角色，这是与程序逻辑密切相关，由程序设计者确定的，对应的配置文件为 resource.json
 
 
 你可以通过 ``flask.g.me`` 获取用户的身份信息，它的结构如下:
@@ -416,7 +267,7 @@ resource.json 结构
 .. code-block:: python
 
     from flask import Flask, Blueprint
-    from flask.ext.restaction import Api
+    from flask_restaction import Api
     from .article import Article
 
     app = Flask(__name__)
@@ -548,7 +399,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
     restaction 是声明式的，简单明确::
         
-        from flask.ext.restaction import reqparse
+        from flask_restaction import reqparse
 
         name = "safestr&required", "world", "you name"
         schema_inputs = {
