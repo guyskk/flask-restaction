@@ -19,6 +19,7 @@ class Todo(Resource):
     date_in = {
         "validater": "datetime",
         "required": True,
+        "input": True,
         "default": datetime.now,
         "desc": "时间"
     }

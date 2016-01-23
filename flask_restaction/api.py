@@ -69,6 +69,16 @@ def _schema_to_json(obj):
         return six.text_type(obj)
 
 
+def _parse_schema(schema):
+    for action, sche in schema.items():
+        if sche is not None:
+            try:
+                schema[action] = validater.parse(sche)
+            except Exception as ex:
+                ex.args += (action,)
+                raise
+
+
 def get_request_data():
     method = request.method.lower()
     if method in ["get", "delete"]:
@@ -143,14 +153,13 @@ def parse_resource(res_cls, name=None):
     Action = namedtuple(
         "Action", "action httpmethod act url endpoint docs inputs outputs")
 
-    for action, sche in \
-            res_cls.schema_inputs.items() + res_cls.schema_outputs.items():
-        if sche is not None:
-            try:
-                validater.parse(sche)
-            except Exception as ex:
-                ex.args += (res_cls, action)
-                raise
+    try:
+        _parse_schema(res_cls.schema_inputs)
+        _parse_schema(res_cls.schema_outputs)
+    except Exception as ex:
+        ex.args += (res_cls,)
+        raise
+
     actions = []
 
     dumps = functools.partial(json.dumps, indent=2, sort_keys=True,
