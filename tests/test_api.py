@@ -139,7 +139,7 @@ def test_base():
 
 def test_config():
     app = Flask(__name__)
-    app.config.from_object("config_data")
+    app.config.from_object("testdata.config")
     app.debug = True
     configs = ["resource_json", "permission_json", "auth_header",
                "auth_token_name", "auth_secret", "auth_alg", "auth_exp",

@@ -21,16 +21,17 @@
     <ul>
         <li>auth_header: <code>Authorization</code></li>
         <li>auth_token_name: <code>res_token</code></li>
-        <li>blueprint: <code>None</code></li>
-        <li>url_prefix: <code>None</code></li>
-        
+        <li>url_prefix: <code></code></li>
+        <p><pre></pre></p>
         
         <li>
         <a class="lead" href="#hello">hello</a>
         <ul>
             
             <li>
-                <a class="lead" href="#hello.get">get</a>
+                <a href="#hello.get">
+                get welcome to flask-restaction
+                </a>
             </li>
             
         </ul>
@@ -40,7 +41,7 @@
     
     <div class="resource table-responsive">
         <h2 id="hello">hello</h2>
-        <p><pre></pre></p>
+        <p><pre>hello world</pre></p>
         <table class="table table-striped">
             <tr>
                 <th>action / docs</th>
@@ -52,21 +53,28 @@
             <tr id="hello.get">
                 <td class="info">
                 <strong>get</strong>
-                <p>docstrings get</p>
+                <p>welcome to flask-restaction</p>
                 </td>
                 <td class="success"><code>GET /hello</code></td>
                 <td class="info">
                 <pre>{
   "name": {
+    "args": [], 
     "default": "world", 
     "desc": "you name", 
     "required": true, 
-    "validate": "safestr"
+    "validater": "safestr"
   }
 }</pre>
                 </td>
                 <td class="success">
-                <pre>null</pre>
+                <pre>{
+  "hello": {
+    "args": [], 
+    "required": true, 
+    "validater": "unicode"
+  }
+}</pre>
                 </td>
             </tr>
             

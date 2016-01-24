@@ -1,19 +1,21 @@
 from flask import Flask
-from flask.ext.restaction import Resource, Api, schema
+from flask.ext.restaction import Resource, Api
 
 app = Flask(__name__)
 api = Api(app)
 
 
 class Hello(Resource):
-    """docstrings Hello"""
-    name = "safestr&required", "world", "you name"
+    """hello world"""
     schema_inputs = {
-        "get": schema("name")
+        "get": {"name": ("safestr&required&default='world'", "you name")}
+    }
+    schema_outputs = {
+        "get": {"hello": "unicode&required"}
     }
 
     def get(self, name):
-        """docstrings get"""
+        """welcome to flask-restaction"""
         return {"hello": name}
 
 api.add_resource(Hello)

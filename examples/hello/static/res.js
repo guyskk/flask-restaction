@@ -207,7 +207,6 @@ window.res = (function(window) {
 
 })(window);
 
-
 /*
 用法：
     res.resource.action(data,fn,progress)
@@ -229,43 +228,57 @@ window.res = (function(window) {
 */
 
 (function(res) {
-    
-    /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
-    res.website_url="";
-    res.clear_token=function() {
-        window.localStorage.removeItem("")
-    }
-    header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 
-    /*以下为jinja2模板，用于生成js*/
-    
-    res.={};
-    ress=res.;
-    
-
-    /*当不需要传递data时，参数顺序是fn,progress,null*/
-    
-    
-    /*End jinja2模板*/
-
-    function addToken(header, key){
-        if (header!==null&&key!==null) {
+    function addToken(header){
+        if (header!==null) {
             if(window.localStorage){
-                _token = window.localStorage.;
+                _token = window.localStorage.res_token;
                 if(_token){
-                    header[key]=_token;
+                    header["Authorization"]=_token;
                 }
             }
         }
     }
 
-    function saveToken(xhr, key) {
-        if (key!==null) {
-            token=xhr.getResponseHeader(key)
-            if (token!==null && window.localStorage) {
-                window.localStorage. = token;
-            }
+    function saveToken(xhr) {
+        token=xhr.getResponseHeader("Authorization")
+        if (token!==null && window.localStorage) {
+            window.localStorage.res_token = token;
         }
     }
 
+    header_accept="application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+    
+    /*网址, 例如 http://www.example.com, 最后面不要斜杠*/
+    res.website_url="";
+    res.clear_token=function() {
+        window.localStorage.removeItem("res_token")
+    }
+    
+    /*当不需要传递数据时，回调函数参数顺序是: fn,progress,null*/
+    function request(url,method,data,fn,progress) {
+        if (progress==null && typeof(data)==="function"){
+            progress = fn;
+            fn = data;
+            data = null;
+        }
+        header={accept:header_accept};
+        addToken(header);
+        var _fn=function(err, data, header, xhr){
+            saveToken(xhr);
+            if(typeof(fn)==="function"){
+                fn(err, data, header, xhr);
+            }
+        }
+        res.ajax(res.website_url+url,{
+            method:method,
+            data:data,
+            header: header,
+            fn:_fn,
+            progress:progress
+        });
+    }
+    res.hello={};
+        res.hello.get=function(data,fn,progress){request("/hello","get",data,fn,progress) };
+    
 })(res);

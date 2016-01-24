@@ -16,8 +16,8 @@ resource
 
 
 def loads(data):
-    if six.PY3:
-        data = data.decode("utf-8")
+    if not isinstance(data, six.text_type):
+        data = data.decode('utf-8')
     return json.loads(data)
 
 
