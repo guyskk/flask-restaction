@@ -7,6 +7,13 @@ from flask_restaction import Api, Resource
 from datetime import datetime
 import pytest
 import json
+import six
+
+
+def loads(data):
+    if not isinstance(data, six.text_type):
+        data = data.decode('utf-8')
+    return json.loads(data)
 
 
 @pytest.fixture(scope="module")
@@ -54,46 +61,46 @@ def test_get(app):
     with app.test_client() as c:
         resp = c.get("/hello?name=")
         assert 200 == resp.status_code
-        assert {'hello': 'world'} == json.loads(resp.data)
+        assert {'hello': 'world'} == loads(resp.data)
 
         resp = c.get("/hello")
         assert 200 == resp.status_code
-        assert {'hello': 'world'} == json.loads(resp.data)
+        assert {'hello': 'world'} == loads(resp.data)
 
         resp = c.get("/hello?name=abc123")
         assert 200 == resp.status_code
-        assert {'hello': 'abc123'} == json.loads(resp.data)
+        assert {'hello': 'abc123'} == loads(resp.data)
 
         resp = c.get("/hello?name=1")
         assert 400 == resp.status_code
-        assert 'name' in json.loads(resp.data)
+        assert 'name' in loads(resp.data)
 
         resp = c.get("/hello?name=中文")
         assert 400 == resp.status_code
-        assert 'name' in json.loads(resp.data)
+        assert 'name' in loads(resp.data)
 
 
 def test_get_user(app):
     with app.test_client() as c:
         resp = c.get("/hello/user?name=")
         assert 200 == resp.status_code
-        assert {'name': 'world'} == json.loads(resp.data)['user']
+        assert {'name': 'world'} == loads(resp.data)['user']
 
         resp = c.get("/hello/user")
         assert 200 == resp.status_code
-        assert {'name': 'world'} == json.loads(resp.data)['user']
+        assert {'name': 'world'} == loads(resp.data)['user']
 
         resp = c.get("/hello/user?name=abc123")
         assert 200 == resp.status_code
-        assert {'name': 'abc123'} == json.loads(resp.data)['user']
+        assert {'name': 'abc123'} == loads(resp.data)['user']
 
         resp = c.get("/hello/user?name=1")
         assert 400 == resp.status_code
-        assert 'name' in json.loads(resp.data)
+        assert 'name' in loads(resp.data)
 
         resp = c.get("/hello/user?name=中文")
         assert 400 == resp.status_code
-        assert 'name' in json.loads(resp.data)
+        assert 'name' in loads(resp.data)
 
 
 def test_post(app):
@@ -101,17 +108,17 @@ def test_post(app):
         data = {"date": "2016-01-22T12:59:59.000599Z"}
         resp = c.post("/hello", data=data)
         assert 200 == resp.status_code
-        assert data == json.loads(resp.data)
+        assert data == loads(resp.data)
 
         resp = c.post("/hello")
         assert 200 == resp.status_code
-        assert 'date' in json.loads(resp.data)
+        assert 'date' in loads(resp.data)
 
         data = {"date": "2016-01-22"}
         resp = c.post("/hello", data=data)
         assert 400 == resp.status_code
-        assert 'date' in json.loads(resp.data)
+        assert 'date' in loads(resp.data)
 
         resp = c.post("/hello")
         assert 200 == resp.status_code
-        assert 'date' in json.loads(resp.data)
+        assert 'date' in loads(resp.data)
