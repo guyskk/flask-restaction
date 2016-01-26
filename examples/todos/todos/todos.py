@@ -4,6 +4,7 @@ from __future__ import unicode_literals, absolute_import, print_function
 from flask_restaction import Resource
 import datetime
 from . import db, model
+from flask import g
 
 
 class Todos(Resource):
@@ -45,11 +46,13 @@ class Todos(Resource):
         return model.Todo.query.get_or_404(todoid)
 
     def get_list(self, pagenum, pagesize):
-        return model.Todo.query.paginate(pagenum, pagesize).items
+        return model.Todo.query.filter_by(userid=g.me["id"])\
+            .paginate(pagenum, pagesize).items
 
     def post(self, name, content):
         date = datetime.datetime.utcnow()
-        todo = model.Todo(name=name, content=content, date=date)
+        todo = model.Todo(userid=g.me["id"],
+                          name=name, content=content, date=date)
         db.session.add(todo)
         db.session.commit()
         return todo

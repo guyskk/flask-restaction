@@ -16,6 +16,7 @@ class User(db.Model):
 
 class Todo(db.Model):
     todoid = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.Integer, nullable=False)
     name = db.Column(db.Unicode(240), index=True, nullable=False)
     content = db.Column(db.UnicodeText, nullable=False)
     date = db.Column(db.DateTime(), index=True, nullable=False)

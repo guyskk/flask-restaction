@@ -16,29 +16,35 @@
             <h1>Hello {{user.name | capitalize}}，Welcome to Todos</h1>
         </div>
         <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
-        
-        <ul class="list-group">
-            <li class="list-group-item row" v-for="todo in todos">
-                <p class="col-md-10">{{todo.content}}</p>
-                <div class="col-md-2">
-                    <span class="glyphicon glyphicon-time" aria-hidden="true"></span> {{todo|moment}}
-                    <button @click="delete_todo(todo)" type="button" class="btn btn-link" aria-label="Left Align">
-                        <span class="glyphicon glyphicon-remove text-warning" aria-hidden="true"></span>
-                    </button>
+        <div v-for="todo in todos">
+            <div class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    <div class="col-md-11">{{todo.name}}</div>
+                    <div class="col-md-1"><span class="glyphicon glyphicon-time" aria-hidden="true"></span> {{todo|moment}}</div>
                 </div>
-            </li>
-            <li class="list-group-item row">
-                <div class=" col-md-10">
-                    <input type="text" v-model="newtodo.name" class="form-control" placeholder="name">
-                    <textarea v-model="newtodo.content" class="form-control" rows="3" placeholder="todos content"></textarea>
+                <div class="panel-body row">
+                    <div class="col-md-11">{{todo.content}}</div>
+                    <div class="col-md-1">
+                        <button @click="delete_todo(todo)" type="button" class="btn btn-link" aria-label="Left Align">
+                            <span class="glyphicon glyphicon-remove text-warning" aria-hidden="true"></span>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <input type="text" v-model="newtodo.name" class="form-control" placeholder="name">
+            </div>
+            <div class="panel-body row">
+                <textarea v-model="newtodo.content" class="form-control col-md-11" rows="3" placeholder="content"></textarea>
+                <div class="col-md-1">
                     <button @click="save(newtodo)" type="button" class="btn btn-link text-info" aria-label="Left Align">
                         保存<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
                     </button>
                 </div>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
     <script type="text/javascript">
     moment.locale('zh_CN');
@@ -83,6 +89,8 @@
                         app.message = err
                     } else {
                         app.todos.push(todo)
+                        newtodo.name = '';
+                        newtodo.content = '';
                     }
                 })
             }
