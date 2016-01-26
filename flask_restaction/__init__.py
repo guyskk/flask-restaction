@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
    ``Resource.userrole`` removed, use Api.fn_user_role instead.
 """
 import re
-__version__ = "0.19.6"
+__version__ = "0.20.0"
 
 import logging
 LOG_FORMAT = '[Flask-Restaction] %(asctime)s %(levelname)s: %(message)s'
