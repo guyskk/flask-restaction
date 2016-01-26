@@ -2,14 +2,56 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
 
-from flask import Flask, Blueprint, g, url_for
+from flask import Flask, Blueprint, g, url_for, request
 from flask_restaction import Api, Resource
-from datetime import datetime
+import validater
 import pytest
-from mock import Mock, patch
+
+
+@pytest.fixture()
+def app():
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+
+    class Hello(Resource):
+
+        def get(self):
+            return "hello"
+
+        def get_error(self):
+            raise ValueError("error")
+
+    api.add_resource(Hello)
+    app.resource = Hello
+    app.api = api
+    return app
 
 
 def test_parse_request():
+    class Hello(Resource):
+
+        def get(self):
+            return "hello"
+
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+    api.add_resource(Hello)
+
+    with app.test_request_context('hello'):
+        assert request.endpoint == "hello"
+        assert url_for("hello") == "/hello"
+    with app.test_client() as c:
+        rv = c.get("hello")
+        assert 200 == rv.status_code
+        assert b"hello" in rv.data
+        assert g.resource == "hello"
+        assert g.action == "get"
+        assert g.me["id"] is None
+
+
+def test_blueprint():
     class Hello(Resource):
 
         def get(self):
@@ -21,120 +63,98 @@ def test_parse_request():
     api = Api(bp)
     api.add_resource(Hello)
     app.register_blueprint(bp, url_prefix="/api")
+
+    with app.test_request_context('/api/hello'):
+        assert request.endpoint == "blueprint.hello"
+        assert url_for("blueprint.hello") == "/api/hello"
     with app.test_client() as c:
         rv = c.get("/api/hello")
-        assert b"hello" in rv.data
+        assert 200 == rv.status_code
+        assert b"hello" == rv.data
         assert g.resource == "hello"
         assert g.action == "get"
         assert g.me["id"] is None
 
 
-def create_api():
+def test_parse_schema():
+    hello = {"hello": "safestr&required"}
+    sche_inputs = {
+        "get": {"name": "name&default='world'"},
+        "post_login": {
+            "name": "name&default='world'",
+            "password": "password&required"
+        }
+    }
+    sche_outputs = {
+        "get": hello,
+        "post_login": hello
+    }
+
     class Hello(Resource):
-        schema_inputs = {
-            "get": {"name": ("name&required&default='world'", "name")},
-            "post_login": {"date": ("date&required", "date")},
-        }
-        hello = {"hello": "unicode&required"}
-        schema_outputs = {
-            "get": hello,
-            "get_error": hello,
-            "post_login": hello,
-        }
+
+        schema_inputs = sche_inputs
+        schema_outputs = sche_outputs
+        output_types = [Flask]
 
         def get(self, name):
-            return {"hello": name}
+            pass
 
-        def get_error(self):
-            raise ValueError("get_error")
-
-        def post_login(self, date):
-            return {"hello": "world"}
+        def post_login(self, name, password):
+            pass
 
     app = Flask(__name__)
     app.debug = True
     api = Api(app)
     api.add_resource(Hello)
 
-    return api
+    assert Hello.schema_inputs == validater.parse(sche_inputs)
+    assert Hello.schema_outputs == validater.parse(sche_outputs)
+    assert Hello.output_types == [Flask]
 
 
-def test_api_before_request():
-    api = create_api()
-    app = api.app
+def test_base(app):
+    with app.test_client() as c:
+        assert 200 == c.get("/hello").status_code
+        assert b"hello" == c.get("/hello").data
+        with pytest.raises(ValueError) as exinfo:
+            c.get("/hello/error")
+        assert exinfo.value.args == ("error",)
 
-    mk = Mock(return_value={"hello": "before_request"})
-    api.before_request(mk)
+
+def test_before_request(app):
+    @app.api.before_request
+    def before_request():
+        return "before_request"
 
     with app.test_client() as c:
-        assert b"before_request" in c.get(
-            "/hello", query_string={"name": "haha"}).data
-        assert b"before_request" in c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).data
-        mk.return_value = None
-        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert 400 == c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).status_code
+        assert b"before_request" == c.get("/hello").data
+        assert b"before_request" == c.get("/hello/error").data
+        assert 200 == c.get("/hello/error").status_code
 
 
-def test_api_after_request():
-    api = create_api()
-    app = api.app
+def test_after_request(app):
+    @app.api.after_request
+    def after_request(rv, code, headers):
+        return "after_request", 200, headers
 
     with app.test_client() as c:
-        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert 400 == c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).status_code
-        mk = Mock()
-        mk.return_value = ({"hello": "after_request"}, 200, None)
-        api.after_request(mk)
-        assert b"after_request" in c.get(
-            "/hello", query_string={"name": "haha"}).data
-        assert b"after_request" in c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).data
+        assert b"after_request" == c.get("/hello").data
+        with pytest.raises(ValueError) as exinfo:
+            c.get("/hello/error")
+        assert exinfo.value.args == ("error",)
 
 
-def test_befor_after():
-    api = create_api()
-    app = api.app
-
-    before = Mock(return_value={"hello": "before_request"})
-    api.before_request(before)
-
-    after = Mock()
-    after.return_value = ({"hello": "after_request"}, 200, None)
-    api.after_request(after)
-
+def test_error_handler(app):
+    @app.api.error_handler
+    def error_handler(ex):
+        assert isinstance(ex, ValueError)
+        assert ex.args == ('error',)
+        return "error_hander"
     with app.test_client() as c:
-        assert b"after_request" in c.get(
-            "/hello", query_string={"name": "haha"}).data
-        assert b"after_request" in c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).data
-
-
-def test_api_error_handler():
-    api = create_api()
-    app = api.app
-
-    mk = Mock(return_value="error_handler")
-    api.error_handler(mk)
-
-    with app.test_client() as c:
-        assert b"error_handler" in c.get("/hello/error").data
-        mk.return_value = None
-        with pytest.raises(ValueError):
-            c.get("/hello/error").data
-
-
-def test_base():
-    api = create_api()
-    app = api.app
-
-    with app.test_client() as c:
-        assert b"world" in c.get("/hello").data
-        assert b"haha" in c.get("/hello", query_string={"name": "haha"}).data
-        assert b"name" in c.get(
-            "/hello", query_string={"name": "ha!@#ha"}).data
+        assert 200 == c.get("/hello").status_code
+        assert b"hello" == c.get("/hello").data
+        assert 200 == c.get("/hello/error").status_code
+        assert b"error_hander" == c.get("/hello/error").data
 
 
 def test_config():
@@ -174,15 +194,33 @@ def test_log_warning():
 
 
 def test_testclient():
-    api = create_api()
+    class Hello(Resource):
+        schema_inputs = {
+            "get": {"name": "name&default='world'"}
+        }
+        schema_outputs = {
+            "get": {"hello": "safestr&required"}
+        }
+
+        def get(self, name):
+            return {"hello": name}
+
+    app = Flask(__name__)
+    api = Api(app)
+    api.add_resource(Hello)
+
     with api.test_client() as c:
         assert 200 == c.hello.get().code
+        assert {"hello": "world"} == c.hello.get().rv
+
+        assert 200 == c.hello.get({"name": "guyskk"}).code
         assert {"hello": "guyskk"} == c.hello.get({"name": "guyskk"}).rv
+
         assert 404 == c.hello.get_asd().code
         with pytest.raises(ValueError):
             c.asdfgh.get()
+
     # api did't inited
     with pytest.raises(AttributeError):
         api = Api()
-        with api.test_client() as c:
-            pass
+        api.test_client()

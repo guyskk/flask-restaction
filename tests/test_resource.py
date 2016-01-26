@@ -21,7 +21,7 @@ def loads(data):
     return json.loads(data)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def app():
     app = Flask(__name__)
     app.debug = True
@@ -33,78 +33,99 @@ def app():
             return "hello"
 
         def get_error(self):
-            raise ValueError("get_error")
-
-        def post_login(self):
-            return "login"
-
-    @Hello.error_handler
-    def error_handler(self, ex):
-        return {"ok": "error_hander"}
-
-    class File(Resource):
-
-        def get(self):
-            return "file"
-
-        def get_error(self):
-            raise ValueError("get_error")
+            raise ValueError("error")
 
         def post_login(self):
             return "login"
 
     api.add_resource(Hello)
     # name can't be unicode on py2
-    api.add_resource(File, name=str("upload"))
+    api.add_resource(Hello, name=str("hi"))
 
+    app.resource = Hello
+    app.api = api
     return app
 
 
-def test_hello(app):
-
+def test_url_for(app):
+    with app.test_request_context('/hello'):
+        assert request.endpoint == 'hello'
+        assert url_for("hello") == '/hello'
     with app.test_request_context('/hello/login'):
         assert request.endpoint == 'hello@login'
-
-    with app.test_request_context('/hello'):
-        assert url_for("hello") == '/hello'
         assert url_for("hello@login") == '/hello/login'
-        assert request.endpoint == 'hello'
+    with app.test_request_context('/hello/error'):
+        assert request.endpoint == 'hello@error'
+        assert url_for("hello@error") == '/hello/error'
+
+    with app.test_request_context('/hi'):
+        assert request.endpoint == 'hi'
+        assert url_for("hi") == '/hi'
+    with app.test_request_context('/hi/login'):
+        assert request.endpoint == 'hi@login'
+        assert url_for("hi@login") == '/hi/login'
+    with app.test_request_context('/hi/error'):
+        assert request.endpoint == 'hi@error'
+        assert url_for("hi@error") == '/hi/error'
+
+
+def test_error_handler(app):
+
+    @app.resource.error_handler
+    def error_handler(self, ex):
+        assert isinstance(ex, ValueError)
+        assert ex.args == ('error',)
+        return "error_hander"
+    with app.test_client() as c:
+        assert 200 == c.get('/hello').status_code
+        assert b'hello' == c.get('/hello').data
+
+        assert 200 == c.post('/hello/login').status_code
+        assert b"login" == c.post('/hello/login').data
+
+        assert 200 == c.get('/hello/error').status_code
+        assert b"error_hander" == c.get('/hello/error').data
+
+
+def test_before_request(app):
+    @app.resource.before_request
+    def before_request(self):
+        return 'before_request'
 
     with app.test_client() as c:
-        assert b'hello' == c.get('/hello').data
-        assert b"login" == c.post('/hello/login').data
-        assert 2 == c.get('/hello/error').status_code // 100
-        assert b"ok"in c.get('/hello/error').data
-        assert b"error_hander" in c.get('/hello/error').data
+        assert 200 == c.get('/hello').status_code
+        assert b'before_request' == c.get('/hello').data
+
+        assert 200 == c.post('/hello/login').status_code
+        assert b"before_request" == c.post('/hello/login').data
+
+        assert 200 == c.get('/hello/error').status_code
+        assert b"before_request" == c.get('/hello/error').data
+
+
+def test_after_request(app):
+    @app.resource.after_request
+    def after_request(self, rv, code, headers):
+        return 'after_request', 200, headers
+
+    with app.test_client() as c:
+        assert 200 == c.get('/hello').status_code
+        assert b'after_request' == c.get('/hello').data
+
+        assert 200 == c.post('/hello/login').status_code
+        assert b"after_request" == c.post('/hello/login').data
+
+        with pytest.raises(ValueError) as exinfo:
+            c.get('/hello/error')
+        assert exinfo.value.args == ('error',)
 
 
 def test_unimplament_action(app):
     with app.test_client() as c:
-        assert 404 == c.get("/unimplament_action").status_code
-        assert 404 == c.post("/upload").status_code
-
-
-def test_file(app):
-
-    with app.test_request_context('/upload'):
-        assert url_for("upload") == '/upload'
-        assert url_for("upload@login") == '/upload/login'
-        assert request.endpoint == 'upload'
-
-    with app.test_request_context('/upload/login'):
-        assert request.endpoint == 'upload@login'
-
-    with app.test_client() as c:
-        assert b'file' == c.get('/upload').data
-        assert b"login" == c.post('/upload/login').data
-
-    with app.test_client() as c:
-        with pytest.raises(ValueError):
-            try:
-                c.get('/upload/error')
-            except ValueError as ex:
-                assert str(ex) == "get_error"
-                raise
+        assert 404 == c.get("/unimplament").status_code
+        assert 404 == c.get("/hello/login").status_code
+        assert 405 == c.put("/hello/login").status_code
+        assert 405 == c.delete("/hello/login").status_code
 
 
 def test_user_role():
@@ -126,20 +147,23 @@ def test_user_role():
 
     with app.test_client() as c:
         rv = c.post("/hello/login")
-        assert b"login" in rv.data
+        assert 200 == rv.status_code
+        assert b"login" == rv.data
         assert api.auth_header in rv.headers
         auth = {api.auth_header: rv.headers[api.auth_header]}
-        rv2 = c.get("/hello", headers=auth)
+    with app.test_client() as c:
+        rv = c.get("/hello", headers=auth)
+        assert 200 == rv.status_code
+        assert b"hello" == rv.data
         assert str(g.me["id"]) == "123"
         # if permission file not exists, user_role will not be called
-        # assert g.me["role"] == "role_123"
-        assert g.me["role"] == None
+        assert g.me["role"] is None
 
 
 def test_request_content_type():
     class Hello(Resource):
         schema_inputs = {
-            "post": {"name": "str"}
+            "post": {"name": "safestr"}
         }
 
         def post(self, name):
@@ -151,47 +175,7 @@ def test_request_content_type():
     api.add_resource(Hello)
     with app.test_client() as c:
         headers = {"Content-Type": "application/json"}
-        assert 200 == c.post("/hello", headers=headers,
-                             data='{"name": "hahah"}').status_code
-        headers = {"Content-Type": "application/json;charset=UTF-8"}
-        assert 200 == c.post("/hello", headers=headers,
-                             data='{"name": "hahah"}').status_code
-
-
-def test_return_inner_custom_type():
-    class User(object):
-
-        def __init__(self, name):
-            self.name = name
-
-    class Hello(Resource):
-        sche = {"name": "str"}
-        schema_outputs = {
-            "get": sche,
-            "get_list": [sche],
-            "get_dict": {"user": sche}
-        }
-        output_types = [User]
-
-        def get(self):
-            return User("kk")
-
-        def get_list(self):
-            return [User("kk")] * 10
-
-        def get_dict(self):
-            return {"user": User("kk")}
-    app = Flask(__name__)
-    app.debug = True
-    api = Api(app)
-    api.add_resource(Hello)
-    with app.test_client() as c:
-        assert 200 == c.get("/hello").status_code
-        assert 200 == c.get("/hello/list").status_code
-        assert 200 == c.get("/hello/dict").status_code
-        user = loads(c.get("/hello").data)
-        assert user == {"name": "kk"}
-        userlist = loads(c.get("/hello/list").data)
-        assert userlist == [{"name": "kk"}] * 10
-        userdict = loads(c.get("/hello/dict").data)
-        assert userdict["user"] == {"name": "kk"}
+        params = dict(headers=headers, data='{"name": "jsoner"}')
+        assert 200 == c.post("/hello", **params).status_code
+        headers["Content-Type"] = "application/json;charset=UTF-8"
+        assert 200 == c.post("/hello", **params).status_code

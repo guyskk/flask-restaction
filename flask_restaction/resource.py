@@ -55,18 +55,18 @@ class Resource(six.with_metaclass(ResourceViewType, View)):
         , the custom type object will be proxy by validater.ProxyDict
     - before_request_funcs is a list of functions::
 
-        def fn():
+        def fn(self):
             return (rv, [code, headers]) or None
 
     - after_request_funcs is a list of functions,
         Must return ``tuple(rv, code, headers)``::
 
-            def fn(rv, code, headers):
+            def fn(self, rv, code, headers):
                 return (rv, code, headers) or None
 
     - handle_error_func is list with just one function::
 
-        def fn(ex):
+        def fn(self, ex):
             return (rv, [code, headers])
 
     """

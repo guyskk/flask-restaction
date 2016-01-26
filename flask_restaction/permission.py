@@ -26,11 +26,13 @@ resource.json struct::
         }
     }
 
-- resource is lowercase
-- resource.json is for programer
+- resource is lowercase and resource.json is for programer
 - permission.json is for website manager, and can be changed via UI
-- owner, other are special res_role, owner means all actions
-- every one can access other actions, needn't add that ctions to every res_role
+- owner, other are special res_role,
+  other means guest/anonymous, owner means allow all actions
+- root is special user_role, means allow all resources
+- every one can access 'other' actions,
+  needn't add that actions to every res_role
 """
 
 import json
@@ -65,10 +67,11 @@ def parse_config(resource, permission):
     permission_config::
 
         {
-            (user_role, resource): (res_role, ["actions"])
+            (user_role, resource): (res_role, [actions])
         }
     """
     result = {}
+    assert "root" not in permission, "user_role: root can't be modified"
     for user_role in permission:
         for resource_name, res_role in permission[user_role].items():
             assert resource_name.islower(), \
@@ -90,9 +93,12 @@ def parse_config(resource, permission):
 
 
 def permit(config, user_role, resource, action):
-    """
+    """check permission
+
     :return: (permit, res_role)
     """
+    if user_role == "root":
+        return (True, "owner")
     result = config.get((user_role, resource))
     if result is None:
         # get res_role of anonymous user
@@ -140,16 +146,16 @@ class Permission(Resource):
     """
     user_role = "unicode&required", "角色"
 
-    permission_item = {
-        "user_role": "unicode&required",
-        "resources": {"validate": ("any&required", "resource:res_role")}
-    }
-
     schema_inputs = {
-        "get_permit": {"user_role": user_role,
-                       "resource": "unicode&required",
-                       "action": "unicode&required"},
-        "post": permission_item,
+        "get_permit": {
+            "user_role": user_role,
+            "resource": "unicode&required",
+            "action": "unicode&required"
+        },
+        "post": {
+            "user_role": "unicode&required",
+            "resources": {"validate": "any&required"}
+        },
         "delete": {"user_role": user_role},
     }
     schema_outputs = {
@@ -172,7 +178,7 @@ class Permission(Resource):
         """获取permission配置信息
         """
         resources = {
-            resource: list(set(list(res_roles) + ["owner", "other"]))
+            resource: list(set(res_roles) + ("owner", "other"))
             for resource, res_roles in self.api.permission_resource.items()
         }
         return {

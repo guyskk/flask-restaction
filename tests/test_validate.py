@@ -36,10 +36,12 @@ def app():
         schema_inputs = {
             "get": {"name": name},
             "get_user": {"name": name},
+            "get_list": {"name": name},
             "post": {"date": date_in}}
         schema_outputs = {
             "get": {"hello": "unicode&required"},
             "get_user": {"user": {"name": name}},
+            "get_list": [{"name": name}],
             "post": {"date": date_out}
         }
         output_types = [User]
@@ -49,6 +51,9 @@ def app():
 
         def get_user(self, name):
             return {'user': User(name)}
+
+        def get_list(self, name):
+            return [User(name)] * 5
 
         def post(self, date):
             return {'date': date}
@@ -101,6 +106,21 @@ def test_get_user(app):
         resp = c.get("/hello/user?name=中文")
         assert 400 == resp.status_code
         assert 'name' in loads(resp.data)
+
+
+def test_get_list(app):
+    with app.test_client() as c:
+        resp = c.get("/hello/list?name=userxxx")
+        assert 200 == resp.status_code
+        assert [{'name': 'userxxx'}] * 5 == loads(resp.data)
+
+        resp = c.get("/hello/list")
+        assert 200 == resp.status_code
+        assert [{'name': 'world'}] * 5 == loads(resp.data)
+
+        resp = c.get("/hello/list?name=中文")
+        assert 400 == resp.status_code
+        assert ['name'] == list(loads(resp.data))
 
 
 def test_post(app):

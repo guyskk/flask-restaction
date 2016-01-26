@@ -86,17 +86,13 @@ def get_request_data():
     elif method in ["post", "put"]:
         if request.mimetype == 'application/json':
             try:
-                data = request.get_json()
-                if data is not None:
-                    return data
-                else:
-                    return {}
+                return request.get_json()
             except:
                 abort(400, "invalid json content")
         else:
             return request.form
     else:
-        return {}
+        return None
 
 
 def parse_request():
@@ -109,7 +105,6 @@ def parse_request():
         action = request.method.lower() + "_" + act
     else:
         action = request.method.lower()
-
     return resource, action
 
 
