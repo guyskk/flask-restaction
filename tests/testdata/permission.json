@@ -1,14 +1,14 @@
 {
-    "roleA": {
-        "photo": "other",
-        "article": "writer"
+    "普通用户": {
+        "permission": "normal",
+        "user": "normal"
     },
-    "roleB": {
-        "photo": "other",
-        "article": "owner"
+    "访客": {
+        "permission": "other",
+        "user": "other"
     },
-    "roleC": {
-        "photo": "owner",
-        "article": "other"
+    "管理员": {
+        "permission": "admin",
+        "user": "normal"
     }
 }

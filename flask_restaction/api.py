@@ -47,7 +47,6 @@ _default_config = {
     "resdocs_name": "resdocs.html",
     "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
     "docs": "",
-    "enable_profiler": False,
 }
 
 
@@ -213,7 +212,6 @@ class Api(object):
     :param bootstrap: url for bootstrap.css, used for resdocs
     :param fn_user_role: a function that return user's role.
     :param docs: api docs
-    :param enable_profiler: enable profiler
 
     .. versionadded:: 0.19.3
         docs: api docs
@@ -240,8 +238,7 @@ class Api(object):
             "resjs_name": "res.js",
             "resdocs_name": "resdocs.html",
             "bootstrap": "http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css",
-            "docs": "",
-            "enable_profiler": False
+            "docs": ""
         }
 
     fn_user_role::
@@ -264,9 +261,10 @@ class Api(object):
         self.handle_error_func = None
         self.app = None
         self.blueprint = None
+        # load default config
+        self._config()
         if app is not None:
-            self.init_app(app)
-        self._config(**config)
+            self.init_app(app, **config)
 
     def _config(self, **config):
 

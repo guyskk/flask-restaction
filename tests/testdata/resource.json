@@ -1,9 +1,10 @@
 {
-    "photo": {
-        "other": ["get"]
+    "user": {
+        "other": ["post"],
+        "normal": ["get"]
     },
-    "article": {
-        "other": ["get"],
-        "writer": ["post","put"]
+    "permission": {
+        "normal": ["get_permit", "get"],
+        "admin": ["get_permit", "get", "post", "delete"]
     }
 }

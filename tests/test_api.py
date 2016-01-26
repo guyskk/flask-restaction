@@ -161,9 +161,10 @@ def test_config():
     app = Flask(__name__)
     app.config.from_object("testdata.config")
     app.debug = True
-    configs = ["resource_json", "permission_json", "auth_header",
+    configs = ["auth_header",
                "auth_token_name", "auth_secret", "auth_alg", "auth_exp",
                "resjs_name", "resdocs_name", "bootstrap"]
+    # "resource_json", "permission_json",  will be change to abs path
     bp = Blueprint("blueprint", __name__)
     api_bp = Api(bp)
     api_app = Api(app)

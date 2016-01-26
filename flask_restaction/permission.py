@@ -49,9 +49,10 @@ def load_config(resource_json, permission_json):
     :param permission_json: path of permission.json
     """
     try:
-        with open(resource_json) as f_resource, open(permission_json) as f_permission:
-            resource = json.load(f_resource, encoding="utf-8")
-            permission = json.load(f_permission, encoding="utf-8")
+        with codecs.open(resource_json, encoding="utf-8") as f_resource, \
+                codecs.open(permission_json, encoding="utf-8") as f_permission:
+            resource = json.load(f_resource)
+            permission = json.load(f_permission)
     except IOError as e:
         e.strerror = 'Unable to load configuration file (%s)' % e.strerror
         raise
@@ -76,6 +77,8 @@ def parse_config(resource, permission):
         for resource_name, res_role in permission[user_role].items():
             assert resource_name.islower(), \
                 "resource should in lowercase: %s" % resource_name
+            assert resource_name in resource, \
+                "resource %s not exists" % resource_name
             res = resource[resource_name]
             if res_role != "owner" and res_role != "other":
                 assert res_role in res, \
@@ -154,7 +157,7 @@ class Permission(Resource):
         },
         "post": {
             "user_role": "unicode&required",
-            "resources": {"validate": "any&required"}
+            "resources": "any&required"
         },
         "delete": {"user_role": user_role},
     }
@@ -178,7 +181,7 @@ class Permission(Resource):
         """获取permission配置信息
         """
         resources = {
-            resource: list(set(res_roles) + ("owner", "other"))
+            resource: list(set(res_roles) | set(["owner", "other"]))
             for resource, res_roles in self.api.permission_resource.items()
         }
         return {
