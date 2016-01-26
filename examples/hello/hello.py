@@ -8,7 +8,7 @@ api = Api(app)
 class Hello(Resource):
     """hello world"""
     schema_inputs = {
-        "get": {"name": ("safestr&required&default='world'", "you name")}
+        "get": {"name": ("safestr&default='world'", "your name")}
     }
     schema_outputs = {
         "get": {"hello": "unicode&required"}

@@ -1,71 +1,69 @@
-# coding:utf-8
-from __future__ import unicode_literals
-from flask import g, abort
-from flask.ext.restaction import Resource, schema
-import time
-from collections import OrderedDict
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function
+from flask_restaction import Resource
+import datetime
+from . import db, model
 
 
 class Todos(Resource):
     """docstring for Todos"""
-    pagenum = "+int", 1
-    pagesize = "+int", 10
-    todo_id = "int&required"
-    content = "safestr&required"
-    message = "unicode"
-    todo = schema("todo_id", "content")
+    paging = {
+        "pagenum": "+int&default=1",
+        "pagesize": "int(5,50)&default=10"
+    }
+    info = {
+        "todoid": "+int&required",
+        "name": "safestr&required",
+        "content": "safestr&required",
+        "date": ("datetime", "last modified datetime")
+    }
     schema_inputs = {
-        "get": schema("todo_id"),
-        "get_list": schema("pagenum", "pagesize"),
-        "post": schema("content"),
-        "put": todo,
-        "delete": schema("todo_id")
+        "get": {"todoid": "+int&required"},
+        "get_list": paging,
+        "post": {
+            "name": "safestr&required",
+            "content": "safestr&required"
+        },
+        "put": {
+            "todoid": "+int&required",
+            "name": "safestr&required",
+            "content": "safestr&required"
+        },
+        "delete": {"todoid": "+int&required"}
     }
     schema_outputs = {
-        "get": schema("content"),
-        "get_list": schema(["todo"]),
-        "post": todo,
-        "put": schema("message"),
-        "delete": schema("message"),
+        "get": info,
+        "get_list": [info],
+        "post": info,
+        "put": info,
+        "delete": {"message": "safestr"}
     }
+    output_types = [model.Todo]
 
-    def __init__(self):
-        todos_key = g.me["id"] + ".todos"
-        g.db.setdefault(todos_key, OrderedDict())
-        self.todos = g.db[todos_key]
-        self.todos_key = todos_key
-
-    def get(self, todo_id):
-        if todo_id not in self.todos:
-            abort(404)
-        return self.todos[todo_id]
+    def get(self, todoid):
+        return model.Todo.query.get_or_404(todoid)
 
     def get_list(self, pagenum, pagesize):
-        todos = self.todos.items()[(pagenum - 1) * pagesize:pagenum * pagesize]
-        return [{"todo_id": todo_id, "content": content} for todo_id, content in todos]
+        return model.Todo.query.paginate(pagenum, pagesize).items
 
-    def post(self, content):
-        todo_id = int(time.time() * 1000)
-        self.todos[todo_id] = content
-        g.db[self.todos_key] = self.todos
-        g.db.commit()
-        return {
-            "todo_id": todo_id,
-            "content": content
-        }
+    def post(self, name, content):
+        date = datetime.datetime.utcnow()
+        todo = model.Todo(name=name, content=content, date=date)
+        db.session.add(todo)
+        db.session.commit()
+        return todo
 
-    def put(self, todo_id, content):
-        if todo_id not in self.todos:
-            abort(404)
-        self.todos[todo_id] = content
-        g.db[self.todos_key] = self.todos
-        g.db.commit()
-        return {"message": "OK"}
+    def put(self, todoid, name, content):
+        todo = model.Todo.query.get_or_404(todoid)
+        todo.name = name
+        todo.content = content
+        todo.date = datetime.datetime.utcnow()
+        db.session.commit()
+        return todo
 
-    def delete(self, todo_id):
-        if todo_id not in self.todos:
-            abort(404)
-        del self.todos[todo_id]
-        g.db[self.todos_key] = self.todos
-        g.db.commit()
+    def delete(self, todoid):
+        todo = model.Todo.query.get_or_404(todoid)
+        db.session.delete(todo)
+        db.session.commit()
         return {"message": "OK"}

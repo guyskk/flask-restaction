@@ -6,7 +6,7 @@
     }, 
     "normal": {
         "user": "owner", 
-        "permission": "other", 
-        "todos": "owner"
+        "todos": "owner",
+        "permission": "other"
     }
 }

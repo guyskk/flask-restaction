@@ -119,8 +119,6 @@ class Permission(Resource):
 
     """Permission
 
-    res_role中owner权限最高，other权限最低
-
     json struct of get::
 
         {
@@ -147,11 +145,9 @@ class Permission(Resource):
             }
         }
     """
-    user_role = "unicode&required", "角色"
-
     schema_inputs = {
         "get_permit": {
-            "user_role": user_role,
+            "user_role": "unicode&required",
             "resource": "unicode&required",
             "action": "unicode&required"
         },
@@ -159,7 +155,7 @@ class Permission(Resource):
             "user_role": "unicode&required",
             "resources": "any&required"
         },
-        "delete": {"user_role": user_role},
+        "delete": {"user_role": "unicode&required"},
     }
     schema_outputs = {
         "get_permit": {"permit": "bool&required"},
@@ -171,14 +167,14 @@ class Permission(Resource):
         self.api = api
 
     def get_permit(self, user_role, resource, action):
-        """判断角色是否有对应的权限
+        """check if the role can access the resource and action
         """
         p, res_role = permit(self.api.permission_config,
                              user_role, resource, action)
         return {"permit": p}
 
     def get(self):
-        """获取permission配置信息
+        """get permission info
         """
         resources = {
             resource: list(set(res_roles) | set(["owner", "other"]))
@@ -190,7 +186,7 @@ class Permission(Resource):
         }
 
     def post(self, user_role, resources):
-        """添加角色或修改角色"""
+        """add or update user_role"""
         permission = copy.deepcopy(self.api.permission_permission)
         permission.setdefault(user_role, {})
         try:
@@ -201,8 +197,7 @@ class Permission(Resource):
         return {"message": "OK"}
 
     def delete(self, user_role):
-        """删除角色
-        """
+        """delete user_role"""
         if user_role in self.api.permission_permission:
             permission = copy.deepcopy(self.api.permission_permission)
             del permission[user_role]
@@ -213,7 +208,8 @@ class Permission(Resource):
         try:
             config = parse_config(self.api.permission_resource, permission)
             with codecs.open(self.api.permission_json, "w", encoding="utf-8") as f:
-                json.dump(permission, f, indent=4, ensure_ascii=False)
+                json.dump(permission, f, indent=4,
+                          ensure_ascii=False, sort_keys=True)
             self.api.permission_permission = permission
             self.api.permission_config = config
         except IOError as ex:

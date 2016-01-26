@@ -5,17 +5,18 @@
     <title>Todos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
-    <script type="text/javascript" src="/static/moment-with-locales.js"></script>
-    <script type="text/javascript" src="/static/res.js"></script>
-    <script type="text/javascript" src="/static/vue.js"></script>
+    <script type="text/javascript" src="/static/js/moment-with-locales.js"></script>
+    <script type="text/javascript" src="/static/js/res.js"></script>
+    <script type="text/javascript" src="/static/js/vue.js"></script>
 </head>
 
 <body>
     <div id="app" class="container">
         <div class="page-header">
-            <h1>Hello {{user.nickname | capitalize}}，Welcome to Todos</h1>
+            <h1>Hello {{user.name | capitalize}}，Welcome to Todos</h1>
         </div>
         <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
+        
         <ul class="list-group">
             <li class="list-group-item row" v-for="todo in todos">
                 <p class="col-md-10">{{todo.content}}</p>
@@ -28,6 +29,7 @@
             </li>
             <li class="list-group-item row">
                 <div class=" col-md-10">
+                    <input type="text" v-model="newtodo.name" class="form-control" placeholder="name">
                     <textarea v-model="newtodo.content" class="form-control" rows="3" placeholder="todos content"></textarea>
                 </div>
                 <div class="col-md-2">
@@ -63,7 +65,7 @@
         methods: {
             delete_todo: function(todo) {
                 res.todos.delete({
-                    todo_id: todo.todo_id
+                    todoid: todo.todoid
                 }, function(err, msg) {
                     if (err) {
                         app.message = err

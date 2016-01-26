@@ -1,52 +1,36 @@
 # coding:utf-8
 from __future__ import unicode_literals
 """
-管理员登录
-    res.user.post_login({email:"admin@todos.com",password:"123456"})
+admin login: res.user.post_login({email:"admin@todos.com",password:"123456"})
 """
-from flask import Flask, Blueprint, g, current_app
+from flask import Flask, Blueprint, current_app
 import os
-from sqlitedict import SqliteDict
-from werkzeug.security import generate_password_hash
-from .extensions import api
+from .extensions import api, db
 from .todos import Todos
 from .user import User
+from . import model
 
 
-def connect_db():
-    if not hasattr(g, "db"):
-        sqlite = current_app.config["SQLITE"]
-        g.db = SqliteDict(sqlite)
-
-
-def close_db(*resp):
-    if hasattr(g, "db"):
-        g.db.close()
-        del g.db
-    return resp
-
-
-def fn_user_role(email):
-    u = g.db.get(email)
-    if u:
-        if email == current_app.config["ADMIN_EMAIL"]:
-            return "admin"
-        else:
-            return "normal"
+def fn_user_role(userid):
+    user = model.User.query.get(userid)
+    if user and user.email == current_app.config["ADMIN_EMAIL"]:
+        return "admin"
+    else:
+        return "normal"
 
 
 def before_first_request():
+    db.create_all()
     api.gen_resjs()
     api.gen_resdocs()
     email = current_app.config["ADMIN_EMAIL"]
-    sqlite = current_app.config["SQLITE"]
-    with SqliteDict(sqlite) as db:
-        pwdhash = generate_password_hash(current_app.config["ADMIN_PASSWORD"])
-        db[email] = {
-            "nickname": "admin",
-            "pwdhash": pwdhash
-        }
-        db.commit()
+    password = current_app.config["ADMIN_PASSWORD"]
+    try:
+        user = User().post(email, password)
+        current_app.logger.info(user)
+    except Exception as ex:
+        current_app.logger.info(ex)
+
 
 url_views = [
     ("/", "index.html"),
@@ -58,11 +42,15 @@ url_views = [
 
 def create_app():
     app = Flask(__name__)
-    app.config["SQLITE"] = "todos.db"
-    app.config["API_BOOTSTRAP"] = "/static/bootstrap.min.css"
-    app.config["API_BOOTSTRAP"] = "/static/bootstrap.min.css"
+    app.config["API_BOOTSTRAP"] = "/static/css/bootstrap.min.css"
+    app.config["API_RESJS_NAME"] = "js/res.js"
     app.config["ADMIN_EMAIL"] = "admin@todos.com"
     app.config["ADMIN_PASSWORD"] = "123456"
+
+    db_path = os.path.join(app.root_path, "todos.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_path
+    app.config["SQLALCHEMY_ECHO"] = True
+    db.init_app(app)
 
     bp_api = Blueprint('api', __name__, static_folder='static')
     api.init_app(bp_api, fn_user_role=fn_user_role, docs=__doc__)
@@ -71,9 +59,6 @@ def create_app():
     api.add_resource(Todos)
     api.add_resource(User)
     api.add_permission_resource()
-
-    api.before_request(connect_db)
-    api.after_request(close_db)
 
     def make_view(filename):
         return lambda *args, **kwargs: app.send_static_file(filename)
