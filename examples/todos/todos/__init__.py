@@ -12,9 +12,9 @@ from . import model
 from flask_restaction import ApiInfo, Permission, Gen
 
 
-def fn_user_role(me):
-    if me and "id" in me:
-        user = model.User.query.get(me["id"])
+def fn_user_role(token):
+    if token and "id" in token:
+        user = model.User.query.get(token["id"])
         if user:
             if user.email == current_app.config["ADMIN_EMAIL"]:
                 return "admin"

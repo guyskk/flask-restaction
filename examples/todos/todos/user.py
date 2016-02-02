@@ -39,7 +39,7 @@ class User(Resource):
 
     def get(self):
         """get user info"""
-        return model.User.query.get_or_404(g.me["id"])
+        return model.User.query.get_or_404(g.token["id"])
 
     def post(self, email, password):
         """regisiter account"""
@@ -69,7 +69,7 @@ class User(Resource):
 
     def put(self, name, photo):
         """update user info"""
-        user = model.User.query.get_or_404(g.me["id"])
+        user = model.User.query.get_or_404(g.token["id"])
         user.name = name
         user.photo = photo
         user.date = datetime.datetime.utcnow()
@@ -78,6 +78,6 @@ class User(Resource):
 
     def delete(self):
         """delete account"""
-        user = model.User.query.get_or_404(g.me["id"])
+        user = model.User.query.get_or_404(g.token["id"])
         db.session.delete(user)
         return {"message": "OK"}

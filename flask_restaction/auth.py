@@ -133,9 +133,9 @@ class Auth(object):
 
     usage::
 
-        def fn_user_role(me):
-            if me and 'id' in me:
-                user_id = me[id]
+        def fn_user_role(token):
+            if token and 'id' in token:
+                user_id = token[id]
                 # query user from database
                 return user_role
             else:
@@ -210,38 +210,37 @@ class Auth(object):
         except AssertionError as ex:
             raise ValueError(ex.message)
 
-    def gen_token(self, me, auth_exp=None):
+    def gen_token(self, token, auth_exp=None):
         """generate auth token
 
-        :param me: a dict like ``{"id": user_id, ...}``
+        :param token: a dict like ``{"id": user_id, ...}``
         :param auth_exp: seconds of jwt token expiration time
                          , default is ``self.auth_exp``
         :return: string
         """
         if auth_exp is None:
             auth_exp = self.auth_exp
-        me["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
-        token = jwt.encode(me, self.auth_secret, algorithm=self.auth_alg)
-        return token
+        token["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
+        return jwt.encode(token, self.auth_secret, algorithm=self.auth_alg)
 
-    def gen_header(self, me, auth_exp=None):
+    def gen_header(self, token, auth_exp=None):
         """generate auth header
 
-        :return: ``{self.auth_header: self.gen_token(me)}``
+        :return: ``{self.auth_header: self.gen_token(token)}``
         """
-        auth = {self.auth_header: self.gen_token(me)}
+        auth = {self.auth_header: self.gen_token(token)}
         return auth
 
     def _before_request(self):
         """check permission"""
-        me = self.parse_auth_header()
-        g.me = me
-        user_role = self._fn_user_role(me)
+        token = self.parse_auth_header()
+        g.token = token
+        user_role = self._fn_user_role(token)
         g.user_role = user_role
         perm, res_role = permit(self.config, user_role, g.resource, g.action)
         g.res_role = res_role
         if not perm:
-            if me is None:
+            if token is None:
                 abort(403, "permission deny: your token is invalid")
             else:
                 abort(403, "You don't have permission: user_role=%s" % user_role)

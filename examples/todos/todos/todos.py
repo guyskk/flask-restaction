@@ -46,12 +46,12 @@ class Todos(Resource):
         return model.Todo.query.get_or_404(todoid)
 
     def get_list(self, pagenum, pagesize):
-        return model.Todo.query.filter_by(userid=g.me["id"])\
+        return model.Todo.query.filter_by(userid=g.token["id"])\
             .paginate(pagenum, pagesize).items
 
     def post(self, name, content):
         date = datetime.datetime.utcnow()
-        todo = model.Todo(userid=g.me["id"],
+        todo = model.Todo(userid=g.token["id"],
                           name=name, content=content, date=date)
         db.session.add(todo)
         db.session.commit()

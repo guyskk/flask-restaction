@@ -15,8 +15,8 @@ def app():
     app.config["API_RESOURCE_JSON"] = "testdata/resource.json"
     app.config["API_PERMISSION_JSON"] = "testdata/permission.json"
 
-    def fn_user_role(me):
-        user_id = me["id"]
+    def fn_user_role(token):
+        user_id = token["id"]
         user_roles = ["访客", "普通用户", "管理员"]
         return user_roles[user_id]
 
@@ -31,8 +31,7 @@ def app():
             return "ok"
 
         def post(self, id):
-            me = {"id": id}
-            return "ok", auth.gen_auth_header(me)
+            return "ok", auth.gen_header({"id": id})
 
     api.add_resource(User)
     api.add_resource(Permission, auth=auth)
@@ -142,7 +141,7 @@ def test_user(app):
         # user_role=访客
         assert c.get("/user", headers=resp.headers).status_code == 403
         assert g.user_role == "访客"
-        assert g.me['id'] == 0
+        assert g.token['id'] == 0
         assert g.res_role == "other"
         assert c.get("/permission",
                      headers=resp.headers).status_code == 403
