@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Permission UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="{{resjs}}"></script>
+    <script type="text/javascript" src="{{vuejs}}"></script>
+    <link rel="stylesheet" type="text/css" href="{{bootstrap}}">
+</head>
+{% raw %}
+<body>
+    <div id="app" class="container">
+        <div class="page-header">
+            <h1>Permission</h1>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th>resource</th>
+                    <th v-for="(res,res_roles) in resource">{{res}}</th>
+                    <th>action</th>
+                </tr>
+                <tr>
+                    <td>root</td>
+                    <td v-for="(res, res_roles) in resource">
+                        owner
+                    </td>
+                    <td>built-in</td>
+                </tr>
+                <tr v-for="(user_role, perm) in permission" track-by="$index">
+                    <td>{{user_role}}</td>
+                    <td v-for="(res, res_roles) in resource">
+                        <select v-on:change="change_role(user_role, res, $event)">
+                            <option v-bind:value="res_role" v-bind:selected="(perm[res]||'other')==res_role" v-for="res_role in res_roles">{{res_role}}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button v-on:click="save_role(user_role)">save</button>
+                        <button v-on:click="delete_role(user_role)">delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input v-model="new_user_role" type="text" size="6" placeholder="new user_role">
+                    </td>
+                    <td v-for="(res, res_roles) in resource">
+                        <select v-on:change="change_new_role(res, $event)">
+                            <option v-bind:selected="'other'==res_role" v-bind:value="res_role" v-for="res_role in res_roles">{{res_role}}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button v-on:click="save_new_role()">save</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
+    </div>
+    <script type="text/javascript">
+    function showMsg(msg) {
+        clearTimeout(showMsg.timeout);
+        app.message = msg || "";
+        showMsg.timeout = setTimeout(function() {
+            app.message = '';
+        }, 1500);
+    }
+    var app = new Vue({
+        el: '#app',
+        data: {
+            permission: null,
+            resource: null,
+            new_user_role: null,
+            new_resource: {},
+            message: ""
+        },
+        methods: {
+            delete_role: function(user_role) {
+                res.permission.delete({
+                    user_role: user_role
+                }).then(function(data) {
+                    Vue.delete(app.permission, user_role);
+                    showMsg(data.message);
+                }).catch(showMsg)
+            },
+            change_role: function(user_role, resource, event) {
+                res_role = event.srcElement.value
+                app.permission[user_role][resource] = res_role;
+            },
+            save_role: function(user_role) {
+                res.permission.post({
+                    user_role: user_role,
+                    resource: app.permission[user_role]
+                }).then(function(data) {
+                    showMsg(data.message);
+                }).catch(showMsg)
+            },
+            change_new_role: function(resource, event) {
+                res_role = event.srcElement.value
+                app.new_resource[resource] = res_role;
+            },
+            save_new_role: function() {
+                if (!app.new_user_role) {
+                    return
+                }
+                data = {
+                    user_role: app.new_user_role,
+                    resource: JSON.parse(JSON.stringify(app.new_resource))
+                }
+                res.permission.post(data).then(function(result) {
+                    Vue.set(app.permission, data.user_role, data.resource);
+                    app.new_user_role = null;
+                    showMsg(result.message);
+                }).catch(showMsg);
+            }
+        }
+    });
+    res.permission.get().then(function(data) {
+        app.permission = data.permission;
+        app.resource = data.resource;
+    });
+    </script>
+</body>
+{% endraw %}
+
+</html>

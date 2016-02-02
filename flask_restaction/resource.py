@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import, print_function
-
 """
     flask_restaction.resource
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,9 +8,8 @@ from __future__ import unicode_literals, absolute_import, print_function
        Support tuple_like schema, The ``schema,parse_schema,combine_schema``
        function was added.
 """
-
+from __future__ import unicode_literals, absolute_import, print_function
 import six
-
 from flask.views import View
 from flask import g, abort
 from validater import validate

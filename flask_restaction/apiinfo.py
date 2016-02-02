@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function
+from flask_restaction import Resource
+from jinja2 import Template
+import codecs
+from pkg_resources import resource_string
+import os
+import json
+
+
+def parse_api(api):
+    """parse api"""
+    data = {"url_prefix": "", "auth_header": ""}
+    data["docs"] = api.docs
+    if api.url_prefix:
+        data["url_prefix"] = api.url_prefix
+    if api.auth:
+        data["auth_header"] = api.auth.auth_header
+    resources = []
+    for name, res in api.resources.items():
+        reaource = {"name": name, "docs": res["docs"]}
+        actions = [dict(x.__dict__) for x in res["actions"]]
+        reaource["actions"] = actions
+        resources.append(reaource)
+    data["resources"] = resources
+    return data
+
+
+class ApiInfo(Resource):
+    """ApiInfo
+
+    :param api: Api
+    """
+    action = {
+        "action": "str",  # post_login
+        "method": "str",  # post
+        "url": "str",  # /api/user/login
+        "endpoint": "str",  # user@login
+        "docs": "str",  # docs of post_login
+        "inputs": "str",  # schema_inputs[action]
+        "outputs": "str",  # schema_outputs[action]
+    }
+    schema_outputs = {
+        "get": {
+            "url_prefix": "str",  # /api
+            "auth_header": "str",  # Authorization
+            "docs": "str",  # docs of api
+            "resources": [{
+                "name": "str",  # user
+                "docs": "str",  # docs of user
+                "actions": [action]
+            }],
+        }
+    }
+
+    def __init__(self, api):
+        self.data = parse_api(api)
+
+    def get(self):
+        return self.data
+
+
+class Gen(object):
+    """Gen tools for docs res.js
+
+    if dest param of generate methods is not absolute path,
+    then join app.root_path and dest as dest path.
+    :param api: Api
+    """
+
+    def __init__(self, api):
+        self.api = api
+        self.data = parse_api(api)
+
+    def _read_file(self, *paths):
+        strs = [resource_string(__name__, path).decode("utf-8")
+                for path in paths]
+        return os.linesep.join(strs)
+
+    def _save_file(self, dest, content):
+        if not os.path.isabs(dest):
+            dest = os.path.join(self.api.app.root_path, dest)
+        with codecs.open(dest, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    def resjs(self, dest):
+        """generate res.js
+
+        :param dest: dest path
+        """
+        tmpl = self._read_file(
+            'tmpl/res-ajax.js', 'tmpl/res-promise.js', 'tmpl/res-core.js')
+        apiinfo = json.dumps(self.data, ensure_ascii=False, indent=4)
+        rendered = Template(tmpl).render(apiinfo=apiinfo)
+        self._save_file(dest, rendered)
+
+    def resdocs(self, dest, resjs, bootstrap):
+        """generate resdocs.html
+
+        :param dest: dest path
+        :param resjs: res.js file's path
+        :param bootstrap: bootstrap.css file's path
+        """
+        tmpl = self._read_file('tmpl/resdocs.html')
+        rendered = Template(tmpl).render(
+            apiinfo=self.data, resjs=resjs, bootstrap=bootstrap)
+        self._save_file(dest, rendered)
+
+    def permission(self, dest, resjs, bootstrap, vuejs):
+        """generate permission.html
+
+        :param dest: dest path
+        :param resjs: res.js file's path
+        :param bootstrap: bootstrap.css file's path
+        :param vuejs: vuejs.js file's path
+        """
+        tmpl = self._read_file('tmpl/permission.html')
+        rendered = Template(tmpl).render(
+            apiinfo=self.data, resjs=resjs, bootstrap=bootstrap, vuejs=vuejs)
+        self._save_file(dest, rendered)

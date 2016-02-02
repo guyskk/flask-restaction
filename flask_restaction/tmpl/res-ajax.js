@@ -18,9 +18,9 @@
 当 data 是 string(id):
     表示input控件id, 会从其中获取要上传的文件, method必须是POST。
 */
+window.res = {};
 
-window.res = (function(window) {
-    var res = {};
+(function(root) {
 
     function createQueryString(query) {
         var parts = [];
@@ -202,7 +202,5 @@ window.res = (function(window) {
         return xmlhttp;
     }
 
-    res.ajax = sendRequest;
-    return res;
-
-})(window);
+    root._ajax = sendRequest;
+})(res);

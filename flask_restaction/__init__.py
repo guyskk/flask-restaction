@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import absolute_import, print_function
-
 """Flask-Restaction is a powerful flask ext for creat restful api
 
 .. versionchanged:: 0.19.0
@@ -11,6 +9,7 @@ from __future__ import absolute_import, print_function
    ``abort`` removed, use flask.abort instead.
    ``Resource.userrole`` removed, use Api.fn_user_role instead.
 """
+from __future__ import absolute_import, print_function
 import re
 __version__ = "0.20.0"
 
@@ -44,5 +43,10 @@ def unpack(rv):
 from .exporters import exporters, exporter
 from .resource import Resource
 from .api import Api
+from .permission import Permission
+from .apiinfo import ApiInfo, Gen
+from .auth import Auth
+from .res import Res
 
-__all__ = ["Api", "Resource", "exporters", "exporter", "__version__"]
+__all__ = ["Api", "Resource", "exporters", "exporter", "Res",
+           "Permission", "ApiInfo", "Gen", "Auth", "__version__"]
