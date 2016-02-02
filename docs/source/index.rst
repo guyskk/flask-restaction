@@ -25,8 +25,6 @@ Flask-Restaction 是一个为 RESTful API 而生的 Web 框架
     
 - 身份验证和权限控制
 
-- 易于测试
-
 - 自动生成 res.js 和 API 文档
     
 - 支持 python3
