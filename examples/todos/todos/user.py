@@ -5,7 +5,7 @@ from flask import g, abort
 from flask_restaction import Resource
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
-from . import api, db, model
+from . import db, model, auth
 
 
 class User(Resource):
@@ -62,7 +62,7 @@ class User(Resource):
             abort(403, "Incorrect email or password")
         if not check_password_hash(user.pwdhash, password):
             abort(403, "Incorrect email or password")
-        header = api.gen_auth_header({"id": user.userid})
+        header = auth.gen_auth_header({"id": user.userid})
         user.date = datetime.datetime.utcnow()
         db.session.commit()
         return user, header

@@ -3,7 +3,7 @@
 
 <head>
     <title>Api Documrnts</title>
-    <link rel="stylesheet" type="text/css" href="http://apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css">
     <script type="text/javascript" src="/static/res.js"></script>
     <style type="text/css">
     .resource {
@@ -19,22 +19,21 @@
         <h1>Api Documents</h1>
     </div>
     <ul>
-        <li>auth_header: <code>Authorization</code></li>
-        <li>auth_token_name: <code>res_token</code></li>
-        <li>url_prefix: <code></code></li>
-        <p><pre></pre></p>
+        
+        
+        
         
         <li>
-        <a class="lead" href="#hello">hello</a>
-        <ul>
-            
-            <li>
-                <a href="#hello.get">
-                get welcome to flask-restaction
-                </a>
-            </li>
-            
-        </ul>
+            <a class="lead" href="#hello">hello</a>
+            <ul>
+                
+                <li>
+                    <a href="#hello.get">
+                get 
+                </a> welcome to flask-restaction
+                </li>
+                
+            </ul>
         </li>
         
     </ul>
@@ -52,25 +51,22 @@
             
             <tr id="hello.get">
                 <td class="info">
-                <strong>get</strong>
-                <p>welcome to flask-restaction</p>
+                    <strong>get</strong>
+                    <p>welcome to flask-restaction</p>
                 </td>
                 <td class="success"><code>GET /hello</code></td>
                 <td class="info">
-                <pre>{
+                    <pre>{
   "name": {
-    "args": [], 
     "default": "world", 
-    "desc": "you name", 
-    "required": true, 
+    "desc": "your name", 
     "validater": "safestr"
   }
 }</pre>
                 </td>
                 <td class="success">
-                <pre>{
+                    <pre>{
   "hello": {
-    "args": [], 
     "required": true, 
     "validater": "unicode"
   }

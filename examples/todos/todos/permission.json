@@ -1,12 +1,12 @@
 {
     "admin": {
-        "user": "owner", 
+        "permission": "owner", 
         "todos": "owner", 
-        "permission": "owner"
+        "user": "owner"
     }, 
     "normal": {
-        "user": "owner", 
-        "todos": "owner",
-        "permission": "other"
+        "permission": "other", 
+        "todos": "owner", 
+        "user": "owner"
     }
 }

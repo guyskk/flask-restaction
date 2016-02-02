@@ -13,9 +13,7 @@ def newuser():
     with api.test_client() as c:
         resp = c.user.post({
             "email": "tester@todos.com",
-            "password": "123456",
-            "nickname": "tester",
-            "photo": "http://pic.todos.com/photo/tester.png"
+            "password": "123456"
         })
         assert resp.code == 200
         yield resp.rv

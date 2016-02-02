@@ -40,13 +40,13 @@
         },
         methods: {
             signup: function(user) {
-                res.user.post(user, function(err, data) {
-                    if (!err) {
+                res.user.post(user)
+                    .then(function(data) {
                         location.href = "/"
-                    } else {
+                    })
+                    .catch(function(err) {
                         app.message = err
-                    }
-                })
+                    })
             },
             goto_login: function() {
                 location.href = "/login"

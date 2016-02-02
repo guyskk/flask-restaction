@@ -10,19 +10,17 @@
         var name = document.getElementById("name").value;
         res.hello.get({
             name: name
-        }, function(err, value) {
-            if (!err) {
-                document.getElementById("message").innerText = value.hello;
-            } else {
-                alert(err)
-            }
+        }).then(function(value) {
+            document.getElementById("message").innerText = 'Hello ' + value.hello;
+        }).catch(function(err) {
+            console.log(err);
         });
     }
     </script>
 </head>
 
 <body>
-    <input id="name" type="text" placeholder="you name">
+    <input id="name" type="text" placeholder="your name">
     <p id="message"></p>
     <button onclick="send()">GetHello</button>
 </body>

@@ -15,7 +15,6 @@
         <div class="page-header">
             <h1>Hello {{user.name | capitalize}}，Welcome to Todos</h1>
         </div>
-        <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
         <div v-for="todo in todos">
             <div class="panel panel-default">
                 <div class="panel-heading clearfix">
@@ -45,12 +44,21 @@
                 </div>
             </div>
         </div>
+        <div v-if="message" class="alert alert-warning" role="alert">{{message|json}}</div>
     </div>
     <script type="text/javascript">
     moment.locale('zh_CN');
     Vue.filter('moment', function(todo) {
-        return moment(todo.todo_id).fromNow() //format("MMM Do YY");
+        return moment.utc(todo.date).fromNow() //format("MMM Do YY");
     });
+
+    function showMsg(msg) {
+        clearTimeout(showMsg.timeout);
+        app.message = msg || "";
+        showMsg.timeout = setTimeout(function() {
+            app.message = '';
+        }, 8000);
+    }
     var app = new Vue({
         el: '#app',
         data: {
@@ -60,52 +68,46 @@
             message: ""
         },
         created: function() {
-            res.todos.get_list(function(err, todos) {
-                if (err) {
-                    app.message = err
-                } else {
+            res.todos.get_list()
+                .then(function(todos) {
                     app.todos = todos
-                }
-            })
+                })
+                .catch(showMsg)
         },
         methods: {
             delete_todo: function(todo) {
                 res.todos.delete({
-                    todoid: todo.todoid
-                }, function(err, msg) {
-                    if (err) {
-                        app.message = err
-                    } else {
+                        todoid: todo.todoid
+                    })
+                    .then(function(msg) {
                         var index = app.todos.indexOf(todo)
                         if (index > -1) {
                             app.todos.splice(index, 1);
                         }
-                    }
-                })
+                    })
+                    .catch(showMsg)
             },
             save: function(newtodo) {
-                res.todos.post(newtodo, function(err, todo) {
-                    if (err) {
-                        app.message = err
-                    } else {
+                res.todos.post(newtodo)
+                    .then(function(todo) {
                         app.todos.push(todo)
                         newtodo.name = '';
                         newtodo.content = '';
-                    }
-                })
+                    })
+                    .catch(showMsg)
             }
         }
     })
-    res.user.get(function(err, user) {
-        if (err) {
-            app.message = err
+    res.user.get()
+        .then(function(user) {
+            app.user = user
+        })
+        .catch(function(err) {
+            showMsg(err);
             setTimeout(function() {
                 location.href = "/login"
             }, 2000)
-        } else {
-            app.user = user
-        }
-    })
+        })
     </script>
 </body>
 

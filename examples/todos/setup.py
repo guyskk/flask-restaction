@@ -8,7 +8,7 @@ setup(
     author="guyskk",
     author_email='1316792450@qq.com',
     install_requires=[
-        "flask_restaction>=0.19.6",
+        "flask_restaction>=0.20.0",
         "sqlitedict>=1.4",
     ],
     packages=["todos"],

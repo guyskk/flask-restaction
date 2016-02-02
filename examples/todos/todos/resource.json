@@ -3,5 +3,8 @@
         "other": ["post", "post_login"]
     },
     "todos": {},
-    "permission": {}
+    "permission": {},
+    "apiinfo": {
+        "other": ["get"]
+    }
 }

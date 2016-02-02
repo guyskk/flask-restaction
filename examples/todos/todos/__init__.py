@@ -1,28 +1,30 @@
 # coding:utf-8
+"""
+管理员登录: res.user.post_login({email:"admin@todos.com",password:"123456"})
+"""
 from __future__ import unicode_literals
-"""
-admin login: res.user.post_login({email:"admin@todos.com",password:"123456"})
-"""
 from flask import Flask, Blueprint, current_app
 import os
-from .extensions import api, db
+from .extensions import api, db, auth
 from .todos import Todos
 from .user import User
 from . import model
+from flask_restaction import ApiInfo, Permission, Gen
 
 
-def fn_user_role(userid):
-    user = model.User.query.get(userid)
-    if user and user.email == current_app.config["ADMIN_EMAIL"]:
-        return "admin"
-    else:
-        return "normal"
+def fn_user_role(me):
+    if me and "id" in me:
+        user = model.User.query.get(me["id"])
+        if user:
+            if user.email == current_app.config["ADMIN_EMAIL"]:
+                return "admin"
+            else:
+                return "normal"
+    return None
 
 
 def before_first_request():
     db.create_all()
-    api.gen_resjs()
-    api.gen_resdocs()
     email = current_app.config["ADMIN_EMAIL"]
     password = current_app.config["ADMIN_PASSWORD"]
     try:
@@ -34,16 +36,14 @@ def before_first_request():
 
 url_views = [
     ("/", "index.html"),
-    ("/permission", "permission.html"),
     ("/login", "login.html"),
-    ("/signup", "signup.html")
+    ("/signup", "signup.html"),
+    ("/permission", "permission.html"),
 ]
 
 
 def create_app():
     app = Flask(__name__)
-    app.config["API_BOOTSTRAP"] = "/static/css/bootstrap.min.css"
-    app.config["API_RESJS_NAME"] = "js/res.js"
     app.config["ADMIN_EMAIL"] = "admin@todos.com"
     app.config["ADMIN_PASSWORD"] = "123456"
 
@@ -53,12 +53,13 @@ def create_app():
     db.init_app(app)
 
     bp_api = Blueprint('api', __name__, static_folder='static')
-    api.init_app(bp_api, fn_user_role=fn_user_role, docs=__doc__)
-    api.config(app.config)
+    api.init_app(app, blueprint=bp_api, docs=__doc__)
+    auth.init_api(api, fn_user_role=fn_user_role)
 
     api.add_resource(Todos)
     api.add_resource(User)
-    api.add_permission_resource()
+    api.add_resource(Permission, auth=auth)
+    api.add_resource(ApiInfo, api=api)
 
     def make_view(filename):
         return lambda *args, **kwargs: app.send_static_file(filename)
@@ -68,4 +69,12 @@ def create_app():
 
     app.before_first_request(before_first_request)
     app.register_blueprint(bp_api, url_prefix='/api')
+
+    gen = Gen(api)
+    gen.resjs('static/js/res.js')
+    gen.resdocs('static/resdocs.html', resjs='/static/js/res.js',
+                bootstrap='/static/css/bootstrap.min.css')
+    gen.permission('static/permission.html', resjs='/static/js/res.js',
+                   bootstrap='/static/css/bootstrap.min.css',
+                   vuejs='/static/js/vue.js')
     return app
