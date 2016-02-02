@@ -3,4 +3,4 @@ include MANIFEST.in
 include readme.md
 include requires.txt
 include tox.ini
-recursive-include flask_restaction/res *
+recursive-include flask_restaction/tmpl *
