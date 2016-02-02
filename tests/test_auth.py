@@ -2,9 +2,9 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
 
-from flask_restaction.permission import permit, parse_config
-from flask import Flask
-from flask_restaction import Api, Resource
+from flask_restaction.auth import permit, parse_config
+from flask import Flask, g
+from flask_restaction import Api, Resource, Auth, Permission, Res
 import pytest
 
 
@@ -15,11 +15,13 @@ def app():
     app.config["API_RESOURCE_JSON"] = "testdata/resource.json"
     app.config["API_PERMISSION_JSON"] = "testdata/permission.json"
 
-    def fn_user_role(user_id):
+    def fn_user_role(me):
+        user_id = me["id"]
         user_roles = ["访客", "普通用户", "管理员"]
         return user_roles[user_id]
 
-    api = Api(app, fn_user_role=fn_user_role)
+    api = Api(app)
+    auth = Auth(api, fn_user_role=fn_user_role)
 
     class User(Resource):
 
@@ -30,11 +32,12 @@ def app():
 
         def post(self, id):
             me = {"id": id}
-            return "ok", api.gen_auth_header(me)
+            return "ok", auth.gen_auth_header(me)
 
     api.add_resource(User)
-    api.add_permission_resource()
+    api.add_resource(Permission, auth=auth)
     app.api = api
+    app.auth = auth
     return app
 
 
@@ -138,6 +141,9 @@ def test_user(app):
         assert resp.data == b"ok"
         # user_role=访客
         assert c.get("/user", headers=resp.headers).status_code == 403
+        assert g.user_role == "访客"
+        assert g.me['id'] == 0
+        assert g.res_role == "other"
         assert c.get("/permission",
                      headers=resp.headers).status_code == 403
 
@@ -168,27 +174,31 @@ def test_user(app):
 
 
 def test_permission(app):
-    api = app.api
-    with api.test_client(user_id=2) as c:
-        p = c.permission
-        assert p.get_permit({"user_role": "普通用户", "resource": "user",
-                             "action": "get"}).rv['permit']
-        assert not p.get_permit({"user_role": "普通用户", "resource": "permission",
-                                 "action": "post"}).rv['permit']
-        data = {
-            "user_role": "RoleX",
-            "resources": {
-                "user": "normal",
-                "permission": "owner"
-            }
-        }
-        assert p.post(data).code == 200
-        assert p.get_permit({"user_role": "RoleX", "resource": "user",
-                             "action": "get"}).rv['permit']
-        assert p.get_permit({"user_role": "RoleX", "resource": "permission",
+    res = Res(app.api)
+    rv, code, headers = res.user.post({"id": 2})
+    assert code == 200
+    res = Res(app.api, headers=headers)
+    p = res.permission
+    assert p.get_permit({"user_role": "普通用户",
+                         "resource": "user",
+                         "action": "get"}).rv['permit']
+    assert not p.get_permit({"user_role": "普通用户",
+                             "resource": "permission",
                              "action": "post"}).rv['permit']
-        assert p.delete({"user_role": "RoleX"}).code == 200
-        assert not p.get_permit({"user_role": "RoleX", "resource": "user",
-                                 "action": "get"}).rv['permit']
-        assert not p.get_permit({"user_role": "RoleX", "resource": "permission",
-                                 "action": "post"}).rv['permit']
+    data = {
+        "user_role": "RoleX",
+        "resource": {
+            "user": "normal",
+            "permission": "owner"
+        }
+    }
+    assert p.post(data).code == 200
+    assert p.get_permit({"user_role": "RoleX", "resource": "user",
+                         "action": "get"}).rv['permit']
+    assert p.get_permit({"user_role": "RoleX", "resource": "permission",
+                         "action": "post"}).rv['permit']
+    assert p.delete({"user_role": "RoleX"}).code == 200
+    assert not p.get_permit({"user_role": "RoleX", "resource": "user",
+                             "action": "get"}).rv['permit']
+    assert not p.get_permit({"user_role": "RoleX", "resource": "permission",
+                             "action": "post"}).rv['permit']

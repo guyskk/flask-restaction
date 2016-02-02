@@ -1,14 +1,14 @@
 {
     "普通用户": {
-        "permission": "normal",
+        "permission": "normal", 
         "user": "normal"
-    },
+    }, 
     "管理员": {
-        "permission": "admin",
+        "permission": "admin", 
         "user": "normal"
-    },
+    }, 
     "访客": {
-        "permission": "other",
+        "permission": "other", 
         "user": "other"
     }
 }

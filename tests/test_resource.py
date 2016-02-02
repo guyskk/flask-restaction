@@ -3,7 +3,7 @@
 from __future__ import unicode_literals, absolute_import, print_function
 
 from flask import Flask, request, g, url_for
-from flask_restaction import Api, Resource
+from flask_restaction import Api, Resource, Auth
 import pytest
 import json
 import six
@@ -126,38 +126,6 @@ def test_unimplament_action(app):
         assert 404 == c.get("/hello/login").status_code
         assert 405 == c.put("/hello/login").status_code
         assert 405 == c.delete("/hello/login").status_code
-
-
-def test_user_role():
-    class Hello(Resource):
-
-        def get(self):
-            return "hello"
-
-        def post_login(self):
-            me = {"id": 123}
-            return "login", 200, api.gen_auth_header(me)
-
-    def user_role(uid, user):
-        return "role_%s" % uid
-    app = Flask(__name__)
-    app.debug = True
-    api = Api(app, fn_user_role=user_role)
-    api.add_resource(Hello)
-
-    with app.test_client() as c:
-        rv = c.post("/hello/login")
-        assert 200 == rv.status_code
-        assert b"login" == rv.data
-        assert api.auth_header in rv.headers
-        auth = {api.auth_header: rv.headers[api.auth_header]}
-    with app.test_client() as c:
-        rv = c.get("/hello", headers=auth)
-        assert 200 == rv.status_code
-        assert b"hello" == rv.data
-        assert str(g.me["id"]) == "123"
-        # if permission file not exists, user_role will not be called
-        assert g.me["role"] is None
 
 
 def test_request_content_type():

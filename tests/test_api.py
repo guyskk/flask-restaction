@@ -6,6 +6,7 @@ from flask import Flask, Blueprint, g, url_for, request
 from flask_restaction import Api, Resource
 import validater
 import pytest
+from flask_restaction.api import load_options
 
 
 @pytest.fixture()
@@ -48,7 +49,6 @@ def test_parse_request():
         assert b"hello" in rv.data
         assert g.resource == "hello"
         assert g.action == "get"
-        assert g.me["id"] is None
 
 
 def test_blueprint():
@@ -60,7 +60,7 @@ def test_blueprint():
     app = Flask(__name__)
     app.debug = True
     bp = Blueprint("blueprint", __name__)
-    api = Api(bp)
+    api = Api(app, blueprint=bp)
     api.add_resource(Hello)
     app.register_blueprint(bp, url_prefix="/api")
 
@@ -73,7 +73,6 @@ def test_blueprint():
         assert b"hello" == rv.data
         assert g.resource == "hello"
         assert g.action == "get"
-        assert g.me["id"] is None
 
 
 def test_parse_schema():
@@ -157,71 +156,10 @@ def test_error_handler(app):
         assert b"error_hander" == c.get("/hello/error").data
 
 
-def test_config():
+def test_load_options():
     app = Flask(__name__)
     app.config.from_object("testdata.config")
-    app.debug = True
-    configs = ["auth_header",
-               "auth_token_name", "auth_secret", "auth_alg", "auth_exp",
-               "resjs_name", "resdocs_name", "bootstrap"]
-    # "resource_json", "permission_json",  will be change to abs path
-    bp = Blueprint("blueprint", __name__)
-    api_bp = Api(bp)
-    api_app = Api(app)
-    api_no_app = Api()
-    for k in configs:
-        key = "API_" + k.upper()
-        assert key in app.config
-        assert app.config[key] == key
-        assert hasattr(api_app, k)
-        assert getattr(api_app, k) == key
-
-        assert getattr(api_no_app, k) != key
-        # inited with blue_print can't load configs
-        assert getattr(api_bp, k) != key
-
-    api_bp.config(app.config)
-    for k in configs:
-        key = "API_" + k.upper()
-        assert getattr(api_bp, k) == key
-
-
-def test_log_warning():
-    """if permission_path not exists, should log warning"""
-    app = Flask(__name__)
-    api = Api(app)
-    with app.test_client() as c:
-        assert 404 == c.get("/").status_code
-
-
-def test_testclient():
-    class Hello(Resource):
-        schema_inputs = {
-            "get": {"name": "name&default='world'"}
-        }
-        schema_outputs = {
-            "get": {"hello": "safestr&required"}
-        }
-
-        def get(self, name):
-            return {"hello": name}
-
-    app = Flask(__name__)
-    api = Api(app)
-    api.add_resource(Hello)
-
-    with api.test_client() as c:
-        assert 200 == c.hello.get().code
-        assert {"hello": "world"} == c.hello.get().rv
-
-        assert 200 == c.hello.get({"name": "guyskk"}).code
-        assert {"hello": "guyskk"} == c.hello.get({"name": "guyskk"}).rv
-
-        assert 404 == c.hello.get_asd().code
-        with pytest.raises(ValueError):
-            c.asdfgh.get()
-
-    # api did't inited
-    with pytest.raises(AttributeError):
-        api = Api()
-        api.test_client()
+    expect_configs = {"auth_header": "API_AUTH_HEADER", "auth_exp": 3000}
+    options = load_options(
+        {"auth_header": "auth_header"}, app, {"auth_exp": 3000})
+    assert options == expect_configs
