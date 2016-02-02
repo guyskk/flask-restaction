@@ -11,11 +11,8 @@
     progress: function(percent, msg)
 
     此文件是根据后端 API 自动生成，调用需要授权的接口时，
-    会自动向请求头中添加 'res_token'。
-    登录成功后将请求头中的 'res_token' 自动储存在浏览器 localStorage 中。
-
-可以设置 res.website_url，这样可以将 ajax 请求的 url 变成绝对 url。
-
+    会自动向请求头中添加 'res_auth_token'。
+    登录成功后将请求头中的 'res_auth_token' 自动储存在浏览器 localStorage 中。
 */
 (function(root) {
 
@@ -87,6 +84,7 @@
         }
     }
     root.clear_token = clear_token;
+    root.ajax = request;
     var info = {{apiinfo}}
     parse_api(info);
 })(res)

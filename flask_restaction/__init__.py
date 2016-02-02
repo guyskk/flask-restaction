@@ -48,5 +48,5 @@ from .apiinfo import ApiInfo, Gen
 from .auth import Auth
 from .res import Res
 
-__all__ = ["Api", "Resource", "exporters", "exporter", "Res",
-           "Permission", "ApiInfo", "Gen", "Auth", "__version__"]
+__all__ = ["Api", "Resource", "Auth", "exporters", "exporter",
+           "Gen", "Res", "Permission", "ApiInfo"]

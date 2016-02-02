@@ -62,7 +62,7 @@ class ApiInfo(Resource):
 
 
 class Gen(object):
-    """Gen tools for docs res.js
+    """Generate tools for docs res.js
 
     if dest param of generate methods is not absolute path,
     then join app.root_path and dest as dest path.

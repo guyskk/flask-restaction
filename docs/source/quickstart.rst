@@ -7,29 +7,35 @@
 -------------------
 
 .. code-block:: python
-
+    
     from flask import Flask
-    from flask_restaction import Resource, Api
+    from flask_restaction import Resource, Api, Gen
 
     app = Flask(__name__)
     api = Api(app)
 
     class Hello(Resource):
-        """Hello world"""
-
-        name = "safestr&required&default='world'", "your name"
+        """hello world"""
         schema_inputs = {
-            "get": {"name": name}
+            "get": {
+                "name": ("safestr&default='world'", "your name")
+            }
+        }
+        schema_outputs = {
+            "get": {"hello": "unicode&required"}
         }
 
         def get(self, name):
-            """Welcome to flask-restaction"""
+            """welcome to flask-restaction"""
             return {"hello": name}
 
     api.add_resource(Hello)
-    api.gen_resjs()
-    api.gen_resdocs()
-    
+
+    gen = Gen(api)
+    gen.resjs('static/res.js')
+    gen.resdocs('static/resdocs.html', resjs='/static/res.js',
+                bootstrap='/static/bootstrap.min.css')
+
     if __name__ == '__main__':
         app.run(debug=True)
 
@@ -68,16 +74,16 @@
 3. 创建一个 Hello 类，继承自 Resource 类并定义 get 方法
 4. 定义 schema_inputs，它指定了输入参数及格式
 5. 调用 api.add_resource(Hello) ，把 Hello 添加到 api 资源中
-6. 生成 res.js 和 resdocs.html
+6. 生成 res.js 和 resdocs.html(需要将bootstrap.min.css放到static目录里面)
 
 
 .. glossary:: 两个概念
-
     *resource*
         资源，比如这里的 Hello 类
-
+    
     *action* 
-        操作，例如 get, post, delete, get_list, post_login。只要是 HTTP 方法或 HTTP 方法加下划线 _ 开头就行
+        操作，例如 get, post, delete, get_list, post_login。
+        只要是 HTTP 方法或 HTTP 方法加下划线 _ 开头就行
 
 
 校验输入输出
@@ -103,7 +109,7 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 
 使用 res.js 可以方便的调用 api ，使用其他的 js 方式调用也是完全可以的。
 
-使用方式:
+示例:
 
 .. code-block:: javascript
     
@@ -111,33 +117,17 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
     <script type="text/javascript" src="/static/res.js"></script>
 
     #调用 api
-    res.hello.get(data, function(err, value) {
-        if (!err){
-            document.getElementById("message").innerText = value.hello;
-        }else{
-            alert(err)
-        }
+    var name = document.getElementById("name").value;
+    res.hello.get({
+        name: name
+    }).then(function(value) {
+        document.getElementById("message").innerText = 'Hello ' + value.hello;
+    }).catch(function(err) {
+        console.log(err);
     });
 
 
-调用 api 的语法为::
-
-    res.resource.action(data, function(err, value), function(progress))
-
-*function(err, value)*
-    请求完成回调函数。
-
-*function(progress)*
-    上传文件进度的回调函数。
-
-*data*
-    请求数据
-
-    - 当 data 是 formdata: 表示上传文件, method 必须是 POST。
-
-    - 当 data 是 string: 表示 input 控件 id, 会从其中获取要上传的文件, method 必须是 POST。
-
-    - 其余情况下 data 是普通 js 对象
+详细用法见 :ref:`resjs`
 
 
 构建 URL
@@ -171,8 +161,8 @@ flask_restaction 使用 *json web token* 作为身份验证工具。
 
 see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
-.. glossary:: 两个概念
 
+.. glossary:: 两个概念
     *user_role*
         用户角色，这是随时可以变动，可以通过UI界面编辑设定的，对应的配置文件为 permission.json
 
@@ -180,58 +170,54 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
         资源角色，这是与程序逻辑密切相关，由程序设计者确定的，对应的配置文件为 resource.json
 
 
-你可以通过 ``flask.g.me`` 获取用户的身份信息，它的结构如下:
+默认情况下，permission.json 和 resource.json 放在应用的根目录下。
+框架会在程序初始化的时候解析 permission.json 和 resource.json，
+请求到来时，根据请求的 resource, action 和 user_role，可以快速确定 res_role 以及是否许可此次请求。
+如果不许可此次请求，返回 403 状态码。
 
-.. code::
-
-    {
-        "id":user_id, 
-        "role":res_role
-    }
-
-此外，你需要在用户登录成功后返回 auth 响应头(default ``Authorization``) 到响应中，它的值可以通过 ``api.gen_token(me)`` or ``api.gen_auth_token(me)`` 生成。
-
-res.js 会自动添加 auth 请求头 (``Authorization``) 到请求中。
-并且当收到 auth 响应头时，会自动将 auth token 保存到浏览器 localstroge 中。
-
-**你需要把自己的 auth_secret 添加到 api 中**，默认值是 ``"SECRET"``。
-
-auth 响应头中的 token 是未加密的，不要把敏感信息保存在里面。
-默认情况下里面仅保存 user_id 和过期时间。
-api 会用 auth_secret 对 token 进行签名，客户端无法篡改 token。
 
 **fn_user_role 函数**
 
-flask-restaction 不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
+框架不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
+
+.. code-block:: python
+    
+    from flask_restaction import Auth
+
+    def fn_user_role(token):
+        if token and 'id' in token:
+            user_id = token[id]
+            # query user from database
+            return user_role
+        else:
+            return None
+
+    auth = Auth(api, fn_user_role=fn_user_role)
+
+**auth.gen_header(token)**
+
+为了能够确认用户的身份，你需要在用户登录成功后生成一个令牌(auth token)，
+将令牌通过响应头(``Authorization``)返回给用户。令牌一般会储存用户ID和过期时间，
+用户在发送请求时需要将令牌通过请求头发送给服务器。
 
 .. code-block:: python
 
-    def fn_user_role(user_id):
-        # you may need query user from database
-        return "user_role"
+    def post_login(self, username, password):
+        """登录"""
+        # query user from database
+        header = auth.gen_header({"id": user.id})
+        return user, header
 
-    api = Api(app, fn_user_role=fn_user_role)
+.. Note:: 注意
 
-如果 ``g.me["id"] is None``，那么不会调用 fn_user_role。
+    令牌会用密钥进行签名，无法篡改。
+    你需要设置一个密钥，可以通过 Auth 的参数 auth_secret 或者 flask 配置 API_AUTH_SECRET。
+    令牌是未加密的，不要把敏感信息保存在里面。
 
-api 会在程序初始化的时候解析 permission.json 和 resource.json，
-请求到来时，根据请求的 resource, action 和 user_role，可以快速确定 res_role 以及是否许可此次请求。
-如果不许可此次请求，返回 403 状态码。res_role 会保存在 ``g.me["role"]`` 中。
-
-**为何这样设计？**
-
-在 RESTful 架构中，应用（网站）由一系列的资源（resource）组成，每个资源包含一系列操作（action）。
-每个资源都是一个独立的组件，这些资源和它们包含的操作一起组成 API 供客户端调用，用户界面以及交互逻辑完全由客户端完成。资源之间需要保持独立，避免修改或添加新资源时产生相互影响，因此把角色分为用户角色（user_role） 和 资源角色（res_role）。用户角色是整个 API 范围的，资源角色只在 resource 内起作用，同时用户角色本身也是 resource，客户端可以通过 API 对它操作，但资源角色是固定的。
+res.js 会自动将令牌添加到请求头中，并且当收到响应时，会自动将响应头中的令牌保存到浏览器 localstroge 中。
 
 
-将用户角色本身做为 resource 
-
-.. code::
-    
-    api.add_permission_resource()
-
-
-permission.json 结构
+**permission.json 结构**
 
 .. code::
 
@@ -243,7 +229,8 @@ permission.json 结构
         ...
     }
 
-resource.json 结构
+
+**resource.json 结构**
     
 .. code::
 
@@ -256,48 +243,79 @@ resource.json 结构
     }
 
 
-默认情况下，api 会去应用的根目录下找 permission.json 和 resource.json，如果这两个文件都不存在，则允许所有请求进行所有操作。
-你也可以把这两个文件放到其他位置，此时需要设置 API_RESOURCE_JSON 和 API_PERMISSION_JSON。
+**为何这样设计？**
 
+在 RESTful 架构中，应用（网站）由一系列的资源（resource）组成，每个资源包含一系列操作（action）。
+每个资源都是一个独立的组件，这些资源和它们包含的操作一起组成 API 供客户端调用，用户界面以及交互逻辑完全由客户端完成。资源之间需要保持独立，避免修改或添加新资源时产生相互影响，因此把角色分为用户角色（user_role） 和 资源角色（res_role）。用户角色是整个 API 范围的，资源角色只在 resource 内起作用，同时用户角色本身也是 resource，客户端可以通过 API 对它操作，但资源角色是固定的。
+
+
+将用户角色本身做为 resource 
+
+.. code::
+    
+    from flask_restaction import Permission
+    api.add_resource(Permission, auth=auth)
+
+
+全局数据
+----------------------------
+
+*flask.g.resource*
+    请求的资源
+
+*flask.g.action*
+    请求的操作
+
+*flask.g.request_data*
+    请求数据
+
+*flask.g.user_role*
+    用户角色
+
+*flask.g.res_role*
+    资源角色
+    
+*flask.g.token*
+    请求令牌
+
+ApiInfo与自动生成工具
+-----------------------------
+
+万物皆资源
+
+API本身也是资源，其威力可比编程语言中的反射/自省。
+
+.. code-block:: python
+
+    from flask_restaction import ApiInfo
+
+    api.add_resource(ApiInfo, api=api)
+
+
+将API本身暴露给前端，可以用来生成文档，res.js，甚至是res.java，
+换句话说，这是用代码生成代码的武器。
+
+目前能自动生成文档，res.js和权限管理页面，用法见 :class:`~flask_restaction.Gen`
 
 
 使用蓝图
 -----------------------------
 
+通过 Api 的 blueprint 参数设置 blueprint，这样所有的 Resource 都会路由到 blueprint 中。
+
 .. code-block:: python
 
     from flask import Flask, Blueprint
     from flask_restaction import Api
-    from .article import Article
 
     app = Flask(__name__)
-
-    #1
     bp_api = Blueprint('api', __name__, static_folder='static')
-    api = Api(bp_api)
-
-    #2
-    api.add_resource(Article)
-
-    #3
-    app.register_blueprint(bp_api, url_prefix='/api')
-
-    #4
-    api.gen_resjs()
-    api.gen_resdocs()
-
-
-如果你需要 gen_resjs 或 gen_resdocs ，你应当添加 ``static_folder='something'`` 到 Blueprint 中，因为生成的 res.js 和 resdocs.html 都要保存到 Blueprint 的 static 目录中。
-
-你必须按 #1, #2, #3, #4 的顺序组织代码，否则会造成错误。因为 Resource urls 在 register_blueprint 时绑定，permission 在 register_blueprint 之后初始化。
+    api = Api(app, blueprint=bp_api)
 
 
 配置
 -----------------------------
 
-你可以把配置加载到 app.config （从配置文件中或其他方式），当 api 初始化接收参数是 app 而不是 blueprint 的时候它会从 app.config 从加载配置。
-
-如果 api 接收参数是 blueprint ，你可以使用 :meth:`~flask_restaction.Api.config` 并传递 ``app.config`` 给它。
 
 配置项:
 
@@ -317,9 +335,6 @@ resource.json 结构
   * - API_AUTH_HEADER
     - Authorization
     - 身份验证请求头
-  * - API_AUTH_TOKEN_NAME
-    - res_token
-    - 身份验证token保存在localstorage中的名称
   * - API_AUTH_SECRET
     - SECRET
     - 用于加密身份验证token的密钥
@@ -327,60 +342,14 @@ resource.json 结构
     - HS256
     - 用于加密身份验证token的算法
   * - API_AUTH_EXP
-    - 1200
+    - 3600
     - 身份验证token的过期时间，单位是秒
-  * - API_RESJS_NAME
-    - res.js
-    - res.js文件名
-  * - API_RESDOCS_NAME
-    - resdocs.html
-    - resdocs.html文件名
-  * - API_BOOTSTRAP
-    - ``http://apps.bdimg.com/libs/
-      bootstrap/3.3.4/css/bootstrap.css``
-    - 用于resdocs.html中
   * - API_DOCS
     - 
     - docs of api
 
 你也可以在 api 初始化的时候传递参数，这些参数也会被当作配置，并且会覆盖 app.config 中的配置。
 see :class:`~flask_restaction.Api`
-
-
-测试
-------------------------
-
-For example:
-
-.. code-block:: python
-
-    with api.test_client() as c:
-        rv,code,header = c.resource.action(data)
-        assert code == 200
-        assert rv == {"hello":"world"}
-        assert c.resource.action_need_login(data).code == 403
-
-    with api.test_client(user_id) as c:
-        assert c.resource.action_need_login(data).code == 200
-        assert c.resource.action_need_login(data).rv == {"hello":"guyskk"}
-
-**Note**
-
-测试中可以访问 flask.g 但是不能访问 flask.request ,因为只有应用环境而没有请求环境。
-c.resource.action(data) 的返回值是 namedtuple("ResponseTuple", "rv code header"),
-其中 rv 是一个 dict。
-
-如果 flask 的完整请求的流程是::
-
-    1. 创建请求环境 应用环境
-    2. 解析请求 获取请求数据 
-    3. 校验请求数据 调用相应的action 校验返回值
-    4. 将返回值转化成响应
-
-那么 1 是 flask 处理的， 2,4 是由 api 处理的，3 是 resource 中处理的。
-第 2 步会将解析结果保存到 g.resource, g.action, g.me 中，这样在 resource 中就能使用解析结果。
-
-测试的时候先创建应用环境，伪造 2，执行 3，直接返回 3 的结果而不执行4。
 
 
 对比其它框架
@@ -401,9 +370,9 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
         
         from flask_restaction import reqparse
 
-        name = "safestr&required", "world", "you name"
+        name = "safestr&required&default='world'", "your name"
         schema_inputs = {
-            "get": schema("name")
+            "get": {"name": name}
         }
 
     在 reslful 中叫做 Request Parsing::
@@ -422,34 +391,39 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
     而 reslful 校验输出更加繁琐！
 
-- 自动生成 res.js 和 自动生成 documents
-
-    用 res.js 可以方便的调用 api，不用记 url，还可以直接上传文件。
-
-    如果你喜欢 angular 或者 vue.js，那你一定会喜欢 res.js。
-
-    *vue-resource* 
-        https://github.com/vuejs/vue-resource
-    *angular-resource*
-        https://docs.angularjs.org/api/ngResource/service/$resource
-
-- 方便测试
-
-    flask 中的测试最终返回结果是字符串，在测试 API 的时候很难验证结构化的数据。
-    restaction 提供 api.test_client，测试这些结构化的数据会方便的多。
-
 - 身份验证及权限控制
     
     restaction 提供一个灵活的权限系统，身份验证基于 jwt(json web token)，
     权限验证是通过json配置文件，而不是散布在代码中的装饰器(decorator)，
     并且角色本身也是 resource，客户端可以通过 API 进行操作。
 
+- 自动生成文档，res.js和权限管理页面
 
-kkblog 介绍
+    用 res.js 可以方便的调用 api，还可以直接上传文件。
+
+
+历程
 -----------------------------
 
-KkBloG 是一套基于 Python 的多人博客系统，你可以用 markdown 格式写文章，保存到 github ，然后就可以在上面展示自己的博客，别人也可以评论你的文章。
+**2015年9月4日 - 2015年12月**
 
-这个项目是对 flask-restaction 框架的一次尝试。
+项目开始
 
-see https://github.com/guyskk/kkblog
+将validater作为一个独立项目
+
+自动生成文档和res.js
+
+添加身份验证和权限控制
+
+重写身份验证和权限控制，之前的用起来太繁琐
+
+
+**2016年1月20日 - 今**
+
+重写 validater，增强灵活性，去除一些混乱的语法
+
+重构 Api
+    - 将权限从 Api 里面分离
+    - 将自动生成工具从 Api 里面分离，优化 res.js
+    - 去除测试工具，因为 flask 1.0 内置测试工具可以取代这个
+    - 将 testing.py 改造成 res.py，用于调用 API，功能类似于 res.js

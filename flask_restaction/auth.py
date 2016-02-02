@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import, print_function
 """
 permission.json struct::
 
@@ -21,7 +20,7 @@ resource.json struct::
     {
         "resource": {
             "other": ["actions"],
-            "res_role": ["action"]
+            "res_role": ["actions"]
         }
     }
 
@@ -30,9 +29,8 @@ resource.json struct::
 - owner, other are special res_role,
   other means guest/anonymous, owner means allow all actions
 - root is special user_role, means allow all resources
-- every one can access 'other' actions,
-  needn't add that actions to every res_role
 """
+from __future__ import unicode_literals, absolute_import, print_function
 from flask import g, abort, request
 import json
 import codecs
@@ -65,11 +63,12 @@ def parse_config(resource, permission):
     :param resource: dict from resource.json
     :param permission: dict from permission.json
     :return:
-    permission_config::
+        ::
 
-        {
-            (user_role, resource): (res_role, [actions])
-        }
+            {
+                (user_role, resource): (res_role, [actions])
+            }
+
     """
     result = {}
     assert "root" not in permission, "user_role: root can't be modified"
@@ -152,7 +151,7 @@ class Auth(object):
     :param auth_secret: secret of generate auth token, default ``SECRET``
     :param auth_alg: algorithm of generate auth token, default ``HS256``,
                      see json-web-token or pyjwt for more infomations
-    :param auth_exp: expired time of auth token, default ``3600`` seconds
+    :param auth_exp: expiration time of auth token, default ``3600`` seconds
     """
 
     def __init__(self, api=None, **kwargs):
@@ -161,6 +160,7 @@ class Auth(object):
             self.init_api(api, **kwargs)
 
     def init_api(self, api, **kwargs):
+        """just like flask's ext init_app()"""
         options = load_options(DEFAULT_OPTIONS, api.app, self._options, kwargs)
         assert options["fn_user_role"] is not None, "fn_user_role is required"
         self.__dict__.update(options)
@@ -211,7 +211,7 @@ class Auth(object):
             raise ValueError(ex.message)
 
     def gen_token(self, me, auth_exp=None):
-        """generate token, ``id`` must in param ``me``
+        """generate auth token
 
         :param me: a dict like ``{"id": user_id, ...}``
         :param auth_exp: seconds of jwt token expiration time
@@ -224,8 +224,8 @@ class Auth(object):
         token = jwt.encode(me, self.auth_secret, algorithm=self.auth_alg)
         return token
 
-    def gen_auth_header(self, me, auth_exp=None):
-        """generate auth_header, ``id`` must in param ``me``
+    def gen_header(self, me, auth_exp=None):
+        """generate auth header
 
         :return: ``{self.auth_header: self.gen_token(me)}``
         """

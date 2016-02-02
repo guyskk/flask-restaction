@@ -14,7 +14,6 @@ Api
 .. autoclass:: flask_restaction.Api
    :members:
    :undoc-members:
-   :inherited-members:
 
 Resource
 ------------------
@@ -23,13 +22,12 @@ Resource
    :members:
    :undoc-members:
 
-
-permission
+auth
 ------------------
 
-.. automodule:: flask_restaction.permission
+.. automodule:: flask_restaction.auth
    :members:
-
+   :undoc-members:
 
 exporters
 -----------------
@@ -37,10 +35,15 @@ exporters
    :members:
    :undoc-members:
 
-
-testing
+Gen
 -----------------
-.. automodule:: flask_restaction.testing
+.. autoclass:: flask_restaction.Gen
+   :members:
+   :undoc-members:
+
+Res
+-----------------
+.. autoclass:: flask_restaction.Res
    :members:
    :undoc-members:
 
