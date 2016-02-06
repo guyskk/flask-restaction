@@ -48,7 +48,8 @@ def test_permit():
         "article": {
             "other": ["get"],
             "writer": ["post", "put"]
-        }
+        },
+        "apiinfo": {}
     }
     permission = {
         "roleA": {

@@ -72,6 +72,17 @@ def parse_config(resource, permission):
     """
     result = {}
     assert "root" not in permission, "user_role: root can't be modified"
+    # user_role is None, for anonymous user
+    # and set default owner,other
+    for resource_name in resource:
+        res = resource[resource_name]
+        res.setdefault("owner", [])
+        res.setdefault("other", [])
+        actions = list(set(res["other"]))
+        for action in actions:
+            assert pattern_action.match(action), \
+                "invalid action: %s.%s" % (resource_name, action)
+        result[(None, resource_name)] = ("other", actions)
     for user_role in permission:
         for resource_name, res_role in permission[user_role].items():
             assert resource_name.islower(), \
@@ -79,8 +90,6 @@ def parse_config(resource, permission):
             assert resource_name in resource, \
                 "resource %s not exists" % resource_name
             res = resource[resource_name]
-            res.setdefault("owner", [])
-            res.setdefault("other", [])
             assert res_role in res, \
                 "res_role %s.%s not exists" % (resource_name, res_role)
             actions = list(set(res.get(res_role, []) + res["other"]))
@@ -88,13 +97,6 @@ def parse_config(resource, permission):
                 assert pattern_action.match(action), \
                     "invalid action: %s.%s" % (resource_name, action)
             result[(user_role, resource_name)] = (res_role, actions)
-    # user_role is None, for anonymous user
-    for resource_name in resource:
-        actions = list(set(resource[resource_name]["other"]))
-        for action in actions:
-            assert pattern_action.match(action), \
-                "invalid action: %s.%s" % (resource_name, action)
-        result[(None, resource_name)] = ("other", actions)
     return result
 
 
