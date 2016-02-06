@@ -1,5 +1,7 @@
 # Flask-Restaction
 
+![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)
+
 Flask-Restaction is a web framwork born to create RESTful API
 
 ### You can do this Easily
@@ -7,8 +9,7 @@ Flask-Restaction is a web framwork born to create RESTful API
 - Create restful api 
 - Validate inputs and Convert outputs
 - Authorize and Permission control
-- Easy to test
-- Auto generate res.js and documents
+- Auto generate res.js and document
 - Support py3
 
 
