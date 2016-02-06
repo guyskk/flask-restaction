@@ -87,7 +87,7 @@ class Gen(object):
         with codecs.open(dest, "w", encoding="utf-8") as f:
             f.write(content)
 
-    def resjs(self, dest):
+    def resjs(self, dest='static/res.js'):
         """generate res.js
 
         :param dest: dest path
@@ -98,7 +98,8 @@ class Gen(object):
         rendered = Template(tmpl).render(apiinfo=apiinfo)
         self._save_file(dest, rendered)
 
-    def resdocs(self, dest, resjs, bootstrap):
+    def resdocs(self, dest='static/resdocs.html', resjs='/static/res.js',
+                bootstrap='http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css'):
         """generate resdocs.html
 
         :param dest: dest path
@@ -110,7 +111,9 @@ class Gen(object):
             apiinfo=self.data, resjs=resjs, bootstrap=bootstrap)
         self._save_file(dest, rendered)
 
-    def permission(self, dest, resjs, bootstrap, vuejs):
+    def permission(self, dest='static/permission.html', resjs='/static/res.js',
+                   bootstrap='http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css',
+                   vuejs='http://cdn.bootcss.com/vue/1.0.16/vue.min.js'):
         """generate permission.html
 
         :param dest: dest path
