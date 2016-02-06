@@ -1,10 +1,9 @@
 # personal data
-tests/todoapp/static/
-tests/static
-
+tests/static/
 res.js
 resdocs.html
-!flask_restaction/res/resdocs.html
+permission.html
+!flask_restaction/tmpl/*
 
 *.db
 

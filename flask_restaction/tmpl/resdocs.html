@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Api Documrnts</title>
+    <link rel="stylesheet" type="text/css" href="{{bootstrap}}">
+    <script type="text/javascript" src="{{resjs}}"></script>
+    <style type="text/css">
+    .resource {
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: solid 2px orange;
+    }
+    </style>
+</head>
+
+<body class="container-fluid">
+    <div class="page-header">
+        <h1>Api Documents</h1>
+    </div>
+    <ul>
+        {% if apiinfo.auth_header %}
+        <li>auth_header: <code>{{apiinfo.auth_header}}</code></li>
+        <li>auth_token_name: <code>{{apiinfo.auth_token_name}}</code></li>
+        {% endif %}
+        {% if apiinfo.url_prefix %}
+        <li>url_prefix: <code>{{apiinfo.url_prefix}}</code></li>
+        {% endif %}
+        {% if apiinfo.docs %}
+        <p><pre>{{apiinfo.docs}}</pre></p>
+        {% endif %}
+        {% for res in apiinfo.resources %}
+        <li>
+            <a class="lead" href="#{{res['name']}}">{{res['name']}}</a>
+            <ul>
+                {% for action in res["actions"] %}
+                <li>
+                    <a href="#{{res['name']+'.'+action.action}}">
+                {{action.action}} 
+                </a> {{action.docs or ''}}
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    </ul>
+    {% for res in apiinfo.resources %}
+    <div class="resource table-responsive">
+        <h2 id="{{res['name']}}">{{res['name']}}</h2>
+        <p><pre>{{res["docs"] or ''}}</pre></p>
+        <table class="table table-striped">
+            <tr>
+                <th>action / docs</th>
+                <th>method / url</th>
+                <th>param</th>
+                <th>return</th>
+            </tr>
+            {% for action in res["actions"] %}
+            <tr id="{{res['name']+'.'+action.action}}">
+                <td class="info">
+                    <strong>{{action.action}}</strong>
+                    <p>{{action.docs or ''}}</p>
+                </td>
+                <td class="success"><code>{{action.method.upper()}} {{apiinfo['url_prefix']+action.url}}</code></td>
+                <td class="info">
+                    <pre>{{action.inputs}}</pre>
+                </td>
+                <td class="success">
+                    <pre>{{action.outputs}}</pre>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</body>
+
+</html>
