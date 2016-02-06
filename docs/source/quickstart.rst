@@ -32,9 +32,8 @@
     api.add_resource(Hello)
 
     gen = Gen(api)
-    gen.resjs('static/res.js')
-    gen.resdocs('static/resdocs.html', resjs='/static/res.js',
-                bootstrap='/static/bootstrap.min.css')
+    gen.resjs()
+    gen.resdocs()
 
     if __name__ == '__main__':
         app.run(debug=True)
@@ -74,7 +73,7 @@
 3. 创建一个 Hello 类，继承自 Resource 类并定义 get 方法
 4. 定义 schema_inputs，它指定了输入参数及格式
 5. 调用 api.add_resource(Hello) ，把 Hello 添加到 api 资源中
-6. 生成 res.js 和 resdocs.html(需要将bootstrap.min.css放到static目录里面)
+6. 生成 res.js 和 resdocs.html
 
 
 .. glossary:: 两个概念
