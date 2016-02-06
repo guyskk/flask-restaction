@@ -72,6 +72,9 @@ class Gen(object):
     def __init__(self, api):
         self.api = api
         self.data = parse_api(api)
+        app = self.api.app
+        if not os.path.exists(app.static_folder):
+            os.makedirs(app.static_folder)
 
     def _read_file(self, *paths):
         strs = [resource_string(__name__, path).decode("utf-8")
