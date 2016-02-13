@@ -175,16 +175,16 @@ def test_user(app):
 
 def test_permission(app):
     res = Res(app.api)
-    rv, code, headers = res.user.post({"id": 2})
-    assert code == 200
-    res = Res(app.api, headers=headers)
+    resp = res.user.post({"id": 2})
+    assert resp.status_code == 200
+    res = Res(app.api, headers=resp.headers)
     p = res.permission
     assert p.get_permit({"user_role": "普通用户",
                          "resource": "user",
-                         "action": "get"}).rv['permit']
+                         "action": "get"}).json['permit']
     assert not p.get_permit({"user_role": "普通用户",
                              "resource": "permission",
-                             "action": "post"}).rv['permit']
+                             "action": "post"}).json['permit']
     data = {
         "user_role": "RoleX",
         "resource": {
@@ -192,13 +192,13 @@ def test_permission(app):
             "permission": "owner"
         }
     }
-    assert p.post(data).code == 200
+    assert p.post(data).status_code == 200
     assert p.get_permit({"user_role": "RoleX", "resource": "user",
-                         "action": "get"}).rv['permit']
+                         "action": "get"}).json['permit']
     assert p.get_permit({"user_role": "RoleX", "resource": "permission",
-                         "action": "post"}).rv['permit']
-    assert p.delete({"user_role": "RoleX"}).code == 200
+                         "action": "post"}).json['permit']
+    assert p.delete({"user_role": "RoleX"}).status_code == 200
     assert not p.get_permit({"user_role": "RoleX", "resource": "user",
-                             "action": "get"}).rv['permit']
+                             "action": "get"}).json['permit']
     assert not p.get_permit({"user_role": "RoleX", "resource": "permission",
-                             "action": "post"}).rv['permit']
+                             "action": "post"}).json['permit']

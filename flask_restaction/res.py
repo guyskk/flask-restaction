@@ -2,24 +2,31 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
 import json
-import six
-from collections import namedtuple
-
-Response = namedtuple("Response", "rv code headers")
+from werkzeug import cached_property
 
 
-def loads(data):
-    """load json string compat"""
-    if not isinstance(data, six.text_type):
-        data = data.decode('utf-8')
-    try:
-        return json.loads(data)
-    except:
-        return data
+class JsonResponseMixin(object):
+    """
+    Mixin with testing helper methods
+    """
+
+    @cached_property
+    def json(self):
+        return json.loads(self.data)
+
+
+def make_json_response(app):
+    class JsonResponse(app.response_class, JsonResponseMixin):
+        pass
+    app.response_class = JsonResponse
 
 
 def call_action(api, resource, action, data=None, headers=None):
     """call api resource action"""
+    # support resp.json before flask 1.0
+    if not hasattr(api.app, 'json'):
+        make_json_response(api.app)
+
     actions = api.resources[resource]['actions']
     for act in actions:
         if act.action == action:
@@ -40,7 +47,7 @@ def call_action(api, resource, action, data=None, headers=None):
     with api.app.test_client() as c:
         resp = c.open(url, method=action.method, headers=headers,
                       content_type="application/json", **data_param)
-        return Response(loads(resp.data), resp.status_code, resp.headers)
+        return resp
 
 
 class Res(object):
