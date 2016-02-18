@@ -129,6 +129,25 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 详细用法见 :ref:`resjs`
 
 
+使用 res.py
+---------------------------
+
+res.py 的用法类似于 res.js
+
+.. code-block:: python
+
+    from flask_restaction import Res
+    # create app, api
+    res = Res(api)
+    data = {'username':'admin', 'password':'123456'}
+    resp = res.user.post_login(data)
+    # resp是JsonResponse的对象，JsonResponse继承flask.Response，拓展了json属性
+    assert resp.status_code == 200
+    user = resp.json
+
+详细用法见 :class:`~flask_restaction.Res`
+
+
 构建 URL
 ---------------------------
 
