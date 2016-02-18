@@ -20,7 +20,7 @@ from werkzeug.exceptions import HTTPException
 from collections import namedtuple
 import functools
 import inspect
-import json
+from flask import json
 from . import exporters, unpack, pattern_action, pattern_endpoint
 import validater
 import types

@@ -5,7 +5,6 @@ from __future__ import unicode_literals, absolute_import, print_function
 from flask import Flask, current_app
 from flask_restaction import exporters, exporter
 from flask_restaction import Api, Resource
-import json
 import pytest
 
 

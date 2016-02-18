@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
-import json
+from flask import json
 from werkzeug import cached_property
 
 
@@ -57,10 +57,12 @@ class Res(object):
 
         res = Res(api)
         data = {'username':'xxx','password':'123456'}
-        rv,code,headers = res.user.post_login(data)
+        resp = res.user.post_login(data)
         # after login, we can call permission required api
         res = Res(api,headers=headers)
-        todos,code,headers=res.todo.get_list()
+        resp = res.todo.get_list()
+        # use response.json to load json response data
+        todos = resp.json
 
     :param api: Api
     :param headers: headers used for all request

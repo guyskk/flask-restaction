@@ -179,12 +179,16 @@ def test_permission(app):
     assert resp.status_code == 200
     res = Res(app.api, headers=resp.headers)
     p = res.permission
-    assert p.get_permit({"user_role": "普通用户",
+    resp = p.get_permit({"user_role": "普通用户",
                          "resource": "user",
-                         "action": "get"}).json['permit']
-    assert not p.get_permit({"user_role": "普通用户",
-                             "resource": "permission",
-                             "action": "post"}).json['permit']
+                         "action": "get"})
+    assert resp.status_code == 200
+    assert resp.json['permit']
+    resp = p.get_permit({"user_role": "普通用户",
+                         "resource": "permission",
+                         "action": "post"})
+    assert resp.status_code == 200
+    assert not resp.json['permit']
     data = {
         "user_role": "RoleX",
         "resource": {

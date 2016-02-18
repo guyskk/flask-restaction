@@ -32,7 +32,7 @@ resource.json struct::
 """
 from __future__ import unicode_literals, absolute_import, print_function
 from flask import g, abort, request
-import json
+from flask import json
 import codecs
 import jwt
 import copy

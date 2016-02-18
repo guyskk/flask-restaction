@@ -3,22 +3,14 @@
 from __future__ import unicode_literals, absolute_import, print_function
 
 from flask import Flask, request, g, url_for
-from flask_restaction import Api, Resource, Auth
+from flask_restaction import Api, Resource
 import pytest
-import json
-import six
 """
 blueprint.resource@action
 resource@action
 blueprint.resource
 resource
 """
-
-
-def loads(data):
-    if not isinstance(data, six.text_type):
-        data = data.decode('utf-8')
-    return json.loads(data)
 
 
 @pytest.fixture()

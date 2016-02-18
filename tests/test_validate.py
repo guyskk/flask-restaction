@@ -6,14 +6,7 @@ from flask import Flask, request, url_for
 from flask_restaction import Api, Resource
 from datetime import datetime
 import pytest
-import json
-import six
-
-
-def loads(data):
-    if not isinstance(data, six.text_type):
-        data = data.decode('utf-8')
-    return json.loads(data)
+from flask.json import loads
 
 
 @pytest.fixture(scope="module")

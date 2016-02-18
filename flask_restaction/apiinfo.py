@@ -6,7 +6,7 @@ from jinja2 import Template
 import codecs
 from pkg_resources import resource_string
 import os
-import json
+from flask import json
 
 
 def parse_api(api):
