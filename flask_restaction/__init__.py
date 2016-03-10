@@ -11,7 +11,7 @@
 """
 from __future__ import absolute_import, print_function
 import re
-__version__ = "0.20.0"
+__version__ = "0.20.1"
 
 import logging
 LOG_FORMAT = '[Flask-Restaction] %(asctime)s %(levelname)s: %(message)s'
