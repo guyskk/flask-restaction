@@ -163,3 +163,19 @@ def test_load_options():
     options = load_options(
         {"auth_header": "auth_header"}, app, {"auth_exp": 3000})
     assert options == expect_configs
+
+
+def test_custom_validaters():
+    api = Api()
+
+    def foo_validater(v):
+        return (True, v)
+    api.validater.add_validater("foo", foo_validater)
+    assert "foo" in api.validater.validaters
+    assert "foo" not in validater.default_validaters
+    sche = api.validater.parse("foo&required")
+    err, val = validater.validate('haha', sche)
+    assert not err
+    assert val == 'haha'
+    api.validater.remove_validater("foo")
+    assert "foo" not in api.validater.validaters

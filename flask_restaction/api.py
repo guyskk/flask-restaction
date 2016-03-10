@@ -59,16 +59,6 @@ def load_options(default, app, *dicts):
     return options
 
 
-def _parse_schema(schema):
-    for action, sche in schema.items():
-        if sche is not None:
-            try:
-                schema[action] = validater.parse(sche)
-            except Exception as ex:
-                ex.args += (action,)
-                raise
-
-
 def get_request_data():
     """get request data based on request.method"""
     method = request.method.lower()
@@ -99,82 +89,6 @@ def parse_request():
     return resource, action
 
 
-def parse_resource(res_cls, name=None):
-    """
-    :param res_cls: resource class
-    :param name: resource name
-    :return: name, res
-
-    name::
-
-        resource name
-
-    res::
-
-        {
-            "class": res_cls,
-            "docs": res_cls.__doc__,
-            "actions": actions,
-            "httpmethods": httpmethods,
-            "rules": rules,
-        }
-
-    action::
-
-        namedtuple(
-            "Action", "action method url endpoint docs inputs outputs")
-
-    .. versionchanged:: 0.19.3
-        the return value changed.
-
-    .. versionchanged:: 0.20.0
-        the return value changed.
-    """
-    if not inspect.isclass(res_cls):
-        raise ValueError("%s is not class" % res_cls)
-    if name is None:
-        name = res_cls.__name__.lower()
-    else:
-        name = name.lower()
-
-    methods = [x for x in dir(res_cls) if pattern_action.match(x)]
-    meth_act = [pattern_action.findall(x)[0] for x in methods]
-    Action = namedtuple(
-        "Action", "action method url endpoint docs inputs outputs")
-
-    try:
-        _parse_schema(res_cls.schema_inputs)
-        _parse_schema(res_cls.schema_outputs)
-    except Exception as ex:
-        ex.args += (res_cls,)
-        raise
-
-    actions = []
-
-    for action, (meth, act) in zip(methods, meth_act):
-        if act == "":
-            url = "/" + name
-            endpoint = name
-        else:
-            url = "/{0}/{1}".format(name, act)
-            endpoint = "{0}@{1}".format(name, act)
-        docs = ensure_unicode(getattr(res_cls, action).__doc__)
-        inputs = dumps(res_cls.schema_inputs.get(action))
-        outputs = dumps(res_cls.schema_outputs.get(action))
-        actions.append(Action(action, meth, url, endpoint,
-                              docs, inputs, outputs))
-    httpmethods = set([x.method for x in actions])
-    rules = set([(x.url, x.endpoint) for x in actions])
-
-    res = {
-        "docs": ensure_unicode(res_cls.__doc__),
-        "actions": actions,
-        "httpmethods": httpmethods,
-        "rules": rules,
-    }
-    return name, res
-
-
 def export(rv, code, headers):
     if isinstance(rv, (ResponseBase, six.string_types)):
         return make_response(rv, code, headers)
@@ -190,6 +104,25 @@ DEFAULT_OPTIONS = {
     "blueprint": None,
     "docs": "",
 }
+
+
+class CustomValidater(object):
+    """support custom validater
+
+    add_validater: add custom validater
+    remove_validater: remove custom validater
+    parse: parse schema use custom validaters
+    """
+
+    def __init__(self):
+        self.validaters = {}
+        self.validaters.update(validater.default_validaters)
+        self.add_validater = functools.partial(
+            validater.add_validater, validaters=self.validaters)
+        self.remove_validater = functools.partial(
+            validater.remove_validater, validaters=self.validaters)
+        self.parse = functools.partial(
+            validater.parse, validaters=self.validaters)
 
 
 class Api(object):
@@ -223,9 +156,14 @@ class Api(object):
         use flask_restaction.Gen instead.
 
         test_client removed, use flask's test tools instead.
+
+    .. versionadded:: 0.20.1
+        validater: support custom validater
+
     """
 
     def __init__(self, app=None, **kwargs):
+        self.validater = CustomValidater()
         self.resources = {}
         self.before_request_funcs = []
         self.after_request_funcs = []
@@ -277,7 +215,7 @@ class Api(object):
         :param class_args: class_args
         :param class_kwargs: class_kwargs
         """
-        name, res = parse_resource(res_cls, name)
+        name, res = self.parse_resource(res_cls, name)
         view = res_cls.as_view(name, *class_args, **class_kwargs)
         view = self.make_view(view)
         if self.blueprint:
@@ -288,6 +226,90 @@ class Api(object):
             root.add_url_rule(url, endpoint=end, view_func=view,
                               methods=res["httpmethods"])
         self.resources[name] = res
+
+    def parse_resource(self, res_cls, name=None):
+        """
+        :param res_cls: resource class
+        :param name: resource name
+        :return: name, res
+
+        name::
+
+            resource name
+
+        res::
+
+            {
+                "class": res_cls,
+                "docs": res_cls.__doc__,
+                "actions": actions,
+                "httpmethods": httpmethods,
+                "rules": rules,
+            }
+
+        action::
+
+            namedtuple(
+                "Action", "action method url endpoint docs inputs outputs")
+
+        .. versionchanged:: 0.19.3
+            the return value changed.
+
+        .. versionchanged:: 0.20.0
+            the return value changed.
+        """
+        if not inspect.isclass(res_cls):
+            raise ValueError("%s is not class" % res_cls)
+        if name is None:
+            name = res_cls.__name__.lower()
+        else:
+            name = name.lower()
+
+        methods = [x for x in dir(res_cls) if pattern_action.match(x)]
+        meth_act = [pattern_action.findall(x)[0] for x in methods]
+        Action = namedtuple(
+            "Action", "action method url endpoint docs inputs outputs")
+
+        try:
+            self._parse_schema(res_cls.schema_inputs)
+            self._parse_schema(res_cls.schema_outputs)
+        except Exception as ex:
+            ex.args += (res_cls,)
+            raise
+
+        actions = []
+
+        for action, (meth, act) in zip(methods, meth_act):
+            if act == "":
+                url = "/" + name
+                endpoint = name
+            else:
+                url = "/{0}/{1}".format(name, act)
+                endpoint = "{0}@{1}".format(name, act)
+            docs = ensure_unicode(getattr(res_cls, action).__doc__)
+            inputs = dumps(res_cls.schema_inputs.get(action))
+            outputs = dumps(res_cls.schema_outputs.get(action))
+            actions.append(Action(action, meth, url, endpoint,
+                                  docs, inputs, outputs))
+        httpmethods = set([x.method for x in actions])
+        rules = set([(x.url, x.endpoint) for x in actions])
+
+        res = {
+            "docs": ensure_unicode(res_cls.__doc__),
+            "actions": actions,
+            "httpmethods": httpmethods,
+            "rules": rules,
+        }
+        return name, res
+
+    def _parse_schema(self, schema):
+        for action, sche in schema.items():
+            if sche is not None:
+                try:
+                    schema[action] = self.validater.parse(sche)
+                except Exception as ex:
+                    ex.args += (action,)
+                    raise
 
     def _before_request(self):
         """before_request"""
