@@ -109,9 +109,14 @@ DEFAULT_OPTIONS = {
 class CustomValidater(object):
     """support custom validater
 
-    add_validater: add custom validater
-    remove_validater: remove custom validater
-    parse: parse schema use custom validaters
+    these methods is samilar as in validater, except the param `validaters`:
+
+        *add_validater*
+            add custom validater
+        *remove_validater*
+            remove custom validater
+        *parse*
+            parse schema use custom validaters
     """
 
     def __init__(self):

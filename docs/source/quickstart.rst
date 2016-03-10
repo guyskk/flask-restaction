@@ -96,11 +96,27 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 *schema_outputs*
     输出格式，同 schema_inputs
 
-*output_types* ，
+*output_types*
     输出类型，是一个 list，里面的元素是你要返回的自定义类型对象的类型，
     这样返回的对象会被包装成一个 dict
 
 关于 validater, 请移步 `validater <https://github.com/guyskk/validater>`_
+
+**自定义 validater**
+
+在 validater 的文档中讲述了自定义 validater 的用法，为了避免自定义的 validater 影响到全局的 default_validaters，Api 中提供 validater(:class:`~flask_restaction.api.CustomValidater`)对象，它具有以下属性: 
+
+*validaters*
+    所有自定义的 validaters 和 内置的 validaters
+
+*add_validater*
+    添加自定义的 validater
+
+*remove_validater*
+    删除自定义的 validater
+
+*parse*
+    使用自定义的 validaters 解析 schema
 
 
 使用 res.js
@@ -436,7 +452,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 重写身份验证和权限控制，之前的用起来太繁琐
 
 
-**2016年1月20日 - 今**
+**2016年1月20日 - 2月24日**
 
 重写 validater，增强灵活性，去除一些混乱的语法
 
@@ -445,3 +461,4 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
     - 将自动生成工具从 Api 里面分离，优化 res.js
     - 去除测试工具，因为 flask 1.0 内置测试工具可以取代这个
     - 将 testing.py 改造成 res.py，用于调用 API，功能类似于 res.js
+

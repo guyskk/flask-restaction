@@ -6,14 +6,18 @@ from flask_restaction.auth import permit, parse_config
 from flask import Flask, g
 from flask_restaction import Api, Resource, Auth, Permission, Res
 import pytest
+import shutil
+from os.path import join
 
 
 @pytest.fixture
-def app():
+def app(tmpdir):
     app = Flask(__name__)
     app.debug = True
-    app.config["API_RESOURCE_JSON"] = "testdata/resource.json"
-    app.config["API_PERMISSION_JSON"] = "testdata/permission.json"
+    shutil.copy("tests/testdata/resource.json", str(tmpdir))
+    shutil.copy("tests/testdata/permission.json", str(tmpdir))
+    app.config["API_RESOURCE_JSON"] = join(str(tmpdir), "resource.json")
+    app.config["API_PERMISSION_JSON"] = join(str(tmpdir), "permission.json")
 
     def fn_user_role(token):
         user_id = token["id"]

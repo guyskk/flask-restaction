@@ -15,6 +15,10 @@ Api
    :members:
    :undoc-members:
 
+.. autoclass:: flask_restaction.api.CustomValidater
+   :members:
+   :undoc-members:
+
 Resource
 ------------------
 
