@@ -118,6 +118,9 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 *parse*
     使用自定义的 validaters 解析 schema
 
+*validate*
+    同 validater.validate
+
 
 使用 res.js
 -----------

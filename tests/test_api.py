@@ -177,5 +177,8 @@ def test_custom_validaters():
     err, val = validater.validate('haha', sche)
     assert not err
     assert val == 'haha'
+    err, val = api.validater.validate('haha', sche)
+    assert not err
+    assert val == 'haha'
     api.validater.remove_validater("foo")
     assert "foo" not in api.validater.validaters

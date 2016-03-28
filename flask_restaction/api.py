@@ -128,6 +128,7 @@ class CustomValidater(object):
             validater.remove_validater, validaters=self.validaters)
         self.parse = functools.partial(
             validater.parse, validaters=self.validaters)
+        self.validate = validater.validate
 
 
 class Api(object):
