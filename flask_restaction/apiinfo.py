@@ -20,7 +20,7 @@ def parse_api(api):
     resources = []
     for name, res in api.resources.items():
         reaource = {"name": name, "docs": res["docs"]}
-        actions = [dict(x.__dict__) for x in res["actions"]]
+        actions = [dict(x._asdict()) for x in res["actions"]]
         reaource["actions"] = actions
         resources.append(reaource)
     data["resources"] = resources
