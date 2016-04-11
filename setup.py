@@ -14,11 +14,11 @@ with open(join(dirname(__file__), 'requires.txt'), 'r') as f:
 
 setup(
     name="flask-restaction",
-    version="0.20.1",
-    description="a powerful flask ext for create restful api",
+    version="0.20.2",
+    description="A web framwork born to create RESTful API",
     long_description=__doc__,
     author="guyskk",
-    author_email='1316792450@qq.com',
+    author_email='guyskk@qq.com',
     url="https://github.com/guyskk/flask-restaction",
     license="MIT",
     packages=["flask_restaction"],

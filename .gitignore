@@ -5,6 +5,8 @@ resdocs.html
 permission.html
 !flask_restaction/tmpl/*
 
+.ropeproject/
+.venv/
 *.db
 
 # pkg resource

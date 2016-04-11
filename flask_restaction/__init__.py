@@ -11,7 +11,10 @@
 """
 from __future__ import absolute_import, print_function
 import re
-__version__ = "0.20.1"
+import pkg_resources
+
+__flask_restaction__ = pkg_resources.get_distribution("flask_restaction")
+__version__ = __flask_restaction__.version
 
 import logging
 LOG_FORMAT = '[Flask-Restaction] %(asctime)s %(levelname)s: %(message)s'
