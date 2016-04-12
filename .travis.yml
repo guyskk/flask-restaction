@@ -10,7 +10,7 @@ python:
 install:
     - pip install pytest
     - pip install mock
-    - pip install -r requires.txt
+    - pip install .
 
 script:
     - py.test 
