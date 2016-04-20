@@ -23,7 +23,7 @@
 
     function addToken(header) {
         if (auth_header && header && window.localStorage) {
-            token = window.localStorage[auth_token];
+            var token = window.localStorage[auth_token];
             if (token) {
                 header[auth_header] = token;
             }
@@ -32,7 +32,7 @@
 
     function saveToken(xhr) {
         if (auth_header && window.localStorage) {
-            token = xhr.getResponseHeader(auth_header)
+            var token = xhr.getResponseHeader(auth_header)
             if (token) {
                 window.localStorage[auth_token] = token;
             }
@@ -46,7 +46,7 @@
     }
 
     function request(url, method, data) {
-        header = {
+        var header = {
             accept: "application/json,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
         };
         addToken(header);
