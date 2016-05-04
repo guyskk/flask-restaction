@@ -2,10 +2,11 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
 from flask_restaction import Resource
-from jinja2 import Template
+from jinja2 import Environment
 import codecs
 from pkg_resources import resource_string
 import os
+import textwrap
 from flask import json
 
 
@@ -73,8 +74,15 @@ class Gen(object):
         self.api = api
         self.data = parse_api(api)
         app = self.api.app
+        self.jinja = Environment()
+        self.jinja.filters['firstline'] = self.firstline_filter
         if not os.path.exists(app.static_folder):
             os.makedirs(app.static_folder)
+
+    def firstline_filter(self, value):
+        if value is None:
+            return ""
+        return textwrap.dedent(value).split('\n')[0]
 
     def _read_file(self, *paths):
         strs = [resource_string(__name__, path).decode("utf-8")
@@ -95,7 +103,7 @@ class Gen(object):
         tmpl = self._read_file(
             'tmpl/res-ajax.js', 'tmpl/res-promise.js', 'tmpl/res-core.js')
         apiinfo = json.dumps(self.data, ensure_ascii=False, indent=4)
-        rendered = Template(tmpl).render(apiinfo=apiinfo)
+        rendered = self.jinja.from_string(tmpl).render(apiinfo=apiinfo)
         self._save_file(dest, rendered)
 
     def resdocs(self, dest='static/resdocs.html', resjs='/static/res.js',
@@ -107,7 +115,7 @@ class Gen(object):
         :param bootstrap: bootstrap.css file's path
         """
         tmpl = self._read_file('tmpl/resdocs.html')
-        rendered = Template(tmpl).render(
+        rendered = self.jinja.from_string(tmpl).render(
             apiinfo=self.data, resjs=resjs, bootstrap=bootstrap)
         self._save_file(dest, rendered)
 
@@ -122,6 +130,6 @@ class Gen(object):
         :param vuejs: vuejs.js file's path
         """
         tmpl = self._read_file('tmpl/permission.html')
-        rendered = Template(tmpl).render(
+        rendered = self.jinja.from_string(tmpl).render(
             apiinfo=self.data, resjs=resjs, bootstrap=bootstrap, vuejs=vuejs)
         self._save_file(dest, rendered)

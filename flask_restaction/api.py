@@ -24,14 +24,21 @@ from flask import json
 from . import exporters, unpack, pattern_action, pattern_endpoint
 import validater
 import types
+import textwrap
 
 
 def ensure_unicode(s):
     """decode s to unicode string by encoding='utf-8'"""
-    if s is not None and not isinstance(s, six.text_type):
+    if s is None:
+        return ""
+    if not isinstance(s, six.text_type):
         return six.text_type(s, encoding="utf-8")
     else:
         return s
+
+
+def format_docs(s):
+    return textwrap.dedent(ensure_unicode(s).strip('\n'))
 
 
 def _schema_to_json(obj):
@@ -187,7 +194,7 @@ class Api(object):
         self.url_prefix = None
         self.auth = None
         options = load_options(DEFAULT_OPTIONS, app, self._options, kwargs)
-        options["docs"] = ensure_unicode(options["docs"])
+        options["docs"] = format_docs(options["docs"])
         self.__dict__.update(options)
         if self.blueprint:
             self.blueprint.record(lambda x: setattr(
@@ -292,7 +299,7 @@ class Api(object):
             else:
                 url = "/{0}/{1}".format(name, act)
                 endpoint = "{0}@{1}".format(name, act)
-            docs = ensure_unicode(getattr(res_cls, action).__doc__)
+            docs = format_docs(getattr(res_cls, action).__doc__)
             inputs = dumps(res_cls.schema_inputs.get(action))
             outputs = dumps(res_cls.schema_outputs.get(action))
             actions.append(Action(action, meth, url, endpoint,
@@ -301,7 +308,7 @@ class Api(object):
         rules = set([(x.url, x.endpoint) for x in actions])
 
         res = {
-            "docs": ensure_unicode(res_cls.__doc__),
+            "docs": format_docs(res_cls.__doc__),
             "actions": actions,
             "httpmethods": httpmethods,
             "rules": rules,

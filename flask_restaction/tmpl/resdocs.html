@@ -24,7 +24,6 @@
     <ul>
         {% if apiinfo.auth_header %}
         <li>auth_header: <code>{{apiinfo.auth_header}}</code></li>
-        <li>auth_token_name: <code>{{apiinfo.auth_token_name}}</code></li>
         {% endif %}
         {% if apiinfo.url_prefix %}
         <li>url_prefix: <code>{{apiinfo.url_prefix}}</code></li>
@@ -40,7 +39,7 @@
                 <li>
                     <a href="#{{res['name']+'.'+action.action}}">
                 {{action.action}} 
-                </a> {{action.docs or ''}}
+                </a> {{(action.docs or '')|firstline}}
                 </li>
                 {% endfor %}
             </ul>
@@ -62,7 +61,7 @@
             <tr id="{{res['name']+'.'+action.action}}">
                 <td class="info">
                     <strong>{{action.action}}</strong>
-                    <p>{{action.docs or ''}}</p>
+                    <pre>{{action.docs or ''}}</pre>
                 </td>
                 <td class="success"><code>{{action.method.upper()}} {{apiinfo['url_prefix']+action.url}}</code></td>
                 <td class="info">
