@@ -5,7 +5,14 @@ var rename = require("gulp-rename");
 
 gulp.task('default', function() {
     return gulp.src('src/*.js')
-        .pipe(webpack(require('./webpack.config.js')))
+        .pipe(webpack({
+            entry: './src/res.js',
+            output: {
+                filename: 'res.js',
+                library: 'res',
+                libraryTarget: 'umd'
+            }
+        }))
         .pipe(gulp.dest('dist'))
         .pipe(uglify())
         .pipe(rename('res.min.js'))

@@ -4,7 +4,7 @@
   "description": "res.js",
   "main": "dist/res.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "guyskk",
   "license": "MIT",
@@ -12,9 +12,20 @@
     "es6-promise": "^3.1.2"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.5.3",
+    "jscover": "^1.0.0",
+    "karma": "^0.13.22",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-mocha": "^1.0.1",
+    "karma-mocha-reporter": "^2.0.3",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^1.7.0",
+    "mocha": "^2.4.5",
+    "muk": "^0.4.0",
     "webpack-stream": "^3.2.0"
   }
 }

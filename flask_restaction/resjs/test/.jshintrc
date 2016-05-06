@@ -1,0 +1,12 @@
+{
+    "globals": {
+        "assert":false,
+            "expect":false,
+            "should":false
+    },
+    "undef": true,
+    "unused": true,
+    "node": true,
+    "browser":true,
+    "mocha":true
+}
