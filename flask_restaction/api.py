@@ -73,8 +73,6 @@ def get_request_data():
         return request.args
     elif method in ["post", "put"]:
         if request.mimetype == 'application/json':
-            if not request.data:
-                return None
             try:
                 return request.get_json()
             except:

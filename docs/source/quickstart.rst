@@ -129,7 +129,7 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 
 示例:
 
-.. code-block:: javascript
+.. code::
     
     #引用 res.js 文件
     <script type="text/javascript" src="/static/res.js"></script>
@@ -144,6 +144,13 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
         console.log(err);
     });
 
+
+.. Note:: 
+
+    如果一个 API 是 POST/PUT 方法的, 并且全部参数是可选的:
+    ``res.resource.post()`` 会报 400 invalid json content,
+    因为空字符串不是有效的 json 格式, 需改成 ``res.resource.post({})``
+        
 
 详细用法见 :ref:`resjs`
 
@@ -245,7 +252,7 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
         header = auth.gen_header({"id": user.id})
         return user, header
 
-.. Note:: 注意
+.. Note:: 
 
     令牌会用密钥进行签名，无法篡改。
     你需要设置一个密钥，可以通过 Auth 的参数 auth_secret 或者 flask 配置 API_AUTH_SECRET。
