@@ -1,0 +1,20 @@
+{
+  "name": "resjs",
+  "version": "1.0.0",
+  "description": "res.js",
+  "main": "dist/res.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "guyskk",
+  "license": "MIT",
+  "dependencies": {
+    "es6-promise": "^3.1.2"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.5.3",
+    "webpack-stream": "^3.2.0"
+  }
+}

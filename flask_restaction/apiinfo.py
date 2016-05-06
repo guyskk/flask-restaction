@@ -7,7 +7,6 @@ import codecs
 from pkg_resources import resource_string
 import os
 import textwrap
-from flask import json
 
 
 def parse_api(api):
@@ -100,11 +99,16 @@ class Gen(object):
 
         :param dest: dest path
         """
-        tmpl = self._read_file(
-            'tmpl/res-ajax.js', 'tmpl/res-promise.js', 'tmpl/res-core.js')
-        apiinfo = json.dumps(self.data, ensure_ascii=False, indent=4)
-        rendered = self.jinja.from_string(tmpl).render(apiinfo=apiinfo)
-        self._save_file(dest, rendered)
+        tmpl = self._read_file('tmpl/res-core.js')
+        rendered = self.jinja.from_string(tmpl).render(apiinfo=self.data)
+
+        resjs = self._read_file('resjs/dist/res.js')
+        resjs = resjs.replace('"#res-core.js#"', rendered)
+        self._save_file(dest, resjs)
+
+        resminjs = self._read_file('resjs/dist/res.min.js')
+        resminjs = resminjs.replace('"#res-core.js#"', rendered)
+        self._save_file(dest.replace('.js', '.min.js'), resminjs)
 
     def resdocs(self, dest='static/resdocs.html', resjs='/static/res.js',
                 bootstrap='http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css'):

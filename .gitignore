@@ -1,9 +1,15 @@
-# personal data
-tests/static/
+dist/
 res.js
+res.min.js
 resdocs.html
 permission.html
 !flask_restaction/tmpl/*
+!flask_restaction/resjs/dist/
+!flask_restaction/resjs/dist/res.js
+!flask_restaction/resjs/dist/res.min.js
+
+tests/static/
+node_modules/
 
 .ropeproject/
 .venv/
@@ -24,7 +30,6 @@ __pycache__/
 env/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
