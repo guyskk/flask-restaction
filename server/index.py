@@ -3,7 +3,7 @@ from flask_restaction import Api, Resource, Auth
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, expose_headers=['Authorization'])
 
 
 def fn_user_role(token):
@@ -28,8 +28,9 @@ class Test(Resource):
         'get_403': None,
         'get_401': None,
         'get_400': None,
-        'get_304': None,
+        'get_302': None,
         'get_500': None,
+        'post_name': 'unicode&default="world"',
         'get_binary': None,
         'post_upload': None,
         'post_login': name,
@@ -40,6 +41,9 @@ class Test(Resource):
         return {'hello': name}
 
     def post(self, name):
+        return {'hello': name}
+
+    def post_name(self, name):
         return {'hello': name}
 
     def put(self, name):
@@ -60,8 +64,8 @@ class Test(Resource):
     def get_400(self):
         abort(400)
 
-    def get_304(self):
-        return redirect(url_for('test@hello'))
+    def get_302(self):
+        return redirect(url_for('test'))
 
     def get_500(self):
         abort(500)

@@ -6,8 +6,8 @@
     {
         method: "get/post/...",
         data: "object/string(id)/formdata",
-        header: {},
-        fn: function(err, data, header, xhr) {
+        headers: {},
+        fn: function(err, data, xhr) {
 
         },
         progress: function(percent, msg) {
@@ -36,16 +36,6 @@ function isFormData(obj) {
     return Object.prototype.toString.call(obj) === "[object FormData]";
 }
 
-
-function contains(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-        if (arr[i] === obj) {
-            return true;
-        }
-    }
-    return false;
-}
 
 var XMLHttpFactories = [
     function() {
@@ -78,59 +68,83 @@ function createXMLHTTPObject() {
     return xmlhttp;
 }
 
-function sendRequest(url, options) {
+function getFormData(id) {
+    var ele = window.document.getElementById(id);
+    if (!ele) {
+        throw "upload elementId'" + id + "' is invalid";
+    }
+    var data = new FormData();
+    if (ele.files.length === 0) {
+        throw "upload element'#" + id + "' has no file";
+    }
+    data.append(ele.name || 'upload', ele.files[0]);
+    return data;
+}
+
+function parseOptions(url, options) {
     if (!url) {
         url = "";
     }
     if (!options) {
         options = {};
     }
-    if (!options.method) {
-        options.method = "GET";
+    var method = "GET";
+    if (options.method) {
+        method = options.method.toUpperCase();
     }
-    var data = null;
-    var isupload = false;
-    if (options.data) {
-        if (options.method.toUpperCase() === "GET" || options.method.toUpperCase() === "DELETE") {
-            var query = createQueryString(options.data);
+    var headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    if (options.headers) {
+        for (var k in options.headers) {
+            headers[k] = options.headers[k];
+        }
+    }
+    var data = options.data === undefined ? null : options.data;
+    var hasData = options.data !== null;
+    var isUpload = false;
+    if (hasData) {
+        if (method === "GET" || method === "DELETE") {
+            var query = createQueryString(data);
             if (query) {
                 url += '?' + query;
             }
-        } else if (isFormData(options.data)) {
-            if (options.method.toUpperCase() !== "POST") {
+        } else if (isFormData(data)) {
+            if (method !== "POST") {
                 throw "method must be POST when upload FormData";
             }
-            isupload = true;
-            data = options.data;
-        } else if (typeof options.data === "string") {
-            if (options.method.toUpperCase() !== "POST") {
+            isUpload = true;
+        } else if (typeof data === "string") {
+            if (method !== "POST") {
                 throw "method must be POST when upload FormData";
             }
-
-            var id = options.data;
-            var ele = window.document.getElementById(id);
-            if (!ele) {
-                throw "upload elementId'" + id + "' is invalid";
-            }
-            data = new FormData();
-            if (ele.files.length === 0) {
-                throw "upload element'#" + id + "' has no file";
-            }
-            isupload = true;
-            data.append(ele.name || 'upload', ele.files[0]);
+            data = getFormData(data);
+            isUpload = true;
         } else {
-            data = JSON.stringify(options.data);
+            data = JSON.stringify(data);
         }
     }
+    return {
+        url: url,
+        method: method,
+        data: data,
+        isUpload: isUpload,
+        hasData: hasData,
+        headers: headers,
+        fn: options.fn,
+        progress: options.progress,
+    };
+}
 
+function sendRequest(url, options) {
+    options = parseOptions(url, options);
     var req = createXMLHTTPObject();
     if (!req) {
         throw "AJAX is not supported";
     }
-    req.open(options.method, url, true);
-    if (isupload) {
-        //不要加请求头，浏览器会自动加上
-        //req.setRequestHeader('Content-Type', 'multipart/form-data');
+    req.open(options.method, options.url, true);
+    if (options.isUpload) {
         req.upload.onprogress = function(event) {
             if (typeof options.progress === 'function') {
                 if (event.lengthComputable) {　　　　　　
@@ -167,18 +181,12 @@ function sendRequest(url, options) {
         req.upload.onerror = function(event) {
             onerror(event, "error");
         };
-    } else {
-        req.setRequestHeader('Content-Type', 'application/json');
     }
-    req.setRequestHeader('Accept', 'application/json');
-    if (options.header) {
-        for (var k in options.header) {
-            req.setRequestHeader(k, options.header[k]);
-        }
+    for (var k in options.headers) {
+        req.setRequestHeader(k, options.headers[k]);
     }
     req.onreadystatechange = function() {
         if (req.readyState != 4) return;
-        var header = req.getAllResponseHeaders();
         var content_type = req.getResponseHeader('Content-Type');
         var data = req.responseText;
         if (data && content_type === "application/json") {
@@ -186,17 +194,17 @@ function sendRequest(url, options) {
                 data = JSON.parse(req.responseText);
             } catch (ex) {}
         }
-        var status_ok = [200, 201, 202, 204, 206, 304];
+        var isSuccess = req.status >= 200 && req.status < 300 || status === 304;
         if (typeof options.fn === 'function') {
-            if (contains(status_ok, req.status)) {
-                options.fn(null, data, header, req);
+            if (isSuccess) {
+                options.fn(null, data, req);
             } else {
-                var msg = "[" + req.status + " " + req.statusText + "]";
-                options.fn(data || msg, null, header, req);
+                var msg = req.status + " " + req.statusText;
+                options.fn(data || msg, null, req);
             }
         }
     };
-    req.send(data);
+    req.send(options.data);
 }
 
 module.exports = sendRequest;

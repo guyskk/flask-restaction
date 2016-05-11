@@ -1,0 +1,9 @@
+{
+    "test": {
+        "other": [
+            "get", "post", "put", "delete",
+            "get_404", "get_403", "get_401", "get_400", "get_302", "get_500",
+            "get_binary", "post_name", "post_upload", "post_login"
+        ]
+    }
+}
