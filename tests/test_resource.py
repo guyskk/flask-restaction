@@ -2,7 +2,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import, print_function
 
-from flask import Flask, request, g, url_for
+from flask import Flask, request, url_for, redirect
 from flask_restaction import Api, Resource
 import pytest
 """
@@ -139,3 +139,21 @@ def test_request_content_type():
         assert 200 == c.post("/hello", **params).status_code
         headers["Content-Type"] = "application/json;charset=UTF-8"
         assert 200 == c.post("/hello", **params).status_code
+
+
+def test_response_status_code():
+    class Hello(Resource):
+
+        def get(self):
+            return 'hello world', 201
+
+        def get_302(self):
+            return redirect(url_for('hello'))
+
+    app = Flask(__name__)
+    app.debug = True
+    api = Api(app)
+    api.add_resource(Hello)
+    with app.test_client() as c:
+        assert c.get("/hello").status_code == 201
+        assert c.get("/hello/302").status_code == 302

@@ -39,8 +39,6 @@ def unpack(rv):
         rv, status, headers = rv + (None,) * (3 - len(rv))
     if isinstance(status, (dict, list)):
         headers, status = status, headers
-    if status is None:
-        status = 200
     return (rv, status, headers)
 
 from .exporters import exporters, exporter

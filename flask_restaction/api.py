@@ -102,6 +102,8 @@ def export(rv, code, headers):
     else:
         if rv is None:
             rv = ""
+        if code is None:
+            code = 200
         mediatype = request.accept_mimetypes.best_match(
             exporters.keys(), default='application/json')
         return exporters[mediatype](rv, code, headers)
