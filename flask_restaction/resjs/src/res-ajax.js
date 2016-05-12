@@ -71,13 +71,13 @@ function createXMLHTTPObject() {
 function getFormData(id) {
     var ele = window.document.getElementById(id);
     if (!ele) {
-        throw "upload elementId'" + id + "' is invalid";
+        throw "upload elementId '" + id + "' is invalid";
     }
     var data = new FormData();
-    if (ele.files.length === 0) {
+    if (!ele.files || ele.files.length === 0) {
         throw "upload element'#" + id + "' has no file";
     }
-    data.append(ele.name || 'upload', ele.files[0]);
+    data.append(ele.name || '', ele.files[0]);
     return data;
 }
 

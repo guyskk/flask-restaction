@@ -54,11 +54,24 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ajax = __webpack_require__(1);
-	var es6_promise = __webpack_require__(2);
+	var init = __webpack_require__(1);
+
+	var res = {};
+	var res_init = "#res-core.js#";
+	res_init(res, init);
+
+	module.exports = res;
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ajax = __webpack_require__(2);
+	var es6_promise = __webpack_require__(3);
 	var Promise = typeof Promise === 'function' ? Promise : es6_promise.Promise;
 
-	function init(authHeader, urlPrefix) {
+	function init(res, authHeader, urlPrefix) {
 
 	    // get token from storage and add it to request headers
 	    function addToken(authHeader, headers) {
@@ -120,16 +133,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return q;
 	}
 
-
-	var res = {};
-	var res_init = "#res-core.js#";
-	res_init(res, init);
-
-	module.exports = res;
+	module.exports = init;
 
 
 /***/ },
-/* 1 */
+/* 2 */
 /***/ function(module, exports) {
 
 	/*
@@ -205,13 +213,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getFormData(id) {
 	    var ele = window.document.getElementById(id);
 	    if (!ele) {
-	        throw "upload elementId'" + id + "' is invalid";
+	        throw "upload elementId '" + id + "' is invalid";
 	    }
 	    var data = new FormData();
-	    if (ele.files.length === 0) {
+	    if (!ele.files || ele.files.length === 0) {
 	        throw "upload element'#" + id + "' has no file";
 	    }
-	    data.append(ele.name || 'upload', ele.files[0]);
+	    data.append(ele.name || '', ele.files[0]);
 	    return data;
 	}
 
@@ -232,7 +240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    if (options.headers) {
 	        for (var k in options.headers) {
-	            headers[k] = options[k];
+	            headers[k] = options.headers[k];
 	        }
 	    }
 	    var data = options.data === undefined ? null : options.data;
@@ -345,7 +353,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var require;var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process, global, module) {/*!
@@ -478,7 +486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function lib$es6$promise$asap$$attemptVertx() {
 	      try {
 	        var r = require;
-	        var vertx = __webpack_require__(5);
+	        var vertx = __webpack_require__(6);
 	        lib$es6$promise$asap$$vertxNext = vertx.runOnLoop || vertx.runOnContext;
 	        return lib$es6$promise$asap$$useVertxTimer();
 	      } catch(e) {
@@ -1291,7 +1299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 
 	    /* global define:true module:true window: true */
-	    if ("function" === 'function' && __webpack_require__(6)['amd']) {
+	    if ("function" === 'function' && __webpack_require__(7)['amd']) {
 	      !(__WEBPACK_AMD_DEFINE_RESULT__ = function() { return lib$es6$promise$umd$$ES6Promise; }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    } else if (typeof module !== 'undefined' && module['exports']) {
 	      module['exports'] = lib$es6$promise$umd$$ES6Promise;
@@ -1303,10 +1311,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}).call(this);
 
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), (function() { return this; }()), __webpack_require__(4)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), (function() { return this; }()), __webpack_require__(5)(module)))
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -1403,7 +1411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -1419,13 +1427,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	module.exports = function() { throw new Error("define cannot be used indirect"); };

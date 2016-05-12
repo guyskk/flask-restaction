@@ -30,7 +30,7 @@ function testGetError(code) {
         ajax('http://127.0.0.1:5000/test/' + code, {
             method: 'GET',
             fn: function(err, data, xhr) {
-                assert.isNotNull(err);
+                assert(err != null);
                 assert.isNull(data);
                 assert.equal(xhr.status, code);
                 done();
@@ -55,7 +55,7 @@ describe('resjs', function() {
                 method: 'GET',
                 fn: function(err, data, xhr) {
                     assert.isNull(err);
-                    assert.isNotNull(data);
+                    assert(data != null);
                     assert.equal(xhr.status, 200);
                     assert.deepEqual(data, {
                         'hello': 'world'
@@ -80,7 +80,7 @@ describe('resjs', function() {
             ajax('http://127.0.0.1:5000/test', {
                 method: 'POST',
                 fn: function(err, data, xhr) {
-                    assert.isNotNull(err);
+                    assert(err != null);
                     assert.equal(xhr.status, 400);
                     done();
                 }
@@ -91,7 +91,7 @@ describe('resjs', function() {
                 method: 'GET',
                 fn: function(err, data, xhr) {
                     assert.isNull(err);
-                    assert.isNotNull(data);
+                    assert(data != null);
                     assert.equal(xhr.status, 200);
                     done();
                 }
@@ -105,7 +105,7 @@ describe('resjs', function() {
                 },
                 fn: function(err, data, xhr) {
                     assert.isNull(err);
-                    assert.isNotNull(data);
+                    assert(data != null);
                     assert.equal(xhr.status, 200);
                     assert.equal(data.name, 'guyskk');
                     var token = xhr.getResponseHeader('Authorization');
@@ -116,7 +116,7 @@ describe('resjs', function() {
                         },
                         fn: function(err, data, xhr) {
                             assert.isNull(err);
-                            assert.isNotNull(data);
+                            assert(data != null);
                             assert.equal(xhr.status, 200);
                             assert.equal(data.name, 'guyskk');
                             done();
@@ -124,6 +124,17 @@ describe('resjs', function() {
                     });
                 }
             });
+        });
+        it('Test upload', function(done) {
+            document.body.innerHTML = window.__html__['test/index.html'];
+            assert.throws(function() {
+                ajax('http://127.0.0.1:5000/test/upload', {
+                    method: 'POST',
+                    data: 'upload'
+                });
+            }, "has no file");
+            //TODO should test actually upload a file
+            done();
         });
     });
     describe("res-init", function() {
@@ -145,14 +156,13 @@ describe('resjs', function() {
             return res.test.post_login({
                     'name': 'guyskk'
                 }).then(function(data) {
-                    assert.isNotNull(data);
+                    assert(data != null);
                     return res.test.get_me();
                 })
                 .then(function(data) {
-                    assert.isNotNull(data);
+                    assert(data != null);
                     assert.equal(data.name, 'guyskk');
                 });
         });
     });
-
 });
