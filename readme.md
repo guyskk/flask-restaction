@@ -36,7 +36,7 @@ First, install test tools:
 
 Then, run tests
 
-    py.test
+    py.test tests
 
     or
 
