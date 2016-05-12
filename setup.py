@@ -14,7 +14,7 @@ with open(join(dirname(__file__), 'requires.txt'), 'r') as f:
 
 setup(
     name="flask-restaction",
-    version="0.20.2",
+    version="0.21.0",
     description="A web framwork born to create RESTful API",
     long_description=__doc__,
     author="guyskk",
