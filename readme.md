@@ -42,11 +42,14 @@ Then, run tests
 
     tox
 
-### Todos
+### res.js
 
-- more tests
-- more documents
-- ...
+    cd flask_restaction/resjs
+    npm install
+    // build
+    gulp
+    // test
+    karma start
 
 ## license 
 

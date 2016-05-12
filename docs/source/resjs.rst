@@ -3,8 +3,18 @@
 res.js
 ======
 
-此文件是根据后端 API 自动生成，发出请求时会自动向请求头中添加 auth token,
-收到响应后会自动将响应头中的 auth token 储存在浏览器 localStorage 中。
+此文件是根据后端 API 自动生成。
+
+发出请求时会自动添加 auth-token(Authorization) 请求头,
+收到响应后会自动将响应头中的 auth-token(Authorization) 储存在浏览器 localStorage 中。
+
+用法::
+
+    // 模块加载方式(UMD)
+    var res = require('./res');
+
+    //或引用 res.js 文件
+    <script type="text/javascript" src="/static/res.js"></script>
 
 
 res.ajax
@@ -16,11 +26,6 @@ res.ajax
         # success
     }).catch(function(error){
         # error
-    }).done(function(value, error){
-        # finish
-    }).doing(function(progress){
-        # will be called on uploading
-        # 0 <= progress <= 100
     })
 
 *当 data 是 formdata*
@@ -47,10 +52,7 @@ res.ajax
         # success
     }).catch(function(error){
         # error
-    }).doing(function(progress){
-        # update progress bar
-    })
-   
+    })   
 
 res.resource.action
 ----------------------
@@ -61,13 +63,7 @@ res.resource.action
         # success
     }).catch(function(error){
         # error
-    }).done(function(value, error){
-        # finish
-    }).doing(function(progress){
-        # will be called on uploading
-        # 0 <= progress <= 100
     })
-
 
 示例::
 
@@ -86,12 +82,17 @@ res.resource.action
         # success
     }).catch(function(error){
         # error
-    }).doing(function(progress){
-        # update progress bar
     })
 
 
-res.clear_token
+.. Note:: 
+
+    如果一个 API 是 POST/PUT 方法的, 并且全部参数是可选的:
+    ``res.resource.post()`` 会报 400 invalid json content,
+    因为空字符串不是有效的 json 格式, 需改成 ``res.resource.post({})``
+
+    
+res.clearToken
 ----------------------
 
 清除浏览器 localStorage 中的 auth token
@@ -99,4 +100,14 @@ res.clear_token
 .. code-block:: javascript
 
     res.clear_token()
+
+
+res.config.urlPrefix
+----------------------
+
+设置请求 url 前缀，可以用来指定请求的服务器
+
+.. code-block:: javascript
+
+    res.config.urlPrefix = 'http://127.0.0.1:5000'
 
