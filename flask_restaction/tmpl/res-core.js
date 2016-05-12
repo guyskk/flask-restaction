@@ -1,5 +1,5 @@
 function(root, init) {
-    var q = init('{{ apiinfo.auth_header }}', '{{ apiinfo.url_prefix }}');
+    var q = init(root, '{{ apiinfo.auth_header }}', '{{ apiinfo.url_prefix }}');
     {% for res in apiinfo.resources %}
     var r = root.{{ res['name'] }} = {};
         {% for action in res['actions'] -%}

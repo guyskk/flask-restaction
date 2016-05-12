@@ -1,4 +1,5 @@
 var ajax = require('../src/res-ajax');
+var init = require('../src/res-init');
 
 var testHttpMethod = function(method, url, name) {
     if (!name) {
@@ -38,7 +39,7 @@ function testGetError(code) {
     });
 }
 describe('resjs', function() {
-    describe('ajax', function() {
+    describe('res-ajax', function() {
         testHttpMethod('GET');
         testHttpMethod('POST');
         testHttpMethod('PUT');
@@ -125,4 +126,33 @@ describe('resjs', function() {
             });
         });
     });
+    describe("res-init", function() {
+        it('Init', function() {
+            var res = {};
+            var q = init(res, 'Authorization', 'http://127.0.0.1:5000');
+            res.test = {};
+            res.test.get = q('/test', 'GET');
+            res.test.post_login = q('/test/login', 'POST');
+            res.test.get_me = q('/test/me', 'GET');
+
+            res.test.get().then(function(data) {
+                assert.deepEqual(data, {
+                    'hello': 'world'
+                });
+            }, function(err) {
+                assert.isNull(err);
+            });
+            return res.test.post_login({
+                    'name': 'guyskk'
+                }).then(function(data) {
+                    assert.isNotNull(data);
+                    return res.test.get_me();
+                })
+                .then(function(data) {
+                    assert.isNotNull(data);
+                    assert.equal(data.name, 'guyskk');
+                });
+        });
+    });
+
 });
