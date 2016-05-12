@@ -44,11 +44,17 @@ Then, run tests
 
 ### res.js
 
+    // create a server for test
+    pip install -r server/requires.txt
+    python server index.py
+
+    // build resjs
     cd flask_restaction/resjs
     npm install
-    // build
     gulp
+    
     // test
+    npm install -g karma-cli
     karma start
 
 ## license 
