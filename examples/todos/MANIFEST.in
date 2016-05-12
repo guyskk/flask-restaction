@@ -1,0 +1,7 @@
+include todos/permission.json
+include todos/resource.json
+recursive-include todos/static *
+exclude todos/static/js/res.js
+exclude todos/static/js/res.min.js
+exclude todos/static/resdocs.html
+exclude todos/static/permission.html

@@ -3,13 +3,13 @@
 管理员登录: res.user.post_login({email:"admin@todos.com",password:"123456"})
 """
 from __future__ import unicode_literals
-from flask import Flask, Blueprint, current_app
 import os
+from flask import Flask, Blueprint, current_app
+from flask_restaction import ApiInfo, Permission, Gen
 from .extensions import api, db, auth
 from .todos import Todos
 from .user import User
 from . import model
-from flask_restaction import ApiInfo, Permission, Gen
 
 
 def fn_user_role(token):
@@ -42,14 +42,17 @@ url_views = [
 ]
 
 
-def create_app():
+def create_app(test=False):
     app = Flask(__name__)
     app.config["ADMIN_EMAIL"] = "admin@todos.com"
     app.config["ADMIN_PASSWORD"] = "123456"
 
-    db_path = os.path.join(app.root_path, "todos.db")
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_path
-    app.config["SQLALCHEMY_ECHO"] = True
+    if test:
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+        app.config["SQLALCHEMY_ECHO"] = True
+    else:
+        db_path = os.path.join(app.root_path, "todos.db")
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_path
     db.init_app(app)
 
     bp_api = Blueprint('api', __name__, static_folder='static')

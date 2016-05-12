@@ -1,28 +1,41 @@
 # coding:utf-8
 from __future__ import unicode_literals
-from todos import api, create_app
+from flask_restaction import Res
+from todos import db, api, create_app
 import pytest
-app = create_app()
 
 
-@pytest.yield_fixture()
-def newuser():
-    with api.test_client("tester@todos.com") as c:
-        resp = c.user.delete()
-        assert resp.code == 200 or resp.code == 403
-    with api.test_client() as c:
-        resp = c.user.post({
-            "email": "tester@todos.com",
-            "password": "123456"
-        })
-        assert resp.code == 200
-        yield resp.rv
-    with api.test_client("tester@todos.com") as c:
-        resp = c.user.delete()
-        assert resp.code == 200
+@pytest.yield_fixture(scope='function')
+def app():
+    app = create_app(test=True)
+    with app.app_context():
+        db.create_all()
+    yield app
+    with app.app_context():
+        db.drop_all()
 
 
-@pytest.yield_fixture
-def res(newuser):
-    with api.test_client("tester@todos.com") as c:
-        yield c
+@pytest.fixture(scope='function')
+def guest(app):
+    return Res(api)
+
+
+@pytest.fixture(scope='function')
+def user(guest):
+    resp = guest.user.post({
+        "email": "tester@todos.com",
+        "password": "123456"
+    })
+    assert resp.status_code == 200
+    return resp.json
+
+
+@pytest.fixture(scope='function')
+def res(guest, user):
+    resp = guest.user.post_login({
+        "email": "tester@todos.com",
+        "password": "123456"
+    })
+    assert resp.status_code == 200
+    auth_headers = {'Authorization': resp.headers['Authorization']}
+    return Res(api, headers=auth_headers)

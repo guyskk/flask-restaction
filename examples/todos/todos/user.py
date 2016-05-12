@@ -62,7 +62,7 @@ class User(Resource):
             abort(403, "Incorrect email or password")
         if not check_password_hash(user.pwdhash, password):
             abort(403, "Incorrect email or password")
-        header = auth.gen_auth_header({"id": user.userid})
+        header = auth.gen_header({"id": user.userid})
         user.date = datetime.datetime.utcnow()
         db.session.commit()
         return user, header

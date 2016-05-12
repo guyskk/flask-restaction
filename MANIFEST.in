@@ -2,5 +2,7 @@ include LICENSE
 include MANIFEST.in
 include readme.md
 include requires.txt
+include pytest.ini
 include tox.ini
 recursive-include flask_restaction/tmpl *
+recursive-include flask_restaction/resjs/dist *

@@ -6,12 +6,14 @@ setup(
     version="1.0",
     description="a todos app",
     author="guyskk",
-    author_email='1316792450@qq.com',
+    author_email='guyskk@qq.com',
     install_requires=[
-        "flask_restaction>=0.20.0",
-        "sqlitedict>=1.4",
+        "flask>=0.10.1",
+        "flask-restaction>=0.20.0",
+        "flask-sqlalchemy>=2.1",
     ],
     packages=["todos"],
+    include_package_data=True,
     tests_require=[
         'pytest',
     ],

@@ -32,7 +32,18 @@ def app():
 def test_parse_request():
     class Hello(Resource):
 
+        schema_inputs = {
+            "post": {"name": "unicode&default='world'"},
+            "put": "unicode&default='world'"
+        }
+
         def get(self):
+            return "hello"
+
+        def post(self, name):
+            return name
+
+        def put(self, name):
             return "hello"
 
     app = Flask(__name__)
@@ -49,6 +60,16 @@ def test_parse_request():
         assert b"hello" in rv.data
         assert g.resource == "hello"
         assert g.action == "get"
+    with app.test_client() as c:
+        headers = {'Content-Type': 'application/json'}
+        # empty request data is invalid json content
+        assert c.post('hello', headers=headers).status_code == 400
+        assert c.put('hello', headers=headers).status_code == 400
+        assert c.post('hello', data="{}", headers=headers).status_code == 200
+        assert c.put('hello', data="null", headers=headers).status_code == 200
+        # bad json
+        assert c.post('hello', headers=headers, data="x").status_code == 400
+        assert c.put('hello', headers=headers, data="x").status_code == 400
 
 
 def test_blueprint():

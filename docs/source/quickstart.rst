@@ -129,7 +129,7 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 
 示例:
 
-.. code-block:: javascript
+.. code::
     
     #引用 res.js 文件
     <script type="text/javascript" src="/static/res.js"></script>
@@ -245,7 +245,7 @@ see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
         header = auth.gen_header({"id": user.id})
         return user, header
 
-.. Note:: 注意
+.. Note:: 
 
     令牌会用密钥进行签名，无法篡改。
     你需要设置一个密钥，可以通过 Auth 的参数 auth_secret 或者 flask 配置 API_AUTH_SECRET。
@@ -464,4 +464,13 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
     - 将自动生成工具从 Api 里面分离，优化 res.js
     - 去除测试工具，因为 flask 1.0 内置测试工具可以取代这个
     - 将 testing.py 改造成 res.py，用于调用 API，功能类似于 res.js
+
+**2016年3月 - 5月**
+
+内部项目使用 flask-restaction 框架，项目已内测。
+期间修复一些bug，做了小的改进和优化，Api基本未变。
+
+**2016年5月 - 5月12日**
+
+完善 res.js，对代码进行了重构和测试，支持模块化和标准 Promise。
 
