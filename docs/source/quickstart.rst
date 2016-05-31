@@ -91,7 +91,9 @@
 Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定如何验证输入输出。
 
 *schema_inputs*
-    输入格式，action 作为 key, schema 作为 value
+    输入格式，action 作为 key, schema 作为 value。
+    实际数据来源取决于HTTP方法，GET和DELETE请求，取自url参数，
+    POST和PUT请求，取自请求体，Content-Type为 ``application/json``。
 
 *schema_outputs*
     输出格式，同 schema_inputs
@@ -104,7 +106,9 @@ Resource 类使用 *schema_inputs*, *schema_outputs*, *output_types* 来指定�
 
 **自定义 validater**
 
-在 validater 的文档中讲述了自定义 validater 的用法，为了避免自定义的 validater 影响到全局的 default_validaters，Api 中提供 validater(:class:`~flask_restaction.api.CustomValidater`)对象，它具有以下属性: 
+在 validater 的文档中讲述了自定义 validater 的用法，为了避免自定义的 validater
+影响到全局的 default_validaters，Api 中提供
+validater(:class:`~flask_restaction.api.CustomValidater`)对象，它具有以下属性: 
 
 *validaters*
     所有自定义的 validaters 和 内置的 validaters
@@ -282,8 +286,13 @@ res.js 会自动将令牌添加到请求头中，并且当收到响应时，会�
 
 **为何这样设计？**
 
-在 RESTful 架构中，应用（网站）由一系列的资源（resource）组成，每个资源包含一系列操作（action）。
-每个资源都是一个独立的组件，这些资源和它们包含的操作一起组成 API 供客户端调用，用户界面以及交互逻辑完全由客户端完成。资源之间需要保持独立，避免修改或添加新资源时产生相互影响，因此把角色分为用户角色（user_role） 和 资源角色（res_role）。用户角色是整个 API 范围的，资源角色只在 resource 内起作用，同时用户角色本身也是 resource，客户端可以通过 API 对它操作，但资源角色是固定的。
+在 RESTful 架构中，应用（网站）由一系列的资源（resource）组成，
+每个资源包含一系列操作（action）。
+每个资源都是一个独立的组件，这些资源和它们包含的操作一起组成 API 供客户端调用，
+用户界面以及交互逻辑完全由客户端完成。资源之间需要保持独立，避免修改或添加新资
+源时产生相互影响，因此把角色分为用户角色（user_role） 和 资源角色（res_role）。
+用户角色是整个 API 范围的，资源角色只在 resource 内起作用，同时用户角色本身也是
+resource，客户端可以通过 API 对它操作，但资源角色是固定的。
 
 
 将用户角色本身做为 resource 
@@ -399,7 +408,8 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
 - restaction 更灵活。
 
-    restful 的方法只能是 http method，就是 get, post, put, delete 那几个，而 restaction 的方法除了 http method，还可以是任何以 http method 加下划线开头的方法。
+    restful 的方法只能是 http method，就是 get, post, put, delete 那几个，而
+    restaction 的方法除了 http method，还可以是任何以 http method 加下划线开头的方法。
 
 - 输入输出校验
 
