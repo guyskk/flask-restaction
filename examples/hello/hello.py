@@ -1,31 +1,37 @@
+"""Hello API"""
 from flask import Flask
-from flask_restaction import Resource, Api, Gen
+from flask_restaction import Api
 
 app = Flask(__name__)
-api = Api(app)
+api = Api(app, docs=__doc__, metafile="meta.json")
+app.secret_key = b'\x7fk\x98\x06xl\xdfU\xae?\x92^\t~:b\x83\xe3uX\xaf\x9a\x01G'
 
 
-class Hello(Resource):
-    """hello world"""
-    schema_inputs = {
-        "get": {
-            "name": ("safestr&default='world'", "your name")
-        }
-    }
-    schema_outputs = {
-        "get": {"hello": "unicode&required"}
-    }
+@api.get_role
+def get_role(token):
+    if token is None:
+        return "guest"
+    else:
+        return "admin"
+
+
+class Hello:
+    """Hello world"""
 
     def get(self, name):
-        """welcome to flask-restaction"""
-        return {"hello": name}
+        """Welcome to flask-restaction
+
+        $input:
+            name?str&escape&default="world": Your name
+        $output:
+            message?str: Welcome message
+        """
+        return {
+            "message": "Hello %s, Welcome to flask-restaction!" % name
+        }
 
 api.add_resource(Hello)
 
-gen = Gen(api)
-gen.resjs('static/res.js')
-gen.resdocs('static/resdocs.html', resjs='/static/res.js',
-            bootstrap='/static/bootstrap.min.css')
 
 if __name__ == '__main__':
     app.run(debug=True)
