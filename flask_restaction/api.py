@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from flask import request, make_response, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
-from . import exporters
+from .exporters import exporters
 
 PATTERN_ACTION = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
