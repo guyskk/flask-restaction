@@ -1,9 +1,9 @@
 function(root, init) {
-    var q = init(root, '{{ apiinfo.auth_header }}', '{{ apiinfo.url_prefix }}');
-    {% for res in apiinfo.resources %}
-    var r = root.{{ res['name'] }} = {};
-        {% for action in res['actions'] -%}
-        r.{{ action.action}} = q('{{ action.url }}', '{{ action.method }}');
+    var q = init(root, '{{ auth_header }}', '{{ url_prefix }}');
+    {% for resource in meta %}
+    var r = root.{{ resource }} = {};
+        {% for action, meta_action in meta[resource].items() -%}
+        r.{{ action }} = q('{{ meta_action["$url"] }}', '{{ meta_action["$httpmethod"] }}');
         {% endfor %}
     {%- endfor %}
 }

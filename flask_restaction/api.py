@@ -5,20 +5,27 @@ import yaml
 import textwrap
 from collections import defaultdict
 from datetime import datetime, timedelta
-from flask import request, abort, jsonify, make_response
+from flask import request, make_response, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from . import exporters
 
-pattern_action = re.compile(
+PATTERN_ACTION = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
-pattern_endpoint = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
-
+PATTERN_ENDPOINT = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 DEFAULT_AUTH = {
     "header": "Authorization",
     "algorithm": "HS256",
     "expiration": 3600
 }
+
+
+def abort(code, body=None, headers=None):
+    if body is None:
+        flask_abort(code)
+    else:
+        resp = export(body, code, headers)
+        flask_abort(code, response=resp)
 
 
 def unpack(rv):
@@ -32,6 +39,18 @@ def unpack(rv):
     if isinstance(status, (dict, list)):
         headers, status = status, headers
     return (rv, status, headers)
+
+
+def res_to_url(resource, action):
+    """Convert resource.action to (url, httpmethod)"""
+    i = action.find("_")
+    if i < 0:
+        url = "/" + resource
+        httpmethod = action
+    else:
+        url = "/%s/%s" % (resource, action[i + 1:])
+        httpmethod = action[:i]
+    return url, httpmethod.upper()
 
 
 def export(rv, code=None, headers=None):
@@ -68,10 +87,10 @@ def get_request_data():
             try:
                 return request.get_json()
             except:
-                abort(400, jsonify({
+                abort(400, {
                     "error": "InvalidData",
                     "message": "invalid json content"
-                }))
+                })
         else:
             return request.form
     else:
@@ -80,12 +99,12 @@ def get_request_data():
 
 def parse_request():
     """Parse resource&action"""
-    find = pattern_endpoint.findall(request.endpoint)
+    find = PATTERN_ENDPOINT.findall(request.endpoint)
     if not find:
-        abort(500, jsonify({
+        abort(500, {
             "error": "ServerError",
             "message": "invalid endpoint: %s" % request.endpoint
-        }))
+        })
     __, resource, action_name = find[0]
     if action_name:
         action = request.method.lower() + "_" + action_name
@@ -94,14 +113,13 @@ def parse_request():
     return resource, action
 
 
-class Api(object):
-    """Api is a manager of resources
+class Api:
+    """A manager of resources
 
     route all resources to blueprint if blueprint is not None,
     and set Api.url_prefix to blueprint's url_prefix when it registered.
 
-    :param app: Flask
-    :param blueprint: Blueprint
+    :param app: Flask or Blueprint
     :param docs: api docs
     """
 
@@ -149,7 +167,7 @@ class Api(object):
         sp = SchemaParser(validaters=self.validaters, shared=shared)
         actions = defaultdict(lambda: {})
         for action in dir(resource):
-            find = pattern_action.findall(action)
+            find = PATTERN_ACTION.findall(action)
             if not find:
                 continue
             httpmethod, action_name = find[0]
@@ -185,10 +203,10 @@ class Api(object):
                 try:
                     data = validate_input(data)
                 except Invalid as ex:
-                    return abort(400, jsonify({
+                    return abort(400, {
                         "error": "InvalidData",
                         "message": str(ex)
-                    }))
+                    })
             if isinstance(data, dict):
                 rv = fn(**data)
             else:
@@ -198,10 +216,10 @@ class Api(object):
                 try:
                     rv = validate_output(rv)
                 except Invalid as ex:
-                    return abort(500, jsonify({
+                    return abort(500, {
                         "error": "InvalidData",
                         "message": str(ex)
-                    }))
+                    })
             return rv, status, headers
         return action
 
@@ -232,17 +250,13 @@ class Api(object):
             token = self.parse_auth_token()
             role = self.get_role_func(token)
             roles = self.meta.get("$roles", {})
+            message = "%s can't access %s.%s" % (role, resource, action)
+            body = {"error": "PermissionDeny", "message": message}
             try:
                 if action not in roles[role][resource]:
-                    abort(403)
+                    abort(403, body)
             except KeyError:
-                abort(403)
-                # self.meta[resource][action]:
-                # abort(403, jsonify({
-                #     "error": "PermissionDeny",
-                #     "message": ("%s can't access %s.%s" %
-                #                 (role, resource, action))
-                # }))
+                abort(403, body)
 
     def get_role(self, f):
         """Decorater"""

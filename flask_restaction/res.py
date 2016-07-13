@@ -1,101 +1,55 @@
-#!/usr/bin/env python
-# coding: utf-8
-from __future__ import unicode_literals, absolute_import, print_function
-from flask import json
-from werkzeug import cached_property
+import requests
+from .api import res_to_url
 
 
-class JsonResponseMixin(object):
-    """
-    Mixin with testing helper methods
-    """
+class Res:
+    """A tool like res.js"""
 
-    @cached_property
-    def json(self):
-        return json.loads(self.data)
+    def __init__(self, url_prefix="", auth_header="Authorization",
+                 *args, **kwargs):
+        self.url_prefix = url_prefix
+        self.auth_header = auth_header
+        self.session = requests.Session(*args, **kwargs)
 
-
-def make_json_response(app):
-    class JsonResponse(app.response_class, JsonResponseMixin):
-        pass
-    app.response_class = JsonResponse
-
-
-def call_action(api, resource, action, data=None, headers=None):
-    """call api resource action"""
-    # support resp.json before flask 1.0
-    if not hasattr(api.app, 'json'):
-        make_json_response(api.app)
-
-    actions = api.resources[resource]['actions']
-    for act in actions:
-        if act.action == action:
-            action = act
-            break
-    else:
-        raise ValueError('action=%s not exists' % action)
-    url = action.url
-    if api.url_prefix:
-        url = api.url_prefix + url
-    if headers is None:
-        headers = {}
-    data_param = {}
-    if action.method in ["get", "delete"]:
-        data_param["query_string"] = data
-    elif action.method in ["post", "put"]:
-        data_param["data"] = json.dumps(data, ensure_ascii=False)
-    with api.app.test_client() as c:
-        resp = c.open(url, method=action.method, headers=headers,
-                      content_type="application/json", **data_param)
+    def request(self, resource, action, data=None, headers=None):
+        url, httpmethod = res_to_url(resource, action)
+        if self.url_prefix:
+            url = self.url_prefix + url
+        data_param = {}
+        if data is None:
+            data_param = {}
+        else:
+            if httpmethod in ["GET", "DELETE"]:
+                data_param["params"] = data
+            elif httpmethod in ["POST", "PUT"]:
+                data_param["json"] = data
+        resp = self.session.request(
+            method=httpmethod, url=url, headers=headers, **data_param)
+        if self.auth_header in resp.headers:
+            self.session.headers[self.auth_header] = \
+                resp.headers[self.auth_header]
         return resp
 
-
-class Res(object):
-    """a tool like res.js
-
-    usage::
-
-        res = Res(api)
-        data = {'username':'xxx','password':'123456'}
-        resp = res.user.post_login(data)
-        # after login, we can call permission required api
-        res = Res(api,headers=headers)
-        resp = res.todo.get_list()
-        # use response.json to load json response data
-        todos = resp.json
-
-    :param api: Api
-    :param headers: headers used for all request
-    """
-
-    def __init__(self, api, headers=None):
-        self.api = api
-        if headers is None:
-            headers = {}
-        self.headers = headers
-
     def __getattr__(self, resource):
-        self.resource = resource
-        return ResourceClient(self)
-
-    def __repr__(self):
-        return "<Res resource=%s>" % self.resource
+        return Resource(self, resource)
 
 
-class ResourceClient(object):
-    """ResourceClient"""
+class Resource:
 
-    def __init__(self, res):
-        self.res = res
+    def __init__(self, res, resource):
+        self._res = res
+        self._resource = resource
 
     def __getattr__(self, action):
-        self.action = action
-        res = object.__getattribute__(self, 'res')
+        return Action(self, action)
 
-        def view_client(data=None, headers=None):
-            if headers is None:
-                headers = {}
-            headers = dict(res.headers, **headers)
-            return call_action(res.api, res.resource, action, data, headers)
-        view_client.__doc__ = "resource=%s, action=%s" % (res.resource, action)
-        return view_client
+
+class Action:
+
+    def __init__(self, resource, action):
+        self.res = resource._res
+        self.resource = resource._resource
+        self.action = action
+
+    def __call__(self, data=None, headers=None):
+        return self.res.request(self.resource, self.action, data, headers)

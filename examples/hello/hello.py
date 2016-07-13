@@ -24,11 +24,22 @@ class Hello:
         $input:
             name?str&escape&default="world": Your name
         $output:
-            message?str: Welcome message
+            message?str&maxlen=60: Welcome message
         """
         return {
             "message": "Hello %s, Welcome to flask-restaction!" % name
         }
+
+    def get_token(self, name):
+        """Create auth headers
+
+        $input:
+            name?str: 角色
+        $output:
+            message?str: 提示信息
+        """
+        headers = api.gen_auth_header({"name": name})
+        return {"message": "OK"}, headers
 
 api.add_resource(Hello)
 

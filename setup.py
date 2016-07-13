@@ -20,6 +20,7 @@ setup(
     url="https://github.com/guyskk/flask-restaction",
     license="MIT",
     packages=["flask_restaction"],
+    scripts=["flask_restaction/resjs.py"],
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
@@ -33,7 +34,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules'

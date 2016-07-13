@@ -34,5 +34,4 @@ def export_json(data, status, headers):
     dumped = json.dumps(data, indent=2, ensure_ascii=False)
     resp = current_app.response_class(
         dumped, status=status, headers=headers, mimetype='application/json')
-
     return resp
