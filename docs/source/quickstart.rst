@@ -186,7 +186,7 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 
 flask_restaction 使用 *json web token* 作为身份验证工具。
 
-see `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
+见 `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
 
 metafile是一个描述API信息的文件，通常放在应用的根目录下，文件名 meta.json。
 在Api初始化的时候通过 Api(metafile="meta.json") 加载。
@@ -201,9 +201,12 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
         }
     }
 
+请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求
+(通过判断 Action 是否在 ``meta["$roles"][Resource]`` 中)。 如果不许可此次请求，返回 403 状态码。
+
 **get_role 函数**
 
-框架不知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
+框架通过URL能解析出Resource, Action，但是无法知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
 
 .. code-block:: python
     
@@ -216,8 +219,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
         else:
             return "Guest"
 
-请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求
-(通过判断Action是否在meta["$roles"][Resource]中)。 如果不许可此次请求，返回 403 状态码。
+如果没有用 api.get_role 注册返回用户角色的函数，则框架不进行权限控制，允许所有请求通过。
 
 **api.gen_header(token)**
 
@@ -235,11 +237,12 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 .. Note:: 
 
-    令牌会用密钥进行签名，无法篡改。
+    令牌会用密钥(app.secret_key)对 token 进行签名，无法篡改。
     你需要设置一个密钥，可以通过 Auth 的参数 auth_secret 或者 flask 配置 API_AUTH_SECRET。
     令牌是未加密的，不要把敏感信息保存在里面。
 
-res.js 会自动将令牌添加到请求头中，并且当收到响应时，会自动将响应头中的令牌保存到浏览器 localstroge 中。
+res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
+res.js 的令牌保存在浏览器的 localstorage 中。
 
 
 使用蓝图
@@ -255,12 +258,6 @@ Api可以放在蓝图中，这样所有的 Resource 都会路由到蓝图中。
     app = Flask(__name__)
     bp = Blueprint('api', __name__)
     api = Api(bp)
-
-
-配置
------------------------------
-
-框架会使用 Flask.secret_key 对 token 进行加密。
 
 
 对比其它框架
@@ -299,19 +296,17 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
     Request Parsing 很繁琐，并且不能很好的重用代码。
 
     restaction 的输出校验和输入校验差不多，不同的是可以校验自定义的 python 对象。
-    https://github.com/guyskk/validater#proxydict-validate-custome-type
 
     而 reslful 校验输出更加繁琐！
 
 - 身份验证及权限控制
     
     restaction 提供一个灵活的权限系统，身份验证基于 jwt(json web token)，
-    权限验证是通过json配置文件，而不是散布在代码中的装饰器(decorator)，
-    并且角色本身也是 resource，客户端可以通过 API 进行操作。
+    权限验证是通过json配置文件，而不是散布在代码中的装饰器(decorator)。
 
-- 自动生成文档，res.js和权限管理页面
+- 自动生成文档和res.js
 
-    用 res.js 可以方便的调用 api，还可以直接上传文件。
+    用 res.js 可以方便的调用 api。
 
 
 历程
