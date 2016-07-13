@@ -1,3 +1,4 @@
+"""API - Resource Manager"""
 import re
 import jwt
 import json
@@ -21,6 +22,12 @@ DEFAULT_AUTH = {
 
 
 def abort(code, body=None, headers=None):
+    """Abort with suitable error response
+
+    :param code: status code
+    :parma body: error content
+    :param headers: response headers
+    """
     if body is None:
         flask_abort(code)
     else:
@@ -54,6 +61,7 @@ def res_to_url(resource, action):
 
 
 def export(rv, code=None, headers=None):
+    """Create a suitable response"""
     if isinstance(rv, (ResponseBase, str)):
         return make_response(rv, code, headers)
     else:
@@ -67,6 +75,11 @@ def export(rv, code=None, headers=None):
 
 
 def parse_docs(text, mark):
+    """Parse YAML syntax content from docs
+
+    :param text: text to be parsed
+    :param mark: which indicate YAML content starts, eg: ``$input``
+    """
     i = text.find(mark)
     if i < 0:
         return {"$desc": text}
@@ -78,7 +91,11 @@ def parse_docs(text, mark):
 
 
 def get_request_data():
-    """Get request data based on request.method"""
+    """Get request data based on request.method
+
+    If method is GET or DELETE, get data from request.args
+    If method is POST or PUT, get data from request.form or request.json
+    """
     method = request.method.lower()
     if method in ["get", "delete"]:
         return request.args
@@ -98,7 +115,7 @@ def get_request_data():
 
 
 def parse_request():
-    """Parse resource&action"""
+    """Parse endpoint and return (resource, action)"""
     find = PATTERN_ENDPOINT.findall(request.endpoint)
     if not find:
         abort(500, {
@@ -114,17 +131,15 @@ def parse_request():
 
 
 class Api:
-    """A manager of resources
-
-    route all resources to blueprint if blueprint is not None,
-    and set Api.url_prefix to blueprint's url_prefix when it registered.
+    """Manager of Resource
 
     :param app: Flask or Blueprint
+    :param validaters: custom validaters
+    :param metafile: path of metafile
     :param docs: api docs
     """
 
     def __init__(self, app, validaters=None, metafile=None, docs=""):
-        """Init app"""
         self.before_request_funcs = []
         self.after_request_funcs = []
         self.handle_error_func = None
@@ -154,6 +169,8 @@ class Api:
     def add_resource(self, resource, *class_args, **class_kwargs):
         """Add resource
 
+        Parse resource and it's actions, route actions by naming rule.
+
         :param resource: resource class
         :param class_args: class_args
         :param class_kwargs: class_kwargs
@@ -165,6 +182,8 @@ class Api:
         shared = self.meta["$shared"].copy()
         shared.update(meta_resource.get("$shared", {}))
         sp = SchemaParser(validaters=self.validaters, shared=shared)
+        # group actions by it's name, and
+        # make action group a view function
         actions = defaultdict(lambda: {})
         for action in dir(resource):
             find = PATTERN_ACTION.findall(action)
@@ -192,6 +211,14 @@ class Api:
             )
 
     def make_action(self, fn, schema_parser, meta):
+        """Make resource's method an action
+
+        Validate input, output by schema in meta
+
+        :param fn: resource's method
+        :param schema_parser: for parsing schema in meta
+        :param meta: meta data of the action
+        """
         validate_input = validate_output = None
         if "$input" in meta:
             validate_input = schema_parser.parse(meta["$input"])
@@ -224,6 +251,10 @@ class Api:
         return action
 
     def make_view(self, action_group):
+        """Create a view function
+
+        Check permission and Dispatch request to action by request.method
+        """
         def view(*args, **kwargs):
             try:
                 resp = self._before_request()
@@ -231,6 +262,7 @@ class Api:
                     httpmathod = request.method.lower()
                     if httpmathod not in action_group:
                         abort(405)
+                    # check permission
                     self.authorize()
                     fn = action_group[httpmathod]
                     data = get_request_data()
@@ -259,7 +291,7 @@ class Api:
                 abort(403, body)
 
     def get_role(self, f):
-        """Decorater"""
+        """Decorater for registing get_role_func"""
         self.get_role_func = f
         return f
 
@@ -286,6 +318,7 @@ class Api:
         return None
 
     def gen_auth_token(self, token, auth_exp=None):
+        """Generate auth token"""
         auth = self.meta["$auth"]
         if auth_exp is None:
             auth_exp = auth["expiration"]
@@ -294,11 +327,11 @@ class Api:
                           algorithm=auth["algorithm"])
 
     def gen_auth_header(self, token, auth_exp=None):
+        """Generate auth header"""
         auth = self.meta["$auth"]
         return {auth["header"]: self.gen_auth_token(token, auth_exp)}
 
     def _before_request(self):
-        """Before request"""
         for fn in self.before_request_funcs:
             rv = fn()
             if rv is not None:

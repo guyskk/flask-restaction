@@ -3,7 +3,23 @@ from .api import res_to_url
 
 
 class Res:
-    """A tool like res.js"""
+    """A tool for calling API
+
+    Will keep a session and handle auth token automatic
+
+    Usage::
+
+        res = Res("http://127.0.0.1:5000")
+        resp = res.user.post_login({...})
+        print(resp.json())
+        resp = res.user.get({...})
+        print(resp.json)
+
+    :param url_prefix: url prefix of API
+    :param auth_header: auth header name of API
+    :parma *args, **kwargs: params passed to requests.Session
+    :return: requests.Response
+    """
 
     def __init__(self, url_prefix="", auth_header="Authorization",
                  *args, **kwargs):

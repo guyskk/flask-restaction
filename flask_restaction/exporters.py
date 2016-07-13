@@ -7,7 +7,7 @@ exporters = {}
 def exporter(mediatype):
     """Decorater for register exporter
 
-    :param mediatype: mediatype, such as ``application/json``
+    :param mediatype: mediatype, eg: ``application/json``
     """
     def wraper(fn):
         register_exporter(mediatype, fn)
@@ -18,7 +18,7 @@ def exporter(mediatype):
 def register_exporter(mediatype, fn):
     """Register exporter
 
-    :param mediatype: mediatype, such as ``application/json``
+    :param mediatype: mediatype, eg: ``application/json``
     """
     exporters[mediatype] = fn
 
