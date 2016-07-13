@@ -1,4 +1,5 @@
 import os
+import argparse
 import requests
 from jinja2 import Template
 from .api import res_to_url
@@ -55,3 +56,12 @@ def resjs(url, dest):
     resminjs = resminjs.replace('"#res-core.js#"', rendered)
     name, ext = os.path.splitext(dest)
     save_file(os.path.join(dest, 'res.min.js'), resminjs)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", help="url of api")
+    parser.add_argument("-d", "--dest", default=".",
+                        help="dest dir to save res.js and res.min.js")
+    args = parser.parse_args()
+    resjs(args.url, args.dest)

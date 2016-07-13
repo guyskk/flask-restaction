@@ -20,7 +20,9 @@ setup(
     url="https://github.com/guyskk/flask-restaction",
     license="MIT",
     packages=["flask_restaction"],
-    scripts=["flask_restaction/resjs.py"],
+    entry_points={
+        'console_scripts': ['resjs=flask_restaction.cli:main'],
+    },
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
