@@ -6,7 +6,7 @@ import yaml
 import textwrap
 from collections import defaultdict
 from datetime import datetime, timedelta
-from flask import request, make_response, abort as flask_abort
+from flask import request, make_response, current_app, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from .exporters import exporters
@@ -302,8 +302,7 @@ class Api:
         options = {'require_exp': True}
         try:
             return jwt.decode(
-                token,
-                self.app.secret_key,
+                token, current_app.secret_key,
                 algorithms=[auth["algorithm"]],
                 options=options
             )
