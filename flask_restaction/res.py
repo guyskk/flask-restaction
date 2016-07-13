@@ -10,9 +10,9 @@ class Res:
     Usage::
 
         res = Res("http://127.0.0.1:5000")
-        resp = res.user.post_login({...})
+        resp = res.user.post_login({..})
         print(resp.json())
-        resp = res.user.get({...})
+        resp = res.user.get({..})
         print(resp.json)
 
     :param url_prefix: url prefix of API

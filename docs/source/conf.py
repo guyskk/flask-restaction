@@ -2,6 +2,7 @@
 
 import sys
 import os
+import pkg_resources
 
 sys.path.append(os.path.abspath('_themes'))
 sys.path.append(os.path.abspath('.'))
@@ -27,7 +28,7 @@ copyright = u'2015, guyskk'
 author = u'guyskk'
 
 # The short X.Y version.
-release = __import__('flask_restaction').__version__
+release = pkg_resources.require("flask_restaction")[0].version
 # The full version, including alpha/beta/rc tags.
 version = release[:release.rindex(".")]
 language = 'zh_CN'
