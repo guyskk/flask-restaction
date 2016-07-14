@@ -2,47 +2,56 @@
 
 ![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)
 
-Flask-Restaction is a web framwork born to create RESTful API
+为RESTful API而生的Web框架：
 
-### You can do this Easily
+- 创建RESTful API
+- 校验用户输入以及将输出转化成合适的响应格式
+- 身份验证和权限控制
+- 自动生成Javascript SDK和API文档
 
-- Create restful api 
-- Validate inputs and Convert outputs
-- Authorize and Permission control
-- Auto generate res.js and document
-- Support py3
+注意：仅支持Python3.3+
+
+Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输入输出。
 
 
-### Install
+### 安装
     
     pip install flask-restaction
 
 
-### Build Document
+### 架构
 
+[REST-Action风格的Web架构](REST-Action.md)
+
+此项目是基于Flask框架实现的REST-Action风格的Web框架。
+目前已具备雏形，但还没有实现所有特性。
+
+
+### 文档
+
+在线文档：http://flask-restaction.readthedocs.org/zh/latest/
+
+手动构建文档：
+    
+    pip install sphinx
     cd docs
     make html
 
-### Documents on Readthedocs
 
-http://flask-restaction.readthedocs.org/zh/latest/
+### 测试
 
-### Test
+用tox测试：
 
-First, install test tools:
-
-    pip install pytest
     pip install tox
-
-Then, run tests
-
-    py.test tests
-
-    or
-
     tox
 
-### res.js
+用pytest测试：
+
+    pip install pytest
+    py.test tests
+
+
+### 构建res.js
 
     // create a server for test
     pip install -r server/requires.txt
@@ -57,6 +66,6 @@ Then, run tests
     npm install -g karma-cli
     karma start
 
-## license 
+## License 
 
 MIT License
