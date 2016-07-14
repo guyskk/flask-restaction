@@ -88,7 +88,7 @@ def get_request_data():
     method = request.method.lower()
     if method in ["get", "delete"]:
         return request.args
-    elif method in ["post", "put"]:
+    elif method in ["post", "put", "patch"]:
         if request.mimetype == 'application/json':
             try:
                 return request.get_json()

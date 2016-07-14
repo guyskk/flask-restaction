@@ -89,7 +89,7 @@
     YAML格式(`YAML 简介 <http://www.mutouxiaogui.cn/blog/?p=357>`_)的字符串，
     Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
     实际数据来源取决于HTTP方法，GET和DELETE请求，取自url参数，
-    POST和PUT请求，取自请求体，Content-Type为 ``application/json``。
+    POST,PUT和PATCH请求，取自请求体，Content-Type为 ``application/json``。
 
 *$output*
     输出格式，同$input。
