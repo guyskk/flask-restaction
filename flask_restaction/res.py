@@ -2,6 +2,20 @@ import requests
 from .api import res_to_url
 
 
+def raise_for_status(resp):
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as ex:
+        # the response may contains {"error": "", "message": ""}
+        # append error and message to exception if possible
+        try:
+            result = resp.json()
+            ex.args += (result["error"], result["message"])
+        except (ValueError, KeyError):
+            pass
+        raise
+
+
 class Res:
     """A tool for calling API
 
@@ -9,11 +23,16 @@ class Res:
 
     Usage::
 
-        res = Res("http://127.0.0.1:5000")
-        resp = res.user.post_login({..})
-        print(resp.json())
-        resp = res.user.get({..})
-        print(resp.json)
+        >>> res = Res("http://127.0.0.1:5000")
+        >>> res.hello.get()
+        {'message': 'Hello world, Welcome to flask-restaction!'}
+        >>> res.hello.get({"name":"kk"})
+        {'message': 'Hello kk, Welcome to flask-restaction!'}
+        >>> res.xxx.get()
+        ...
+        requests.exceptions.HTTPError: 404 Client Error: NOT FOUND
+                                       for url: http://127.0.0.1:5000/xxx
+        >>>
 
     :param url_prefix: url prefix of API
     :param auth_header: auth header name of API
@@ -28,6 +47,13 @@ class Res:
         self.session = requests.Session(*args, **kwargs)
 
     def request(self, resource, action, data=None, headers=None):
+        """Send request
+
+        :param resource: resource
+        :param action: action
+        :param data: string or object which can be json.dumps
+        :param headers: http headers
+        """
         url, httpmethod = res_to_url(resource, action)
         if self.url_prefix:
             url = self.url_prefix + url
@@ -37,14 +63,15 @@ class Res:
         else:
             if httpmethod in ["GET", "DELETE"]:
                 data_param["params"] = data
-            elif httpmethod in ["POST", "PUT"]:
+            elif httpmethod in ["POST", "PUT", "PATCH"]:
                 data_param["json"] = data
         resp = self.session.request(
             method=httpmethod, url=url, headers=headers, **data_param)
         if self.auth_header in resp.headers:
-            self.session.headers[self.auth_header] = \
-                resp.headers[self.auth_header]
-        return resp
+            self.session.headers[
+                self.auth_header] = resp.headers[self.auth_header]
+        raise_for_status(resp)
+        return resp.json()
 
     def __getattr__(self, resource):
         return Resource(self, resource)
