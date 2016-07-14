@@ -1,5 +1,16 @@
 import requests
-from .api import res_to_url
+
+
+def res_to_url(resource, action):
+    """Convert resource.action to (url, HTTP_METHOD)"""
+    i = action.find("_")
+    if i < 0:
+        url = "/" + resource
+        httpmethod = action
+    else:
+        url = "/%s/%s" % (resource, action[i + 1:])
+        httpmethod = action[:i]
+    return url, httpmethod.upper()
 
 
 def raise_for_status(resp):
@@ -32,7 +43,6 @@ class Res:
         ...
         requests.exceptions.HTTPError: 404 Client Error: NOT FOUND
                                        for url: http://127.0.0.1:5000/xxx
-        >>>
 
     :param url_prefix: url prefix of API
     :param auth_header: auth header name of API

@@ -186,7 +186,7 @@ flask_restaction 使用 *json web token* 作为身份验证工具。
 metafile是一个描述API信息的文件，通常放在应用的根目录下，文件名 meta.json。
 在Api初始化的时候通过 Api(metafile="meta.json") 加载。
 
-在 metafile 中设定角色和权限：
+在 metafile 中设定角色和权限::
     
     {
         "$roles": {
@@ -195,6 +195,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
             }
         }
     }
+
 
 请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求
 (通过判断 Action 是否在 ``meta["$roles"][Resource]`` 中)。 如果不许可此次请求，返回 403 状态码。
@@ -238,6 +239,35 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
 res.js 的令牌保存在浏览器的 localstorage 中。
+
+
+处理依赖关系
+-----------------------------
+
+一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
+使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
+
+例如，User需要api对象来生成auth token::
+
+    class User:
+
+        def __init__(self, api):
+            self.api = api
+
+    api.add_resource(User, api=api)
+
+
+或是依赖于网络上的另一个API::
+    
+    class User:
+
+        def __init__(self, dependecy):
+            self.dependecy = dependecy
+
+    dependecy = Res("url_prefix")
+    api.add_resource(User, dependecy=dependecy)
+
+传给add_resource的参数都会原封不动的传给Resource的 `__init__` 方法。
 
 
 使用蓝图
