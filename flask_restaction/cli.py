@@ -2,7 +2,7 @@ import os
 import argparse
 import requests
 from jinja2 import Template
-from .api import res_to_url
+from .res import res_to_url
 
 
 def parse_meta(url):

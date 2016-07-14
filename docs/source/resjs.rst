@@ -3,10 +3,10 @@
 res.js
 ======
 
-此文件是根据后端 API 自动生成。
+res.js是用框架提供的命令行工具自动生成的。
 
-发出请求时会自动添加 auth-token(Authorization) 请求头,
-收到响应后会自动将响应头中的 auth-token(Authorization) 储存在浏览器 localStorage 中。
+发出请求时会自动添加 auth token(Authorization) 请求头,
+收到响应后会自动将响应头中的 auth token(Authorization) 储存在浏览器 localStorage 中。
 
 用法::
 

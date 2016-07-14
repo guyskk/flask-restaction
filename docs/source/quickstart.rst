@@ -89,7 +89,7 @@
     YAML格式(`YAML 简介 <http://www.mutouxiaogui.cn/blog/?p=357>`_)的字符串，
     Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
     实际数据来源取决于HTTP方法，GET和DELETE请求，取自url参数，
-    POST和PUT请求，取自请求体，Content-Type为 ``application/json``。
+    POST,PUT和PATCH请求，取自请求体，Content-Type为 ``application/json``。
 
 *$output*
     输出格式，同$input。
@@ -112,6 +112,8 @@ Api(validaters=validaters) 进行注册。
 使用 res.js
 -----------
 
+res.js是对AJAX的封装，用res.js调用API非常简单，回调是Promise风格的。
+
 用框架提供的命令行工具生成 res.js 和 res.min.js::
 
     resjs url dest
@@ -121,8 +123,6 @@ Api(validaters=validaters) 进行注册。
     resjs http://127.0.0.1:5000 static
 
 会将生成的文件保存在 static 目录中。
-
-用res.js调用API非常简单，回调是Promise风格的。
 
 res.js用法::
 
@@ -149,13 +149,8 @@ res.py 的用法类似于 res.js，网络请求用的是requests库。
 
 .. code-block:: python
 
-    from flask_restaction import Res
-    res = Res("http://127.0.0.1:5000")
-    data = {'username':'admin', 'password':'123456'}
-    resp = res.user.post_login(data)
-    # resp是requests.Response对象
-    assert resp.status_code == 200
-    user = resp.json()
+    >>> from flask_restaction import Res
+    >>> help(Res)
 
 
 构建 URL
@@ -173,7 +168,7 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 
 格式::
 
-    url_for("resource@lastpart") -> /resource/lastpart
+    url_for("resource@action_name") -> /resource/action_name
 
 示例::
     
@@ -191,7 +186,7 @@ flask_restaction 使用 *json web token* 作为身份验证工具。
 metafile是一个描述API信息的文件，通常放在应用的根目录下，文件名 meta.json。
 在Api初始化的时候通过 Api(metafile="meta.json") 加载。
 
-在 metafile 中设定角色和权限：
+在 metafile 中设定角色和权限::
     
     {
         "$roles": {
@@ -200,6 +195,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
             }
         }
     }
+
 
 请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求
 (通过判断 Action 是否在 ``meta["$roles"][Resource]`` 中)。 如果不许可此次请求，返回 403 状态码。
@@ -243,6 +239,35 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
 res.js 的令牌保存在浏览器的 localstorage 中。
+
+
+处理依赖关系
+-----------------------------
+
+一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
+使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
+
+例如，User需要api对象来生成auth token::
+
+    class User:
+
+        def __init__(self, api):
+            self.api = api
+
+    api.add_resource(User, api=api)
+
+
+或是依赖于网络上的另一个API::
+    
+    class User:
+
+        def __init__(self, dependecy):
+            self.dependecy = dependecy
+
+    dependecy = Res("url_prefix")
+    api.add_resource(User, dependecy=dependecy)
+
+传给add_resource的参数都会原封不动的传给Resource的 `__init__` 方法。
 
 
 使用蓝图

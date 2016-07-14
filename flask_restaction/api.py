@@ -10,6 +10,7 @@ from flask import request, make_response, current_app, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from .exporters import exporters
+from .res import Res
 
 PATTERN_ACTION = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
@@ -46,18 +47,6 @@ def unpack(rv):
     if isinstance(status, (dict, list)):
         headers, status = status, headers
     return (rv, status, headers)
-
-
-def res_to_url(resource, action):
-    """Convert resource.action to (url, httpmethod)"""
-    i = action.find("_")
-    if i < 0:
-        url = "/" + resource
-        httpmethod = action
-    else:
-        url = "/%s/%s" % (resource, action[i + 1:])
-        httpmethod = action[:i]
-    return url, httpmethod.upper()
 
 
 def export(rv, code=None, headers=None):
@@ -99,7 +88,7 @@ def get_request_data():
     method = request.method.lower()
     if method in ["get", "delete"]:
         return request.args
-    elif method in ["post", "put"]:
+    elif method in ["post", "put", "patch"]:
         if request.mimetype == 'application/json':
             try:
                 return request.get_json()
@@ -161,6 +150,10 @@ class Api:
         auth.update(meta_api.get("$auth", {}))
         self.meta["$auth"] = auth
         self.app.add_url_rule("/", view_func=self.meta_view)
+        # TODO
+        self.requires = {}
+        for k, v in self.meta.get("$requires", {}).items():
+            self.requires[k] = Res(v)
 
     def meta_view(self):
         """Meta data as API"""
