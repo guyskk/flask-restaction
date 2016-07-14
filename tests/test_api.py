@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import, print_function
 
-from flask import Flask, Blueprint, g, url_for, request
-from flask_restaction import Api, Resource
-import validater
+from flask import Flask, Blueprint
+from flask import url_for
+from flask import request
+from flask_restaction import Api
+
 import pytest
-from flask_restaction.api import load_options
 
 
 @pytest.fixture()
@@ -15,36 +15,58 @@ def app():
     app.debug = True
     api = Api(app)
 
-    class Hello(Resource):
+    class Hello:
 
         def get(self):
-            return "hello"
+            return 'hello'
 
         def get_error(self):
-            raise ValueError("error")
+            raise ValueError('error')
 
     api.add_resource(Hello)
-    app.resource = Hello
     app.api = api
     return app
 
 
-def test_parse_request():
-    class Hello(Resource):
+def test_hello_world():
+    class Hello:
+        """Hello world test"""
 
-        schema_inputs = {
-            "post": {"name": "unicode&default='world'"},
-            "put": "unicode&default='world'"
-        }
+        def get(self, name):
+            """Get Hello world message
 
-        def get(self):
-            return "hello"
+            $input:
+                name?str&escape&default="world": Your name
+            $output:
+                message?str&maxlen=60: welcome message
+            """
+            return {
+                'message': 'Hello {}'.format(name)
+            }
 
         def post(self, name):
-            return name
+            """Post message
+
+            $input:
+                name?str&escape&default="anonym": name
+            $output:
+                message?str&maxlen=60: post echo
+            """
+            return {
+                'message': 'post by {}'.format(name)
+            }
 
         def put(self, name):
-            return "hello"
+            """Put message
+
+            $input:
+                name?str&escape&default="anonym": name
+            $output:
+                message?str&maxlen=60: put echo
+            """
+            return {
+                'message': 'put by {}'.format(name)
+            }
 
     app = Flask(__name__)
     app.debug = True
@@ -52,154 +74,46 @@ def test_parse_request():
     api.add_resource(Hello)
 
     with app.test_request_context('hello'):
-        assert request.endpoint == "hello"
-        assert url_for("hello") == "/hello"
-    with app.test_client() as c:
-        rv = c.get("hello")
-        assert 200 == rv.status_code
-        assert b"hello" in rv.data
-        assert g.resource == "hello"
-        assert g.action == "get"
+        assert request.endpoint == 'hello'
+        assert url_for('hello') == '/hello'
     with app.test_client() as c:
         headers = {'Content-Type': 'application/json'}
-        # empty request data is invalid json content
-        assert c.post('hello', headers=headers).status_code == 400
-        assert c.put('hello', headers=headers).status_code == 400
-        assert c.post('hello', data="{}", headers=headers).status_code == 200
-        assert c.put('hello', data="null", headers=headers).status_code == 200
-        # bad json
-        assert c.post('hello', headers=headers, data="x").status_code == 400
-        assert c.put('hello', headers=headers, data="x").status_code == 400
+        good_params = dict(data='{"name":"tester"}', headers=headers)
+        null_params = dict(data='{"name":null}', headers=headers)
+        bad_params = dict(data='x', headers=headers)
+        empty_params = dict(data='null', headers=headers)
+        assert c.get('hello').status_code == 200
+        assert b'world' in c.get('hello').data
+        assert b'tester' in c.get('hello?name=tester').data
+
+        assert c.post('hello', **good_params).status_code == 200
+        assert c.post('hello', **null_params).status_code == 200
+        assert b'anonym' in c.post('hello', **null_params).data
+        assert c.post('hello', **bad_params).status_code == 400
+        assert c.post('hello', **empty_params).status_code == 400
+
+        assert c.put('hello', **good_params).status_code == 200
 
 
 def test_blueprint():
-    class Hello(Resource):
+    class Hello:
+        """Blueprint test"""
 
         def get(self):
-            return "hello"
+            """Get Hello world message
+            """
+            return {'message': 'Hello world'}
 
     app = Flask(__name__)
     app.debug = True
-    bp = Blueprint("blueprint", __name__)
-    api = Api(app, blueprint=bp)
+    bp = Blueprint('blueprint', __name__)
+    api = Api(bp)
     api.add_resource(Hello)
-    app.register_blueprint(bp, url_prefix="/api")
+    app.register_blueprint(bp, url_prefix='/api')
 
     with app.test_request_context('/api/hello'):
-        assert request.endpoint == "blueprint.hello"
-        assert url_for("blueprint.hello") == "/api/hello"
+        assert request.endpoint == 'blueprint.hello'
+        assert url_for('blueprint.hello') == '/api/hello'
     with app.test_client() as c:
-        rv = c.get("/api/hello")
-        assert 200 == rv.status_code
-        assert b"hello" == rv.data
-        assert g.resource == "hello"
-        assert g.action == "get"
-
-
-def test_parse_schema():
-    hello = {"hello": "safestr&required"}
-    sche_inputs = {
-        "get": {"name": "name&default='world'"},
-        "post_login": {
-            "name": "name&default='world'",
-            "password": "password&required"
-        }
-    }
-    sche_outputs = {
-        "get": hello,
-        "post_login": hello
-    }
-
-    class Hello(Resource):
-
-        schema_inputs = sche_inputs
-        schema_outputs = sche_outputs
-        output_types = [Flask]
-
-        def get(self, name):
-            pass
-
-        def post_login(self, name, password):
-            pass
-
-    app = Flask(__name__)
-    app.debug = True
-    api = Api(app)
-    api.add_resource(Hello)
-
-    assert Hello.schema_inputs == validater.parse(sche_inputs)
-    assert Hello.schema_outputs == validater.parse(sche_outputs)
-    assert Hello.output_types == [Flask]
-
-
-def test_base(app):
-    with app.test_client() as c:
-        assert 200 == c.get("/hello").status_code
-        assert b"hello" == c.get("/hello").data
-        with pytest.raises(ValueError) as exinfo:
-            c.get("/hello/error")
-        assert exinfo.value.args == ("error",)
-
-
-def test_before_request(app):
-    @app.api.before_request
-    def before_request():
-        return "before_request"
-
-    with app.test_client() as c:
-        assert b"before_request" == c.get("/hello").data
-        assert b"before_request" == c.get("/hello/error").data
-        assert 200 == c.get("/hello/error").status_code
-
-
-def test_after_request(app):
-    @app.api.after_request
-    def after_request(rv, code, headers):
-        return "after_request", 200, headers
-
-    with app.test_client() as c:
-        assert b"after_request" == c.get("/hello").data
-        with pytest.raises(ValueError) as exinfo:
-            c.get("/hello/error")
-        assert exinfo.value.args == ("error",)
-
-
-def test_error_handler(app):
-    @app.api.error_handler
-    def error_handler(ex):
-        assert isinstance(ex, ValueError)
-        assert ex.args == ('error',)
-        return "error_hander"
-    with app.test_client() as c:
-        assert 200 == c.get("/hello").status_code
-        assert b"hello" == c.get("/hello").data
-        assert 200 == c.get("/hello/error").status_code
-        assert b"error_hander" == c.get("/hello/error").data
-
-
-def test_load_options():
-    app = Flask(__name__)
-    app.config.from_object("testdata.config")
-    expect_configs = {"auth_header": "API_AUTH_HEADER", "auth_exp": 3000}
-    options = load_options(
-        {"auth_header": "auth_header"}, app, {"auth_exp": 3000})
-    assert options == expect_configs
-
-
-def test_custom_validaters():
-    api = Api()
-
-    def foo_validater(v):
-        return (True, v)
-    api.validater.add_validater("foo", foo_validater)
-    assert "foo" in api.validater.validaters
-    assert "foo" not in validater.default_validaters
-    sche = api.validater.parse("foo&required")
-    err, val = validater.validate('haha', sche)
-    assert not err
-    assert val == 'haha'
-    err, val = api.validater.validate('haha', sche)
-    assert not err
-    assert val == 'haha'
-    api.validater.remove_validater("foo")
-    assert "foo" not in api.validater.validaters
+        rv = c.get('/api/hello')
+        assert b'Hello' in rv.data
