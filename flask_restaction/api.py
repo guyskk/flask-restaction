@@ -49,7 +49,7 @@ def unpack(rv):
 
 
 def res_to_url(resource, action):
-    """Convert resource.action to (url, httpmethod)"""
+    """Convert resource.action to (url, HTTP_METHOD)"""
     i = action.find("_")
     if i < 0:
         url = "/" + resource

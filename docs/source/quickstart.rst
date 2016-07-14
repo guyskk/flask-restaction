@@ -112,6 +112,8 @@ Api(validaters=validaters) 进行注册。
 使用 res.js
 -----------
 
+res.js是对AJAX的封装，用res.js调用API非常简单，回调是Promise风格的。
+
 用框架提供的命令行工具生成 res.js 和 res.min.js::
 
     resjs url dest
@@ -121,8 +123,6 @@ Api(validaters=validaters) 进行注册。
     resjs http://127.0.0.1:5000 static
 
 会将生成的文件保存在 static 目录中。
-
-用res.js调用API非常简单，回调是Promise风格的。
 
 res.js用法::
 
@@ -149,13 +149,8 @@ res.py 的用法类似于 res.js，网络请求用的是requests库。
 
 .. code-block:: python
 
-    from flask_restaction import Res
-    res = Res("http://127.0.0.1:5000")
-    data = {'username':'admin', 'password':'123456'}
-    resp = res.user.post_login(data)
-    # resp是requests.Response对象
-    assert resp.status_code == 200
-    user = resp.json()
+    >>> from flask_restaction import Res
+    >>> help(Res)
 
 
 构建 URL
@@ -173,7 +168,7 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 
 格式::
 
-    url_for("resource@lastpart") -> /resource/lastpart
+    url_for("resource@action_name") -> /resource/action_name
 
 示例::
     
