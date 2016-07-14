@@ -14,12 +14,12 @@
 Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输入输出。
 
 
-### 安装
+## 安装
     
     pip install flask-restaction
 
 
-### 架构
+## 架构
 
 [REST-Action风格的Web架构](REST-Action.md)
 
@@ -27,7 +27,7 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
 目前已具备雏形，但还没有实现所有特性。
 
 
-### 文档
+## 文档
 
 在线文档：http://flask-restaction.readthedocs.org/zh/latest/
 
@@ -38,7 +38,7 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
     make html
 
 
-### 测试
+## 测试
 
 用tox测试：
 
@@ -51,7 +51,7 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
     py.test tests
 
 
-### 构建res.js
+## 构建res.js
 
     // create a server for test
     pip install -r server/requires.txt
