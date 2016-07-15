@@ -1,18 +1,268 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-from flask import Flask, Blueprint
-from flask import url_for
-from flask import request
-from flask_restaction import Api
-
+import json
+import yaml
 import pytest
+from validater import Invalid
+from validater.validaters import handle_default_optional_desc
+from flask import Flask, Blueprint, url_for, request, make_response
+from flask_restaction import exporter
+from flask_restaction.api import (
+    Api, abort, unpack, export, parse_docs,
+    get_request_data, parse_request
+)
+from werkzeug.exceptions import BadRequest
+
+
+def resp_json(resp):
+    return json.loads(resp.data.decode("utf-8"))
+
+
+def test_abort():
+    app = Flask(__name__)
+
+    @app.route("/")
+    def index():
+        abort(400, {"error": "AbortTest"})
+
+    @app.route("/headers")
+    def headers():
+        abort(403, {"error": "AbortHeadersTest"}, {"Authorization": "XXXX"})
+
+    with app.test_client() as c:
+        resp = c.get("/")
+        assert resp.status_code == 400
+        assert resp_json(resp) == {"error": "AbortTest"}
+
+        resp = c.get("/headers")
+        assert resp.status_code == 403
+        assert resp_json(resp) == {"error": "AbortHeadersTest"}
+        assert resp.headers["Authorization"] == "XXXX"
+
+
+def test_unpack():
+    assert unpack("rv") == ("rv", None, None)
+    assert unpack(123) == (123, None, None)
+    assert unpack({}) == ({}, None, None)
+    assert unpack([]) == ([], None, None)
+
+    assert unpack(("rv", 200)) == ("rv", 200, None)
+    assert unpack(("rv", 200, {})) == ("rv", 200, {})
+    assert unpack(("rv", 200, [])) == ("rv", 200, [])
+
+    assert unpack(("rv", {})) == ("rv", None, {})
+    assert unpack(("rv", [])) == ("rv", None, [])
+
+    assert unpack(("rv", {}, 200)) == ("rv", 200, {})
+    assert unpack(("rv", [], 200)) == ("rv", 200, [])
+
+
+@pytest.mark.parametrize("rv, code, headers", [
+    ({"message": "hello"}, 200, None),
+    ({"message": "中文"}, 400, None),
+    (123, 200, None),
+    ("123", 200, None),
+    (None, 200, None),
+    ("rv", 200, {"Authorization": "XXX"}),
+    ("rv", 200, [("Authorization", "XXX")])
+])
+def test_export(rv, code, headers):
+    app = Flask(__name__)
+    with app.test_request_context("/"):
+
+        resp = export(rv)
+        assert resp.status_code == 200
+
+        resp = export(rv, code)
+        assert resp.mimetype == "application/json"
+        assert resp.status_code == code
+        assert resp_json(resp) == rv
+
+        if headers is not None:
+            resp = export(rv, None, headers)
+            if isinstance(headers, dict):
+                for k, v in headers.items():
+                    assert resp.headers[k] == v
+            else:
+                for k, v in headers:
+                    assert resp.headers[k] == v
+
+
+def test_export_response():
+    app = Flask(__name__)
+    with app.test_request_context("/"):
+        resp = make_response("hello")
+
+        resp = export(resp)
+        assert resp.mimetype == "text/html"
+        assert resp.status_code == 200
+        assert resp.data == b"hello"
+
+        resp = export(resp, 400)
+        assert resp.mimetype == "text/html"
+        assert resp.status_code == 400
+        assert resp.data == b"hello"
+
+
+def test_export_custom():
+    app = Flask(__name__)
+
+    @exporter("text/html")
+    def export_html(rv, code, headers):
+        return make_response(rv, code, headers)
+
+    accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    with app.test_request_context(headers={"Accept": accept}):
+        resp = export("hello world")
+        assert resp.mimetype == "text/html"
+        assert resp.data == b"hello world"
+
+
+def test_parse_docs():
+    def f_no_docs():
+        pass
+    assert parse_docs(f_no_docs.__doc__, ["$input"]) == {}
+
+    def f_no_content():
+        """"""
+    assert parse_docs(f_no_content.__doc__, ["$input"]) == {"$desc": ""}
+
+    def f_empty_content():
+        """        """
+    assert parse_docs(f_empty_content.__doc__, ["$input"]) == {"$desc": ""}
+
+    def f_no_yaml():
+        """Hello World"""
+    assert parse_docs(f_no_yaml.__doc__, ["$input"]) == {
+        "$desc": "Hello World"
+    }
+
+    def f_no_marks():
+        """
+        Hello World
+
+        No marks
+        """
+    assert parse_docs(f_no_marks.__doc__, ["$input"]) == {
+        "$desc": "Hello World\n\nNo marks"
+    }
+
+
+def test_parse_docs_has_yaml():
+    def f():
+        """
+        Hello
+
+        name: kk
+        email: guyskk@qq.com
+        """
+    assert parse_docs(f.__doc__, marks=[]) == {
+        "$desc": "Hello\n\nname: kk\nemail: guyskk@qq.com"
+    }
+    assert parse_docs(f.__doc__, marks=["unknown"]) == {
+        "$desc": "Hello\n\nname: kk\nemail: guyskk@qq.com"
+    }
+    assert parse_docs(f.__doc__, marks=["email"]) == {
+        "$desc": "Hello\n\nname: kk",
+        "email": "guyskk@qq.com"
+    }
+    assert parse_docs(f.__doc__, marks=["name"]) == {
+        "$desc": "Hello",
+        "name": "kk",
+        "email": "guyskk@qq.com"
+    }
+    assert parse_docs(f.__doc__, marks=["name", "email"]) == {
+        "$desc": "Hello",
+        "name": "kk",
+        "email": "guyskk@qq.com"
+    }
+
+
+def test_parse_docs_invalid_yaml():
+    def f_invalid_syntax():
+        """
+        $input:
+          name: kk
+            email: guyskk@qq.com
+        """
+    with pytest.raises(yaml.YAMLError):
+        parse_docs(f_invalid_syntax.__doc__, ["$input"])
+
+    def f_invalid_yaml_char():
+        """
+        $input:
+            userid: @userid
+        """
+    with pytest.raises(yaml.YAMLError):
+        parse_docs(f_invalid_yaml_char.__doc__, ["$input"])
+
+    def f_invalid_char_quoted():
+        """
+        $input:
+            userid: "@userid"
+        """
+    assert parse_docs(f_invalid_char_quoted.__doc__, ["$input"]) == {
+        "$desc": "",
+        "$input": {
+            "userid": "@userid"
+        }
+    }
+
+
+def test_get_request_data():
+    app = Flask(__name__)
+    with app.test_client() as c:
+        c.get("/", query_string={"name": "kk"})
+        assert get_request_data().get("name") == "kk"
+        assert get_request_data()["name"] == "kk"
+
+        c.get("/?name=kk")
+        assert get_request_data().get("name") == "kk"
+        assert get_request_data()["name"] == "kk"
+
+        c.post("/?name=xx", data={"name": "kk"})
+        assert get_request_data().get("name") == "kk"
+        assert get_request_data()["name"] == "kk"
+
+        headers = {"Content-Type": "application/json"}
+        c.post("/?name=xx", data='{"name": "kk"}', headers=headers)
+        assert get_request_data().get("name") == "kk"
+        assert get_request_data()["name"] == "kk"
+
+        with pytest.raises(BadRequest):
+            c.post("/?name=xx", data='{"name": kk}', headers=headers)
+            get_request_data()
+
+
+def test_parse_request():
+    app = Flask(__name__)
+
+    @app.route("/", endpoint="index", methods=["GET", "POST"])
+    def index():
+        return "123"
+
+    @app.route("/page", endpoint="index@page")
+    def index_page():
+        return "123"
+
+    @app.route("/blueprint/page", endpoint="blueprint.index@page")
+    def blueprint_index_page():
+        return "123"
+
+    with app.test_client() as c:
+        c.get("/")
+        assert parse_request() == ("index", "get")
+        c.post("/")
+        assert parse_request() == ("index", "post")
+
+        c.get("/page")
+        assert parse_request() == ("index", "get_page")
+
+        c.get("/blueprint/page")
+        assert parse_request() == ("index", "get_page")
 
 
 @pytest.fixture()
 def app():
     app = Flask(__name__)
-    app.debug = True
     api = Api(app)
 
     class Hello:
@@ -24,11 +274,128 @@ def app():
             raise ValueError('error')
 
     api.add_resource(Hello)
-    app.api = api
-    return app
+    return app.test_client()
 
 
-def test_hello_world():
+def test_no_schema():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            """
+            Get hello
+
+            Welcome
+            """
+            return {}
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/hello?name=kk")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {}
+
+
+def test_no_input_schema():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            """
+            Get hello
+
+            $output:
+                message?str: welcome message
+            """
+            return {}
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/hello?name=kk")
+        assert resp.status_code == 500
+        assert resp_json(resp)["error"] == "InvalidData"
+
+
+def test_no_output_schema():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self, userid):
+            """Get hello
+
+            $input:
+                userid?int: UserID
+            """
+            return {"message": userid}
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/hello?userid=123")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {
+            "message": 123
+        }
+        resp = c.get("/hello?userid=kk")
+        assert resp.status_code == 400
+        assert resp_json(resp)["error"] == "InvalidData"
+
+
+def test_input_output_schema():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Welcome:
+
+        def __init__(self, userid):
+            self.userid = userid
+            self.message = "Hi, %d" % userid
+
+    class Hello:
+
+        def get(self, userid):
+            """Get hello
+
+            $input:
+                userid?int: UserID
+            $output:
+                message?str: Welcome message
+            """
+            return {"message": "Hi, %d" % userid}
+
+        def post(self, userid):
+            """Get hello
+
+            $input:
+                userid?int: UserID
+            $output:
+                message?str: Welcome message
+            """
+            return Welcome(userid)
+
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/hello?userid=123")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {"message": "Hi, 123"}
+
+        resp = c.post("/hello", data={"userid": 123})
+        assert resp.status_code == 200
+        assert resp_json(resp) == {"message": "Hi, 123"}
+
+        headers = {"Content-Type": "application/json"}
+        resp = c.post("/hello", data='{"userid": 123}', headers=headers)
+        assert resp.status_code == 200
+        assert resp_json(resp) == {"message": "Hi, 123"}
+
+
+def test_helloworld():
     class Hello:
         """Hello world test"""
 
@@ -44,11 +411,14 @@ def test_hello_world():
                 'message': 'Hello {}'.format(name)
             }
 
+        def get_message(self):
+            pass
+
         def post(self, name):
             """Post message
 
             $input:
-                name?str&escape&default="anonym": name
+                name?str&escape&default="unknown": name
             $output:
                 message?str&maxlen=60: post echo
             """
@@ -60,7 +430,7 @@ def test_hello_world():
             """Put message
 
             $input:
-                name?str&escape&default="anonym": name
+                name?str&escape&default="unknown": name
             $output:
                 message?str&maxlen=60: put echo
             """
@@ -69,13 +439,17 @@ def test_hello_world():
             }
 
     app = Flask(__name__)
-    app.debug = True
     api = Api(app)
     api.add_resource(Hello)
 
-    with app.test_request_context('hello'):
+    with app.test_request_context('/hello'):
         assert request.endpoint == 'hello'
         assert url_for('hello') == '/hello'
+
+    with app.test_request_context('/hello/message'):
+        assert request.endpoint == 'hello@message'
+        assert url_for('hello@message') == '/hello/message'
+
     with app.test_client() as c:
         headers = {'Content-Type': 'application/json'}
         good_params = dict(data='{"name":"tester"}', headers=headers)
@@ -88,7 +462,7 @@ def test_hello_world():
 
         assert c.post('hello', **good_params).status_code == 200
         assert c.post('hello', **null_params).status_code == 200
-        assert b'anonym' in c.post('hello', **null_params).data
+        assert b'unknown' in c.post('hello', **null_params).data
         assert c.post('hello', **bad_params).status_code == 400
         assert c.post('hello', **empty_params).status_code == 400
 
@@ -99,13 +473,19 @@ def test_blueprint():
     class Hello:
         """Blueprint test"""
 
-        def get(self):
-            """Get Hello world message
+        def get(self, name):
             """
-            return {'message': 'Hello world'}
+            Get Hello world message
+
+            $input:
+                name?str: Your name
+            """
+            return {'message': 'Hello %s' % name}
+
+        def get_message(self):
+            pass
 
     app = Flask(__name__)
-    app.debug = True
     bp = Blueprint('blueprint', __name__)
     api = Api(bp)
     api.add_resource(Hello)
@@ -114,6 +494,71 @@ def test_blueprint():
     with app.test_request_context('/api/hello'):
         assert request.endpoint == 'blueprint.hello'
         assert url_for('blueprint.hello') == '/api/hello'
+
+    with app.test_request_context('/api/hello/message'):
+        assert request.endpoint == 'blueprint.hello@message'
+        assert url_for('blueprint.hello@message') == '/api/hello/message'
+
     with app.test_client() as c:
-        rv = c.get('/api/hello')
-        assert b'Hello' in rv.data
+        resp = c.get('/api/hello?name=kk')
+        assert resp.status_code == 200
+        assert resp_json(resp) == {
+            "message": "Hello kk"
+        }
+
+        resp = c.get('/api/hello')
+        assert resp.status_code == 400
+        assert resp_json(resp)["error"] == "InvalidData"
+
+
+def test_validaters():
+
+    @handle_default_optional_desc
+    def even_validater():
+        def validater(value):
+            try:
+                i = int(value)
+            except:
+                raise Invalid("invalid int")
+            if i % 2 == 0:
+                return i
+            else:
+                raise Invalid("not even number")
+        return validater
+
+    app = Flask(__name__)
+    api = Api(app, validaters={"even": even_validater})
+
+    class Test:
+
+        def get(self, number):
+            """
+            $input:
+                number?even: even number
+            """
+            return {
+                "number": number
+            }
+    api.add_resource(Test)
+    with app.test_client() as c:
+        resp = c.get("/test?number=2")
+        assert resp.status_code == 200
+        resp = c.get("/test?number=3")
+        assert resp.status_code == 400
+        assert resp_json(resp)["error"] == "InvalidData"
+
+
+def test_metafile():
+    pass
+
+
+def test_docs():
+    pass
+
+
+def test_api_shared_schema():
+    pass
+
+
+def test_resource_shared_schema():
+    pass

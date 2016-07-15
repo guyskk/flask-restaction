@@ -51,11 +51,9 @@ def unpack(rv):
 
 def export(rv, code=None, headers=None):
     """Create a suitable response"""
-    if isinstance(rv, (ResponseBase, str)):
+    if isinstance(rv, ResponseBase):
         return make_response(rv, code, headers)
     else:
-        if rv is None:
-            rv = ""
         if code is None:
             code = 200
         mediatype = request.accept_mimetypes.best_match(
@@ -63,19 +61,30 @@ def export(rv, code=None, headers=None):
         return exporters[mediatype](rv, code, headers)
 
 
-def parse_docs(text, mark):
+def parse_docs(docs, marks):
     """Parse YAML syntax content from docs
 
-    :param text: text to be parsed
-    :param mark: which indicate YAML content starts, eg: ``$input``
+    If docs is None, return {}
+    If docs has no YAML content, return {"$desc": docs}
+    Else, parse YAML content, return {"$desc": docs, YAML}
+
+    :param docs: docs to be parsed
+    :param marks: list of which indicate YAML content starts, eg: ``$input``
     """
-    i = text.find(mark)
-    if i < 0:
-        return {"$desc": text}
-    start = text.rfind("\n", 0, i)
-    yamltext = textwrap.dedent(text[start + 1:])
+    if docs is None:
+        return {}
+    indexs = []
+    for mark in marks:
+        i = docs.find(mark)
+        if i >= 0:
+            indexs.append(i)
+    if not indexs:
+        return {"$desc": textwrap.dedent(docs).strip()}
+    start = min(indexs)
+    start = docs.rfind("\n", 0, start)
+    yamltext = textwrap.dedent(docs[start + 1:])
     meta = yaml.load(yamltext)
-    meta["$desc"] = textwrap.dedent(text[:start].strip('\n'))
+    meta["$desc"] = textwrap.dedent(docs[:start]).strip()
     return meta
 
 
@@ -143,7 +152,7 @@ class Api:
         else:
             with open(metafile) as f:
                 self.meta = json.load(f)
-        meta_api = parse_docs(docs, "$shared")
+        meta_api = parse_docs(docs, ["$shared"])
         self.meta["$shared"] = meta_api.get("$shared", {})
         self.meta["$desc"] = meta_api.get("$desc", "")
         auth = DEFAULT_AUTH.copy()
@@ -170,7 +179,7 @@ class Api:
         """
         name = resource.__name__.lower()
         resource = resource(*class_args, **class_kwargs)
-        meta_resource = parse_docs(resource.__doc__, "$shared")
+        meta_resource = parse_docs(resource.__doc__, ["$shared"])
         self.meta[name] = meta_resource
         shared = self.meta["$shared"].copy()
         shared.update(meta_resource.get("$shared", {}))
@@ -185,7 +194,8 @@ class Api:
             httpmethod, action_name = find[0]
             action_group = actions[action_name]
             fn = getattr(resource, action)
-            meta_action = parse_docs(fn.__doc__, "$input")
+            meta_action = parse_docs(fn.__doc__,
+                                     ["$input", "$output", "$error"])
             meta_resource[action] = meta_action
             action_group[httpmethod] = self.make_action(fn, sp, meta_action)
 
@@ -206,7 +216,9 @@ class Api:
     def make_action(self, fn, schema_parser, meta):
         """Make resource's method an action
 
-        Validate input, output by schema in meta
+        Validate input, output by schema in meta.
+        If no input schema, call fn without params.
+        If no output schema, will not validate return value.
 
         :param fn: resource's method
         :param schema_parser: for parsing schema in meta
@@ -227,10 +239,12 @@ class Api:
                         "error": "InvalidData",
                         "message": str(ex)
                     })
-            if isinstance(data, dict):
-                rv = fn(**data)
+                if isinstance(data, dict):
+                    rv = fn(**data)
+                else:
+                    rv = fn(data)
             else:
-                rv = fn(data)
+                rv = fn()
             rv, status, headers = unpack(rv)
             if validate_output:
                 try:

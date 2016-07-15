@@ -90,23 +90,25 @@
     Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
     实际数据来源取决于HTTP方法，GET和DELETE请求，取自url参数，
     POST,PUT和PATCH请求，取自请求体，Content-Type为 ``application/json``。
+    如果没有$input，则不校验输入，以无参数的形式调用Action。
 
 *$output*
     输出格式，同$input。
+    如果没有$output，则不校验输出。
 
 *$error*
-    可能返回的错误，例如::
+    用来生成API文档，描述可能返回的错误，例如::
 
         $error:
             InvalidData: 输入参数错误
             PermissionDeny: 权限不足
 
-关于 Validater, 请移步 `Validater <https://github.com/guyskk/validater>`_
-
-**自定义 validater**
+**自定义 Validater**
 
 在 Validater 的文档中讲述了自定义 validater 的用法。所有自定义的 validater 通过
 Api(validaters=validaters) 进行注册。
+
+关于 Validater, 请移步 `Validater <https://github.com/guyskk/validater>`_
 
 
 使用 res.js
@@ -174,6 +176,19 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
     
     url_for("hello") -> /hello
     url_for("hello@login") -> /hello/login
+
+
+返回错误信息
+----------------------------
+
+.. code-block::python
+
+    from flask_restaction import abort
+
+    # 函数原型
+    abort(status_code, body=None, headers=None)
+
+如果没有body参数，效果和flask.abort一样。如果有body，会序列化为适当的格式返回。
 
 
 身份验证&权限控制
@@ -283,6 +298,10 @@ Api可以放在蓝图中，这样所有的 Resource 都会路由到蓝图中。
     app = Flask(__name__)
     bp = Blueprint('api', __name__)
     api = Api(bp)
+    api.add_resource(XXX)
+    app.register_blueprint(bp)
+
+注意：add_resource 需要在 register_blueprint 之前执行，否则 add_resource 无效。
 
 
 对比其它框架
