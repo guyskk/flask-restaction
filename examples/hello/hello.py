@@ -1,47 +1,68 @@
 """Hello API"""
-from flask import Flask
+from flask import Flask, g
 from flask_restaction import Api
 
 app = Flask(__name__)
 api = Api(app, docs=__doc__, metafile="meta.json")
-app.secret_key = b'\x7fk\x98\x06xl\xdfU\xae?\x92^\t~:b\x83\xe3uX\xaf\x9a\x01G'
+app.secret_key = b'secret_key'
 
 
 @api.get_role
 def get_role(token):
+    g.token = token
     if token is None:
         return "guest"
     else:
-        return "admin"
+        return "normal"
+
+
+class Welcome:
+
+    def __init__(self, name):
+        self.name = name
+        self.message = "Hello %s, Welcome to flask-restaction!" % name
 
 
 class Hello:
-    """Hello world"""
+    """
+    Hello world
+
+    $shared:
+        name:
+            name?str&escape&default="world": Your name
+        message:
+            message?str: Welcome message
+    """
+
+    def __init__(self, api):
+        self.api = api
 
     def get(self, name):
-        """Welcome to flask-restaction
-
-        $input:
-            name?str&escape&default="world": Your name
-        $output:
-            message?str&maxlen=60: Welcome message
         """
-        return {
-            "message": "Hello %s, Welcome to flask-restaction!" % name
-        }
+        Welcome to flask-restaction
 
-    def get_token(self, name):
+        $input: "@name"
+        $output: "@message"
+        """
+        return Welcome(name)
+
+    def get_me(self):
+        """
+        Get welcome for me
+
+        $output: "@message"
+        """
+        return Welcome(g.token["name"])
+
+    def post(self, name):
         """Create auth headers
 
-        $input:
-            name?str: 角色
-        $output:
-            message?str: 提示信息
+        $input: "@name"
         """
-        headers = api.gen_auth_header({"name": name})
-        return {"message": "OK"}, headers
+        headers = self.api.gen_auth_headers({"name": name})
+        return "OK", headers
 
-api.add_resource(Hello)
+api.add_resource(Hello, api)
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@
             $input:
                 name?str&escape&default="world": Your name
             $output:
-                message?str&maxlen=60: Welcome message
+                message?str: Welcome message
             """
             return {
                 "message": "Hello %s, Welcome to flask-restaction!" % name
@@ -47,7 +47,7 @@
 .. code::
 
     {
-      "hello": "world"
+      "message": "Hello world, Welcome to flask-restaction!"
     }
 
 再访问 http://127.0.0.1:5000/hello?name=kk
@@ -57,7 +57,7 @@
 .. code::
 
     {
-      "hello": "kk"
+      "message": "Hello kk, Welcome to flask-restaction!"
     }
 
 访问 http://127.0.0.1:5000 可以查看自动生成的文档(JSON格式)，
@@ -105,7 +105,7 @@
 
 **自定义 Validater**
 
-在 Validater 的文档中讲述了自定义 validater 的用法。所有自定义的 validater 通过
+在 Validater 的文档中讲述了自定义 Validater 的用法。所有自定义的 validater 通过
 Api(validaters=validaters) 进行注册。
 
 关于 Validater, 请移步 `Validater <https://github.com/guyskk/validater>`_
@@ -118,11 +118,11 @@ res.js是对AJAX的封装，用res.js调用API非常简单，回调是Promise风
 
 用框架提供的命令行工具生成 res.js 和 res.min.js::
 
-    resjs url dest
+    resjs url -d dest
 
 例如::
 
-    resjs http://127.0.0.1:5000 static
+    resjs http://127.0.0.1:5000 -d static
 
 会将生成的文件保存在 static 目录中。
 
@@ -232,7 +232,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 如果没有用 api.get_role 注册返回用户角色的函数，则框架不进行权限控制，允许所有请求通过。
 
-**api.gen_headers(token)**
+**api.gen_auth_headers(token)**
 
 为了能够确认用户的身份，你需要在用户登录成功后生成一个令牌(auth token)，
 将令牌通过响应头(``Authorization``)返回给用户。令牌一般会储存用户ID和过期时间，
@@ -243,7 +243,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
     def post_login(self, username, password):
         """登录"""
         # query user from database
-        headers = api.gen_headers({"id": user.id})
+        headers = api.gen_auth_headers({"id": user.id})
         return user, headers
 
 .. Note:: 
@@ -302,6 +302,12 @@ Api可以放在蓝图中，这样所有的 Resource 都会路由到蓝图中。
     app.register_blueprint(bp)
 
 注意：add_resource 需要在 register_blueprint 之前执行，否则 add_resource 无效。
+
+
+Examples
+--------------------
+
+`项目主页 <https://github.com/guyskk/flask-restaction>`_ 的 examples 目录。
 
 
 对比其它框架
