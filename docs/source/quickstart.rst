@@ -232,7 +232,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 如果没有用 api.get_role 注册返回用户角色的函数，则框架不进行权限控制，允许所有请求通过。
 
-**api.gen_header(token)**
+**api.gen_headers(token)**
 
 为了能够确认用户的身份，你需要在用户登录成功后生成一个令牌(auth token)，
 将令牌通过响应头(``Authorization``)返回给用户。令牌一般会储存用户ID和过期时间，
@@ -243,17 +243,17 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
     def post_login(self, username, password):
         """登录"""
         # query user from database
-        headers = api.gen_header({"id": user.id})
+        headers = api.gen_headers({"id": user.id})
         return user, headers
 
 .. Note:: 
 
-    令牌会用密钥(app.secret_key)对 token 进行签名，无法篡改。
-    你需要设置一个密钥，可以通过 Auth 的参数 auth_secret 或者 flask 配置 API_AUTH_SECRET。
+    令牌会用密钥(app.secret_key)对 token 进行签名，无法篡改，生成令牌前需要先设置 app.secret_key，或通过 flask 配置。
     令牌是未加密的，不要把敏感信息保存在里面。
 
+
 res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
-res.js 的令牌保存在浏览器的 localstorage 中。
+res.js 的令牌保存在浏览器的 LocalStorage 中。
 
 
 处理依赖关系

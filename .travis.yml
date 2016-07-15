@@ -1,16 +1,15 @@
 language: python
 
 python:
-  - "2.7"
-  - "pypy"
   - "3.3"
   - "3.4"
   - "3.5"
 
 install:
-    - pip install pytest
-    - pip install mock
     - pip install .
+
+before_script:
+    - cd server && pip install -r requires.txt && python index.py
 
 script:
     - py.test 

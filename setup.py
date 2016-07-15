@@ -1,6 +1,5 @@
 """
 Flask-Restaction
-----------------
 
 http://flask-restaction.readthedocs.org/zh/latest/
 """
@@ -26,10 +25,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
-    tests_require=[
-        'pytest',
-        'mock'
-    ],
+    tests_require=['pytest'],
     classifiers=[
         'Framework :: Flask',
         'Environment :: Web Environment',

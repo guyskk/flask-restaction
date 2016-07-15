@@ -1,3 +1,2 @@
 flask
 flask-cors
-flask-restaction

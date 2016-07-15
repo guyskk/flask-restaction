@@ -194,8 +194,8 @@ class Api:
             httpmethod, action_name = find[0]
             action_group = actions[action_name]
             fn = getattr(resource, action)
-            meta_action = parse_docs(fn.__doc__,
-                                     ["$input", "$output", "$error"])
+            meta_action = parse_docs(
+                fn.__doc__, ["$input", "$output", "$error"])
             meta_resource[action] = meta_action
             action_group[httpmethod] = self.make_action(fn, sp, meta_action)
 
@@ -307,9 +307,14 @@ class Api:
         auth = self.meta["$auth"]
         token = request.headers.get(auth["header"])
         options = {'require_exp': True}
+        key = current_app.secret_key
+        if key is None:
+            if current_app.debug:
+                current_app.logger.debug("app.secret_key not set")
+            return None
         try:
             return jwt.decode(
-                token, current_app.secret_key,
+                token, key,
                 algorithms=[auth["algorithm"]],
                 options=options
             )
@@ -319,8 +324,6 @@ class Api:
             # jwt's bug when token is None or int
             # https://github.com/jpadilla/pyjwt/issues/183
             pass
-        if self.app.debug:
-            self.app.logger.debug("InvalidToken: %s" % token)
         return None
 
     def gen_auth_token(self, token, auth_exp=None):
@@ -329,11 +332,13 @@ class Api:
         if auth_exp is None:
             auth_exp = auth["expiration"]
         token["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
-        return jwt.encode(token, self.app.secret_key,
-                          algorithm=auth["algorithm"])
+        key = current_app.secret_key
+        if key is None:
+            raise ValueError("please set app.secret_key before generate token")
+        return jwt.encode(token, key, algorithm=auth["algorithm"])
 
-    def gen_auth_header(self, token, auth_exp=None):
-        """Generate auth header"""
+    def gen_auth_headers(self, token, auth_exp=None):
+        """Generate auth headers"""
         auth = self.meta["$auth"]
         return {auth["header"]: self.gen_auth_token(token, auth_exp)}
 

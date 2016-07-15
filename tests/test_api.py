@@ -3,7 +3,7 @@ import yaml
 import pytest
 from validater import Invalid
 from validater.validaters import handle_default_optional_desc
-from flask import Flask, Blueprint, url_for, request, make_response
+from flask import Flask, Blueprint, url_for, request, make_response, g
 from flask_restaction import exporter
 from flask_restaction.api import (
     Api, abort, unpack, export, parse_docs,
@@ -548,17 +548,144 @@ def test_validaters():
         assert resp_json(resp)["error"] == "InvalidData"
 
 
-def test_metafile():
-    pass
+def test_metafile(tmpdir):
+    metafile = tmpdir.join("meta.json")
+    json.dump({"$xxx": "test", "$roles": {}}, metafile.open("w"))
+    app = Flask(__name__)
+    api = Api(app, metafile=metafile.strpath)
+
+    class Hello:
+        """docstring for Hello"""
+
+        def get(self):
+            """Get hello"""
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/")
+        assert resp.status_code == 200
+        assert resp_json(resp)["$xxx"] == "test"
+        assert resp_json(resp)["$roles"] == {}
+        assert resp_json(resp)["hello"]["$desc"] == "docstring for Hello"
+        assert resp_json(resp)["hello"]["get"]["$desc"] == "Get hello"
 
 
-def test_docs():
-    pass
+def test_auth(tmpdir):
+    metafile = tmpdir.join("meta.json")
+    json.dump({
+        "$desc": "test",
+        "$roles": {
+            "admin": {
+                "hello": ["get", "post"]
+            },
+            "guest": {
+                "hello": ["post"]
+            }
+        }
+    }, metafile.open("w"))
+
+    app = Flask(__name__)
+    app.secret_key = "secret_key"
+    api = Api(app, metafile=metafile.strpath)
+
+    @api.get_role
+    def get_role(token):
+        g.name = None
+        if token and token["name"] == "kk":
+            g.name = token["name"]
+            return "admin"
+        else:
+            return "guest"
+
+    class Hello:
+
+        def __init__(self, api):
+            self.api = api
+
+        def get(self):
+            """
+            Get Name
+
+            $output:
+                name?str&optional: Your name
+            """
+            return {"name": g.name}
+
+        def post(self, name):
+            """
+            Generate Token
+
+            $input:
+                name?str: Your name
+            """
+            headers = self.api.gen_auth_headers({"name": name})
+            return "OK", headers
+
+    api.add_resource(Hello, api)
+    auth_header = api.meta["$auth"]["header"]
+
+    with app.test_client() as c:
+        resp = c.get("/hello")
+        assert resp.status_code == 403
+
+        resp = c.post("/hello", data={"name": "abc"})
+        assert resp.status_code == 200
+        headers = {auth_header: resp.headers[auth_header]}
+        resp = c.get("/hello", headers=headers)
+        assert resp.status_code == 403
+        assert resp_json(resp)["error"] == "PermissionDeny"
+        assert "guest" in resp_json(resp)["message"]
+
+        resp = c.post("/hello", data={"name": "kk"})
+        assert resp.status_code == 200
+        headers = {auth_header: resp.headers[auth_header]}
+        resp = c.get("/hello", headers=headers)
+        assert resp.status_code == 200
+        assert resp_json(resp) == {"name": "kk"}
 
 
-def test_api_shared_schema():
-    pass
+def test_docs_and_shared_schema():
+    docs = """
+    Hello World
 
+    $shared:
+        userid: int&min=0
+    """
+    app = Flask(__name__)
+    api = Api(app, docs=docs)
+    assert api.meta["$desc"] == "Hello World"
+    assert api.meta["$shared"] == {"userid": "int&min=0"}
 
-def test_resource_shared_schema():
-    pass
+    class Hello:
+        """
+        docstring for Hello
+
+        $shared:
+            name: str
+        """
+
+        def get(self, userid, name):
+            """
+            Test shared schema
+
+            $input:
+                userid@userid: UserID
+                name@name: UserName
+            """
+            return {
+                "userid": userid,
+                "name": name
+            }
+    api.add_resource(Hello)
+
+    with app.test_client() as c:
+        resp = c.get("/hello?userid=123&name=kk")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {
+            "userid": 123,
+            "name": "kk"
+        }
+        resp = c.get("/hello?userid=abc&name=kk")
+        assert resp.status_code == 400
+        assert resp_json(resp)["error"] == "InvalidData"
+        assert "userid" in resp_json(resp)["message"]

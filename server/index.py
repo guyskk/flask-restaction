@@ -1,55 +1,71 @@
+"""Test Server"""
 from flask import Flask, Response, request, abort, redirect, url_for, g
-from flask_restaction import Api, Resource, Auth
+from flask_restaction import Api
 from flask_cors import CORS
 
 app = Flask(__name__)
+app.secret_key = "secret_key"
 CORS(app, expose_headers=['Authorization'])
+api = Api(app, metafile="meta.json")
 
 
-def fn_user_role(token):
+@api.get_role
+def get_role(token):
+    g.token = token
     if token and 'name' in token:
         return token['name']
-
-api = Api(app)
-auth = Auth(api, fn_user_role=fn_user_role)
+    return "guest"
 
 
-class Test(Resource):
+class Test:
+    """
+    $shared:
+        name: str&default="world"
+    """
 
-    name = {
-        'name': 'unicode&default="world"'
-    }
-    schema_inputs = {
-        'get': name,
-        'post': name,
-        'put': name,
-        'delete': name,
-        'get_404': None,
-        'get_403': None,
-        'get_401': None,
-        'get_400': None,
-        'get_302': None,
-        'get_500': None,
-        'post_name': 'unicode&default="world"',
-        'get_binary': None,
-        'post_upload': None,
-        'post_login': name,
-        'get_me': None,
-    }
+    def __init__(self, api):
+        self.api = api
 
     def get(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         return {'hello': name}
 
     def post(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         return {'hello': name}
 
     def post_name(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         return {'hello': name}
 
     def put(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
+        return {'hello': name}
+
+    def patch(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         return {'hello': name}
 
     def delete(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         return {'hello': name}
 
     def get_404(self):
@@ -82,15 +98,19 @@ class Test(Resource):
         return {'recv': len(files)}
 
     def post_login(self, name):
+        """
+        $input:
+            name@name: Your name
+        """
         token = {'name': name}
-        headers = auth.gen_header(token)
+        headers = api.gen_auth_headers(token)
         return token, headers
 
     def get_me(self):
         return g.token
 
 
-api.add_resource(Test)
+api.add_resource(Test, api)
 
 if __name__ == '__main__':
     app.run(debug=True)

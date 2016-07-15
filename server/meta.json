@@ -1,0 +1,19 @@
+{
+    "$url_prefix": "http://127.0.0.1:5000",
+    "$roles": {
+        "guest": {
+            "test": [
+                "get", "post", "put", "delete", "patch",
+                "get_404", "get_403", "get_401", "get_400", "get_302", "get_500",
+                "get_binary", "post_name", "post_upload", "post_login"
+            ]
+        },
+        "admin": {
+            "test": [
+                "get", "post", "put", "delete", "patch",
+                "get_404", "get_403", "get_401", "get_400", "get_302", "get_500",
+                "get_binary", "post_name", "post_upload", "post_login", "get_me"
+            ]
+        }
+    }
+}
