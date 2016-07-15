@@ -6,6 +6,9 @@ python:
   - "3.5"
 
 install:
+    - pip install pytest
+    - pip install pytest-cov
+    - pip install codecov
     - pip install .
 
 before_script:
@@ -13,5 +16,5 @@ before_script:
     - sleep 3
 
 script:
-    - py.test tests
+    - py.test tests --cov=$(cd tests&&python -c "import flask_restaction;print(flask_restaction.__path__[0])")
 
