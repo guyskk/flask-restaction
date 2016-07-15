@@ -18,3 +18,5 @@ before_script:
 script:
     - py.test tests --cov=$(cd tests&&python -c "import flask_restaction;print(flask_restaction.__path__[0])")
 
+after_success:
+    - codecov
