@@ -9,7 +9,7 @@ install:
     - pip install .
 
 before_script:
-    - cd server && pip install -r requires.txt && nohup python index.py > /dev/null
+    - cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1 &
     - sleep 3
 
 script:
