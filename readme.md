@@ -41,6 +41,12 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
 
 ## 测试
 
+测试之前需先运行一个服务器：
+
+    cd server
+    pip install -r requires.txt
+    python index.py
+
 用tox测试：
 
     pip install tox
@@ -55,8 +61,9 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
 ## 构建res.js
 
     // create a server for test
-    pip install -r server/requires.txt
-    python server index.py
+    cd server
+    pip install -r requires.txt
+    python index.py
 
     // build resjs
     cd flask_restaction/resjs
