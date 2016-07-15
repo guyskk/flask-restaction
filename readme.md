@@ -1,6 +1,7 @@
 # Flask-Restaction
 
-![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)
+![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg) [![codecov](https://codecov.io/gh/guyskk/flask-restaction/branch/master/graph/badge.svg)](https://codecov.io/gh/guyskk/flask-restaction)
+
 
 为RESTful API而生的Web框架：
 
