@@ -689,3 +689,63 @@ def test_docs_and_shared_schema():
         assert resp.status_code == 400
         assert resp_json(resp)["error"] == "InvalidData"
         assert "userid" in resp_json(resp)["message"]
+
+
+def test_before_request():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            return "Hello World"
+    api.add_resource(Hello)
+
+    @api.before_request
+    def before_request():
+        return "before_request"
+
+    with app.test_client() as c:
+        resp = c.get("/hello")
+        assert resp.status_code == 200
+        assert resp_json(resp) == "before_request"
+
+
+def test_after_request():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            return "Hello World"
+    api.add_resource(Hello)
+
+    @api.after_request
+    def after_request(rv, code, headers):
+        return "%s after_request" % rv, code, headers
+
+    with app.test_client() as c:
+        resp = c.get("/hello")
+        assert resp.status_code == 200
+        assert resp_json(resp) == "Hello World after_request"
+
+
+def test_error_handler():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            raise ValueError("bug")
+    api.add_resource(Hello)
+
+    @api.error_handler
+    def error_handler(ex):
+        return "error_handler %s" % ex.args[0]
+
+    with app.test_client() as c:
+        resp = c.get("/hello")
+        assert resp.status_code == 200
+        assert resp_json(resp) == "error_handler bug"
