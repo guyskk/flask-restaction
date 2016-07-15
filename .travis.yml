@@ -10,6 +10,7 @@ install:
 
 before_script:
     - cd server && pip install -r requires.txt && nohup python index.py > /dev/null
+    - sleep 3
 
 script:
     - py.test 
