@@ -1,7 +1,7 @@
 import json
 import yaml
 import pytest
-from validater import Invalid
+from validater import Invalid, SchemaError
 from validater.validaters import handle_default_optional_desc
 from flask import Flask, Blueprint, url_for, request, make_response, g
 from flask_restaction import exporter
@@ -766,3 +766,55 @@ def test_export_json_unicode():
         resp = c.get("/hello")
         assert resp.status_code == 200
         assert "\\u" not in resp.data.decode("utf-8")
+
+
+@pytest.mark.skip
+def test_schema_error_message_shared():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+        """
+        $shared:
+            message: xxx
+        """
+
+        def get(self):
+            pass
+    with pytest.raises(SchemaError) as exinfo:
+        api.add_resource(Hello)
+    assert exinfo.value.position == "Hello.$shared.message"
+
+
+def test_schema_error_message_input():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            """
+            $input:
+                message: xxx
+            """
+            pass
+    with pytest.raises(SchemaError) as exinfo:
+        api.add_resource(Hello)
+    assert exinfo.value.position == "Hello.get.$input.message"
+
+
+def test_schema_error_message_output():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            """
+            $output:
+                message: xxx
+            """
+            pass
+    with pytest.raises(SchemaError) as exinfo:
+        api.add_resource(Hello)
+    assert exinfo.value.position == "Hello.get.$output.message"

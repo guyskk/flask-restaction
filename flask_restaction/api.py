@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from flask import request, make_response, current_app, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
+from validater.schema import MarkKey
 from .exporters import exporters
 from .res import Res
 
@@ -182,26 +183,30 @@ class Api:
         :param class_kwargs: class_kwargs
         """
         name = resource.__name__.lower()
-        resource = resource(*class_args, **class_kwargs)
         meta_resource = parse_docs(resource.__doc__, ["$shared"])
         self.meta[name] = meta_resource
         shared = self.meta["$shared"].copy()
         shared.update(meta_resource.get("$shared", {}))
-        sp = SchemaParser(validaters=self.validaters, shared=shared)
-        # group actions by it's name, and
-        # make action group a view function
-        actions = defaultdict(lambda: {})
-        for action in dir(resource):
-            find = PATTERN_ACTION.findall(action)
-            if not find:
-                continue
-            httpmethod, action_name = find[0]
-            action_group = actions[action_name]
-            fn = getattr(resource, action)
-            meta_action = parse_docs(
-                fn.__doc__, ["$input", "$output", "$error"])
-            meta_resource[action] = meta_action
-            action_group[httpmethod] = self.make_action(fn, sp, meta_action)
+        with MarkKey("%s.$shared" % resource.__name__):
+            sp = SchemaParser(validaters=self.validaters, shared=shared)
+        with MarkKey(resource.__name__):
+            resource = resource(*class_args, **class_kwargs)
+            # group actions by it's name, and
+            # make action group a view function
+            actions = defaultdict(lambda: {})
+            for action in dir(resource):
+                find = PATTERN_ACTION.findall(action)
+                if not find:
+                    continue
+                httpmethod, action_name = find[0]
+                action_group = actions[action_name]
+                fn = getattr(resource, action)
+                meta_action = parse_docs(
+                    fn.__doc__, ["$input", "$output", "$error"])
+                meta_resource[action] = meta_action
+                with MarkKey(fn.__name__):
+                    action_group[httpmethod] = \
+                        self.make_action(fn, sp, meta_action)
 
         for action_name in actions:
             if action_name == "":
@@ -230,9 +235,11 @@ class Api:
         """
         validate_input = validate_output = None
         if "$input" in meta:
-            validate_input = schema_parser.parse(meta["$input"])
+            with MarkKey("$input"):
+                validate_input = schema_parser.parse(meta["$input"])
         if "$output" in meta:
-            validate_output = schema_parser.parse(meta["$output"])
+            with MarkKey("$output"):
+                validate_output = schema_parser.parse(meta["$output"])
 
         def action(data):
             if validate_input:
