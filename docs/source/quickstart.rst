@@ -82,19 +82,19 @@
 校验输入输出
 -------------------
 
-在Resource的文档字符串中用 *$shared* 描述共享的Schema。
+在Api的参数 ``Api(docs=__doc__)`` 中用 *$shared* 描述全局共享的Schema。
+
+在Resource的文档字符串中用 *$shared* 描述Resource内共享的Schema。
+
 在Action的文档字符串中用 *$input*, *$output* 描述输入输出Schema, 用 *$error* 描述可能返回的错误。
 
 *$input*
-    YAML格式(`YAML 简介 <http://www.mutouxiaogui.cn/blog/?p=357>`_)的字符串，
-    Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
+    输入格式，如果没有$input，则不校验输入，以无参数的形式调用Action。
     实际数据来源取决于HTTP方法，GET和DELETE请求，取自url参数，
     POST,PUT和PATCH请求，取自请求体，Content-Type为 ``application/json``。
-    如果没有$input，则不校验输入，以无参数的形式调用Action。
 
 *$output*
-    输出格式，同$input。
-    如果没有$output，则不校验输出。
+    输出格式，如果没有$output，则不校验输出。
 
 *$error*
     用来生成API文档，描述可能返回的错误，例如::
@@ -102,6 +102,24 @@
         $error:
             InvalidData: 输入参数错误
             PermissionDeny: 权限不足
+
+Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串，JSON的语法是YAML语法的子集，因此大部分的JSON文件都可以被YAML的解析器解析。
+由于YAML的运作主要依赖缩进来决定结构，且字符串不需要双引号，写出的Schema会更加精简。
+
+Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
+
+.. Note::
+
+    ``@`` 符号是YAML的保留符号，所以在用到引用时，需加上双引号。
+
+    例如::
+        
+        "@user"
+
+        userid: "@userid"
+
+        friends:
+            - "@user"
 
 **自定义 Validater**
 

@@ -35,6 +35,8 @@ class Res:
     Usage::
 
         >>> res = Res("http://127.0.0.1:5000")
+        >>> res.ajax("/hello")
+        {'message': 'Hello world, Welcome to flask-restaction!'}
         >>> res.hello.get()
         {'message': 'Hello world, Welcome to flask-restaction!'}
         >>> res.hello.get({"name":"kk"})

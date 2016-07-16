@@ -317,7 +317,7 @@ def test_no_input_schema():
     with app.test_client() as c:
         resp = c.get("/hello?name=kk")
         assert resp.status_code == 500
-        assert resp_json(resp)["error"] == "InvalidData"
+        assert resp_json(resp)["error"] == "ServerError"
 
 
 def test_no_output_schema():
@@ -768,7 +768,19 @@ def test_export_json_unicode():
         assert "\\u" not in resp.data.decode("utf-8")
 
 
-@pytest.mark.skip
+def test_api_shared_schema_error_message():
+    docs = """"
+    $shared:
+        name:
+          -
+            key?xxx: desc
+    """
+    app = Flask(__name__)
+    with pytest.raises(SchemaError) as exinfo:
+        Api(app, docs=docs)
+    assert exinfo.value.position == "$shared.name[].key"
+
+
 def test_schema_error_message_shared():
     app = Flask(__name__)
     api = Api(app)

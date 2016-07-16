@@ -156,6 +156,10 @@ class Api:
         meta_api = parse_docs(docs, ["$shared"])
         self.meta["$desc"] = meta_api.get("$desc", "")
         self.meta["$shared"] = meta_api.get("$shared", {})
+        # check shared is valid or not
+        if self.meta["$shared"]:
+            with MarkKey("$shared"):
+                SchemaParser(shared=self.meta["$shared"])
         auth = DEFAULT_AUTH.copy()
         auth.update(self.meta.get("$auth", {}))
         self.meta["$auth"] = auth
@@ -262,7 +266,7 @@ class Api:
                     rv = validate_output(rv)
                 except Invalid as ex:
                     return abort(500, {
-                        "error": "InvalidData",
+                        "error": "ServerError",
                         "message": str(ex)
                     })
             return rv, status, headers
