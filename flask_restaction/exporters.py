@@ -1,5 +1,5 @@
+import json
 from flask import current_app
-from flask import json
 
 exporters = {}
 
@@ -27,11 +27,14 @@ def register_exporter(mediatype, fn):
 def export_json(data, status, headers):
     """Creates a JSON response
 
-    :param data: flask.Response or any type object that can dump to json
+    JSON content is encoded by utf-8, not unicode escape.
+
+    :param data: any type object that can dump to json
     :param status: http status code
     :param headers: http headers
     """
-    dumped = json.dumps(data, indent=2, ensure_ascii=False)
+    dumped = json.dumps(data, indent=4, ensure_ascii=False)
     resp = current_app.response_class(
-        dumped, status=status, headers=headers, mimetype='application/json')
+        dumped, status=status, headers=headers,
+        content_type='application/json; charset=utf-8')
     return resp

@@ -749,3 +749,20 @@ def test_error_handler():
         resp = c.get("/hello")
         assert resp.status_code == 200
         assert resp_json(resp) == "error_handler bug"
+
+
+def test_export_json_unicode():
+    app = Flask(__name__)
+    api = Api(app)
+
+    class Hello:
+
+        def get(self):
+            return {"message": "中文"}
+
+    api.add_resource(Hello)
+    # json content is encoded by utf-8, not unicode escape
+    with app.test_client() as c:
+        resp = c.get("/hello")
+        assert resp.status_code == 200
+        assert "\\u" not in resp.data.decode("utf-8")
