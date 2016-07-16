@@ -16,6 +16,10 @@ def test_basic():
     assert res.test.delete(data) == expect
 
 
+def test_ajax():
+    assert res.ajax("/")["test"]["get"] is not None
+
+
 @pytest.mark.parametrize("code", [404, 403, 401, 400, 500])
 def test_error(code):
     with pytest.raises(HTTPError) as exinfo:

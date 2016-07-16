@@ -50,13 +50,31 @@ class Res:
     :return: requests.Response
     """
 
-    def __init__(self, url_prefix="", auth_header="Authorization",
+    def __init__(self, url_prefix, auth_header="Authorization",
                  *args, **kwargs):
         self.url_prefix = url_prefix
         self.auth_header = auth_header
         self.session = requests.Session(*args, **kwargs)
 
-    def request(self, resource, action, data=None, headers=None):
+    def ajax(self, url, method="GET", data=None, headers=None):
+        data_param = {}
+        if data is None:
+            data_param = {}
+        else:
+            if method in ["GET", "DELETE"]:
+                data_param["params"] = data
+            elif method in ["POST", "PUT", "PATCH"]:
+                data_param["json"] = data
+        resp = self.session.request(
+            method=method, url=self.url_prefix + url,
+            headers=headers, **data_param)
+        if self.auth_header in resp.headers:
+            self.session.headers[
+                self.auth_header] = resp.headers[self.auth_header]
+        raise_for_status(resp)
+        return resp.json()
+
+    def _request(self, resource, action, data=None, headers=None):
         """Send request
 
         :param resource: resource
@@ -65,23 +83,7 @@ class Res:
         :param headers: http headers
         """
         url, httpmethod = res_to_url(resource, action)
-        if self.url_prefix:
-            url = self.url_prefix + url
-        data_param = {}
-        if data is None:
-            data_param = {}
-        else:
-            if httpmethod in ["GET", "DELETE"]:
-                data_param["params"] = data
-            elif httpmethod in ["POST", "PUT", "PATCH"]:
-                data_param["json"] = data
-        resp = self.session.request(
-            method=httpmethod, url=url, headers=headers, **data_param)
-        if self.auth_header in resp.headers:
-            self.session.headers[
-                self.auth_header] = resp.headers[self.auth_header]
-        raise_for_status(resp)
-        return resp.json()
+        return self.ajax(url, httpmethod, data, headers)
 
     def __getattr__(self, resource):
         return Resource(self, resource)
@@ -105,4 +107,4 @@ class Action:
         self.action = action
 
     def __call__(self, data=None, headers=None):
-        return self.res.request(self.resource, self.action, data, headers)
+        return self.res._request(self.resource, self.action, data, headers)
