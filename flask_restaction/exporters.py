@@ -33,7 +33,7 @@ def export_json(data, status, headers):
     :param status: http status code
     :param headers: http headers
     """
-    dumped = json.dumps(data, indent=4, ensure_ascii=False)
+    dumped = json.dumps(data, ensure_ascii=False)
     resp = current_app.response_class(
         dumped, status=status, headers=headers,
         content_type='application/json; charset=utf-8')

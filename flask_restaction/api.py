@@ -153,10 +153,10 @@ class Api:
             with open(metafile) as f:
                 self.meta = json.load(f)
         meta_api = parse_docs(docs, ["$shared"])
-        self.meta["$shared"] = meta_api.get("$shared", {})
         self.meta["$desc"] = meta_api.get("$desc", "")
+        self.meta["$shared"] = meta_api.get("$shared", {})
         auth = DEFAULT_AUTH.copy()
-        auth.update(meta_api.get("$auth", {}))
+        auth.update(self.meta.get("$auth", {}))
         self.meta["$auth"] = auth
         self.app.add_url_rule("/", view_func=self.meta_view)
         # TODO
@@ -166,7 +166,11 @@ class Api:
 
     def meta_view(self):
         """Meta data as API"""
-        return export(self.meta, 200, {})
+        dumped = json.dumps(
+            self.meta, indent=4, sort_keys=True, ensure_ascii=False)
+        return make_response(dumped, {
+            "Content-Type": "application/json; charset=utf-8"
+        })
 
     def add_resource(self, resource, *class_args, **class_kwargs):
         """Add resource
