@@ -38,5 +38,4 @@ def test_auth():
     assert res.test.post_login({"name": "admin"})
     assert res.test.get_me()["name"] == "admin"
     assert res.test.post_login({"name": "kk"})
-    with pytest.raises(HTTPError):
-        res.test.get_me()
+    assert res.test.get_me()["name"] == "kk"

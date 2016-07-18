@@ -9,7 +9,8 @@
   "author": "guyskk",
   "license": "MIT",
   "dependencies": {
-    "es6-promise": "^3.1.2"
+    "es6-promise": "^3.2.1",
+    "axios": "^0.13.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -19,6 +20,7 @@
     "jscover": "^1.0.0",
     "karma": "^0.13.22",
     "karma-chai": "^0.1.0",
+    "karma-chai-as-promised": "^0.1.2",
     "karma-chrome-launcher": "^1.0.1",
     "karma-html2js-preprocessor": "^1.0.0",
     "karma-mocha": "^1.0.1",

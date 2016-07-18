@@ -1,5 +1,5 @@
 function(root, init) {
-    var q = init(root, '{{ auth_header }}', '{{ url_prefix }}');
+    var q = init('{{ auth_header }}', '{{ url_prefix }}');
     {% for resource in meta %}
     var r = root.{{ resource }} = {};
         {% for action, meta_action in meta[resource].items() -%}

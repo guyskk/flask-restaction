@@ -58,7 +58,15 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
     py.test tests
 
 
-## 构建res.js
+## res.js
+
+构建
+    
+    cd flask_restaction/resjs
+    npm install
+    gulp
+
+测试
 
     // create a server for test
     cd server
@@ -66,13 +74,17 @@ Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输�
     python index.py
 
     // build resjs
-    cd flask_restaction/resjs
+    cd ../flask_restaction/resjs
     npm install
     gulp
     
+    // generate res.js
+    resjs http://127.0.0.1:5000 -d test
+
     // test
     npm install -g karma-cli
     karma start
+
 
 ## License 
 

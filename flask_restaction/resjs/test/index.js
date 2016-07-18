@@ -1,168 +1,114 @@
-var ajax = require('../src/res-ajax');
-var init = require('../src/res-init');
-
-var testHttpMethod = function(method, url, name) {
-    if (!name) {
-        name = 'world';
-    }
-    if (!url) {
-        url = '/test';
-    }
-    it(method + ' ' + url, function(done) {
-        ajax('http://127.0.0.1:5000' + url, {
-            method: method,
-            data: {
-                "name": name
-            },
-            fn: function(err, data) {
-                assert.isNull(err);
-                assert.deepEqual(data, {
-                    'hello': name
-                });
-                done();
-            }
-        });
-    });
-};
-
-function testGetError(code) {
-    it('Test ' + code, function(done) {
-        ajax('http://127.0.0.1:5000/test/' + code, {
-            method: 'GET',
-            fn: function(err, data, xhr) {
-                assert(err != null);
-                assert.isNull(data);
-                assert.equal(xhr.status, code);
-                done();
-            }
-        });
-    });
-}
+var res = require('./res.js');
 describe('resjs', function() {
-    describe('res-ajax', function() {
-        testHttpMethod('GET');
-        testHttpMethod('POST');
-        testHttpMethod('PUT');
-        testHttpMethod('DELETE');
-        var statusCodes = [400, 401, 403, 404, 500];
-        for (var i in statusCodes) {
-            testGetError(statusCodes[i]);
-        }
-
-        xit('Test ' + 302, function(done) {
-            // 302 with CORS is not allowed
-            ajax('http://127.0.0.1:5000/test/' + 302, {
-                method: 'GET',
-                fn: function(err, data, xhr) {
-                    assert.isNull(err);
-                    assert(data != null);
-                    assert.equal(xhr.status, 200);
-                    assert.deepEqual(data, {
-                        'hello': 'world'
-                    });
-                    done();
-                }
+    it("test.get", function() {
+        return res.test.get({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
             });
         });
-        it('POST without data to use default param', function(done) {
-            ajax('http://127.0.0.1:5000/test/name', {
-                method: 'POST',
-                fn: function(err, data) {
-                    assert.isNull(err);
-                    assert.deepEqual(data, {
-                        'hello': 'world'
-                    });
-                    done();
-                }
+    });
+    it("test.post", function() {
+        return res.test.post({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
             });
         });
-        it('POST without data to dict-like param should 400', function(done) {
-            ajax('http://127.0.0.1:5000/test', {
-                method: 'POST',
-                fn: function(err, data, xhr) {
-                    assert(err != null);
-                    assert.equal(xhr.status, 400);
-                    done();
-                }
+    });
+    it("test.post_name", function() {
+        return res.test.post_name({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
             });
         });
-        it('GET binary response', function(done) {
-            ajax('http://127.0.0.1:5000/test/binary', {
-                method: 'GET',
-                fn: function(err, data, xhr) {
-                    assert.isNull(err);
-                    assert(data != null);
-                    assert.equal(xhr.status, 200);
-                    done();
-                }
+    });
+    it("test.put", function() {
+        return res.test.put({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
             });
         });
-        it('Test Auth', function(done) {
-            ajax('http://127.0.0.1:5000/test/login', {
-                method: 'POST',
-                data: {
-                    "name": "guyskk"
-                },
-                fn: function(err, data, xhr) {
-                    assert.isNull(err);
-                    assert(data != null);
-                    assert.equal(xhr.status, 200);
-                    assert.equal(data.name, 'guyskk');
-                    var token = xhr.getResponseHeader('Authorization');
-                    ajax('http://127.0.0.1:5000/test/me', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': token
-                        },
-                        fn: function(err, data, xhr) {
-                            assert.isNull(err);
-                            assert(data != null);
-                            assert.equal(xhr.status, 200);
-                            assert.equal(data.name, 'guyskk');
-                            done();
-                        }
-                    });
-                }
+    });
+    it("test.patch", function() {
+        return res.test.patch({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
             });
         });
-        it('Test upload', function(done) {
-            document.body.innerHTML = window.__html__['test/index.html'];
-            assert.throws(function() {
-                ajax('http://127.0.0.1:5000/test/upload', {
-                    method: 'POST',
-                    data: 'upload'
-                });
-            }, "has no file");
-            //TODO should test actually upload a file
+    });
+    it("test.delete", function() {
+        return res.test.delete({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'kk'
+            });
+        });
+    });
+    it("test.get_302", function() {
+        return res.test.get_302().then(function(data) {
+            assert.deepEqual(data, {
+                'hello': 'world'
+            });
+        });
+    });
+    it("test.get_404", function(done) {
+        res.test.get_404().catch(function(error) {
+            assert.isNotNull(error);
             done();
         });
     });
-    describe("res-init", function() {
-        it('Init', function() {
-            var res = {};
-            var q = init(res, 'Authorization', 'http://127.0.0.1:5000');
-            res.test = {};
-            res.test.get = q('/test', 'GET');
-            res.test.post_login = q('/test/login', 'POST');
-            res.test.get_me = q('/test/me', 'GET');
+    it("test.get_403", function(done) {
+        res.test.get_403().catch(function(error) {
+            assert.isNotNull(error);
+            done();
+        });
+    });
+    it("test.get_401", function(done) {
+        res.test.get_401().catch(function(error) {
+            assert.isNotNull(error);
+            done();
+        });
+    });
+    it("test.get_400", function(done) {
+        res.test.get_400().catch(function(error) {
+            assert.isNotNull(error);
+            done();
+        });
+    });
+    it("test.get_500", function(done) {
+        res.test.get_500().catch(function(error) {
+            assert.isNotNull(error);
+            done();
+        });
+    });
+    it("test.get_binary", function(done) {
+        res.test.get_binary().then(function(data) {
+            assert.isNotNull(data);
+            done();
+        });
+    });
 
-            res.test.get().then(function(data) {
-                assert.deepEqual(data, {
-                    'hello': 'world'
-                });
-            }, function(err) {
-                assert.isNull(err);
+    it("test.post_upload", function(done) {
+        res.test.post_upload().then(function(data) {
+            assert.isNotNull(data);
+            done();
+        });
+    });
+    it("test.post_login", function(done) {
+        res.clearToken();
+        res.test.post_login({ name: "kk" }).then(function(data) {
+            assert.deepEqual(data.name, "kk");
+        }).then(function() {
+            res.test.get_me().then(function(data) {
+                assert.deepEqual(data.name, "kk");
+                done();
             });
-            return res.test.post_login({
-                    'name': 'guyskk'
-                }).then(function(data) {
-                    assert(data != null);
-                    return res.test.get_me();
-                })
-                .then(function(data) {
-                    assert(data != null);
-                    assert.equal(data.name, 'guyskk');
-                });
+        });
+    });
+
+    it("test.get_me", function(done) {
+        res.clearToken();
+        res.test.get_me().catch(function(error) {
+            assert.isNotNull(error);
+            done();
         });
     });
 });
