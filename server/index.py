@@ -2,11 +2,13 @@
 from flask import Flask, Response, request, abort, redirect, url_for, g
 from flask_restaction import Api
 from flask_cors import CORS
+from os.path import abspath, dirname, join
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
 CORS(app, expose_headers=['Authorization'])
-api = Api(app, metafile="meta.json")
+metafile = abspath(join(dirname(__file__), "meta.json"))
+api = Api(app, metafile=metafile)
 
 
 @api.get_role

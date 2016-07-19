@@ -513,7 +513,7 @@ def test_blueprint():
 
 def test_validaters():
 
-    @handle_default_optional_desc
+    @handle_default_optional_desc()
     def even_validater():
         def validater(value):
             try:

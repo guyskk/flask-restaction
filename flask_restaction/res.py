@@ -1,4 +1,40 @@
+import flask
 import requests
+from json import dumps, loads
+
+
+def resp_json(resp):
+    """
+    Get JSON from response if success, raise requests.HTTPError otherwise.
+
+    :param resp: requests.Response or flask.Response
+    :return: JSON value
+    """
+    if isinstance(resp, flask.Response):
+        if 400 <= resp.status_code < 600:
+            error, message = resp.status_code, resp.status
+            try:
+                result = loads(resp.data.decode("utf-8"))
+                error, message = result["error"], result["message"]
+            except (ValueError, KeyError):
+                pass
+            http_error_msg = "%s: %s" % (error, message)
+            raise requests.HTTPError(http_error_msg, response=resp)
+        else:
+            return loads(resp.data.decode("utf-8"))
+    else:
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as ex:
+            # the response may contains {"error": "", "message": ""}
+            # append error and message to exception if possible
+            try:
+                result = resp.json()
+                ex.args += (result["error"], result["message"])
+            except (ValueError, KeyError):
+                pass
+            raise
+        return resp.json()
 
 
 def res_to_url(resource, action):
@@ -13,18 +49,35 @@ def res_to_url(resource, action):
     return url, httpmethod.upper()
 
 
-def raise_for_status(resp):
-    try:
-        resp.raise_for_status()
-    except requests.HTTPError as ex:
-        # the response may contains {"error": "", "message": ""}
-        # append error and message to exception if possible
-        try:
-            result = resp.json()
-            ex.args += (result["error"], result["message"])
-        except (ValueError, KeyError):
-            pass
-        raise
+class TestClientSession:
+    """Wrapper Flask.test_client like requests.Session"""
+
+    def __init__(self, test_client, headers=None, *args, **kwargs):
+        self.test_client = test_client
+        if headers is None:
+            self.headers = {}
+        else:
+            self.headers = headers
+
+    def request(self, method, url, params=None, data=None,
+                headers=None, json=None):
+        if headers is None:
+            headers = self.headers
+        else:
+            headers.update(self.headers)
+        params = {
+            "path": url,
+            "method": method,
+            "query_string": params,
+            "headers": headers,
+            "content_type": "application/json",
+            "follow_redirects": True
+        }
+        if json is not None:
+            params["data"] = dumps(json, ensure_ascii=False)
+        with self.test_client() as c:
+            resp = c.open(**params)
+        return resp
 
 
 class Res:
@@ -34,7 +87,8 @@ class Res:
 
     Usage::
 
-        >>> res = Res("http://127.0.0.1:5000")
+        >>> res = Res(test_client=app.test_client)  # used in testing
+        >>> res = Res("http://127.0.0.1:5000")  # request remote api
         >>> res.ajax("/hello")
         {'message': 'Hello world, Welcome to flask-restaction!'}
         >>> res.hello.get()
@@ -52,29 +106,31 @@ class Res:
     :return: requests.Response
     """
 
-    def __init__(self, url_prefix, auth_header="Authorization",
-                 *args, **kwargs):
+    def __init__(self, url_prefix="", test_client=None,
+                 auth_header="Authorization", *args, **kwargs):
         self.url_prefix = url_prefix
         self.auth_header = auth_header
-        self.session = requests.Session(*args, **kwargs)
+        if test_client is None:
+            self.session = requests.Session(*args, **kwargs)
+        else:
+            self.session = TestClientSession(test_client, *args, **kwargs)
 
     def ajax(self, url, method="GET", data=None, headers=None):
-        data_param = {}
-        if data is None:
-            data_param = {}
-        else:
+        params = {
+            "method": method,
+            "url": self.url_prefix + url,
+            "headers": headers
+        }
+        if data is not None:
             if method in ["GET", "DELETE"]:
-                data_param["params"] = data
+                params["params"] = data
             elif method in ["POST", "PUT", "PATCH"]:
-                data_param["json"] = data
-        resp = self.session.request(
-            method=method, url=self.url_prefix + url,
-            headers=headers, **data_param)
+                params["json"] = data
+        resp = self.session.request(**params)
         if self.auth_header in resp.headers:
             self.session.headers[
                 self.auth_header] = resp.headers[self.auth_header]
-        raise_for_status(resp)
-        return resp.json()
+        return resp_json(resp)
 
     def _request(self, resource, action, data=None, headers=None):
         """Send request
