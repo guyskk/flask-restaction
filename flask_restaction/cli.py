@@ -6,7 +6,8 @@ from .res import res_to_url
 
 
 def parse_meta(url):
-    meta = requests.get(url).json()
+    url_prefix = url.rstrip("/")
+    meta = requests.get(url_prefix).json()
     meta2 = {}
     for resource_name in meta:
         if resource_name.startswith("$"):
@@ -20,7 +21,7 @@ def parse_meta(url):
                 "$url": url,
                 "$httpmethod": httpmethod
             }
-    return meta["$url_prefix"], meta["$auth"]["header"], meta2
+    return url_prefix, meta["$auth"]["header"], meta2
 
 
 def read_file(fpath):
