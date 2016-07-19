@@ -12,14 +12,14 @@ def resp_json(resp):
     """
     if isinstance(resp, flask.Response):
         if 400 <= resp.status_code < 600:
-            error, message = resp.status_code, resp.status
+            msg = resp.status
             try:
                 result = loads(resp.data.decode("utf-8"))
-                error, message = result["error"], result["message"]
+                msg = "%s %s, %s" % (
+                    resp.status_code, result["error"], result["message"])
             except (ValueError, KeyError):
                 pass
-            http_error_msg = "%s: %s" % (error, message)
-            raise requests.HTTPError(http_error_msg, response=resp)
+            raise requests.HTTPError(msg, response=resp)
         else:
             return loads(resp.data.decode("utf-8"))
     else:
