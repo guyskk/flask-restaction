@@ -1,9 +1,7 @@
 from flask_restaction import Res
 import pytest
 from requests import HTTPError
-import importlib
-
-app = importlib.import_module("server.index").app
+from server.index import app
 
 
 @pytest.fixture(params=[
