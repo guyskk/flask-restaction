@@ -15,9 +15,12 @@ def resp_json(resp):
             msg = resp.status
             try:
                 result = loads(resp.data.decode("utf-8"))
-                msg = "%s %s, %s" % (
-                    resp.status_code, result["error"], result["message"])
-            except (ValueError, KeyError):
+                if isinstance(result, str):
+                    msg = "%s, %s" % (resp.status, result)
+                else:
+                    msg = "%s %s, %s" % (
+                        resp.status_code, result["error"], result["message"])
+            except Exception:
                 pass
             raise requests.HTTPError(msg, response=resp)
         else:
