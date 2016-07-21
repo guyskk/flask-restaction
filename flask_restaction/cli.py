@@ -5,8 +5,13 @@ from jinja2 import Template
 from .res import res_to_url
 
 
-def parse_meta(url):
-    url_prefix = url.rstrip("/")
+def parse_meta(url_prefix):
+    """
+    Parse metadata of API
+
+    Use meta["$url_prefix"] if exists, url_prefix otherwise.
+    :return: (url_prefix, auth_header, meta)
+    """
     meta = requests.get(url_prefix).json()
     meta2 = {}
     for resource_name in meta:
@@ -21,6 +26,7 @@ def parse_meta(url):
                 "$url": url,
                 "$httpmethod": httpmethod
             }
+    url_prefix = meta.get("$url_prefix", url_prefix).rstrip("/")
     return url_prefix, meta["$auth"]["header"], meta2
 
 
