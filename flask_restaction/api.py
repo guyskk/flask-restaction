@@ -4,6 +4,7 @@ import jwt
 import json
 import yaml
 import textwrap
+from functools import lru_cache
 from collections import defaultdict
 from datetime import datetime, timedelta
 from flask import request, make_response, current_app, abort as flask_abort
@@ -169,6 +170,7 @@ class Api:
         for k, v in self.meta.get("$requires", {}).items():
             self.requires[k] = Res(v)
 
+    @lru_cache()
     def meta_view(self):
         """Meta data as API"""
         dumped = json.dumps(
