@@ -303,7 +303,7 @@ class Api:
         """Check permission"""
         if self.get_role_func:
             resource, action = parse_request()
-            token = self.parse_auth_token()
+            token = self.parse_auth_headers()
             role = self.get_role_func(token)
             roles = self.meta.get("$roles", {})
             message = "%s can't access %s.%s" % (role, resource, action)
@@ -319,11 +319,13 @@ class Api:
         self.get_role_func = f
         return f
 
-    def parse_auth_token(self):
+    def parse_auth_headers(self):
         """Parse Authorization token from request headers"""
-        auth = self.meta["$auth"]
-        token = request.headers.get(auth["header"])
-        options = {'require_exp': True}
+        token = request.headers.get(self.meta["$auth"]["header"])
+        return self.parse_auth_token(token)
+
+    def parse_auth_token(self, token):
+        """Parse Authorization token"""
         key = current_app.secret_key
         if key is None:
             if current_app.debug:
@@ -332,8 +334,8 @@ class Api:
         try:
             return jwt.decode(
                 token, key,
-                algorithms=[auth["algorithm"]],
-                options=options
+                algorithms=[self.meta["$auth"]["algorithm"]],
+                options={'require_exp': True}
             )
         except jwt.InvalidTokenError:
             pass
