@@ -322,6 +322,31 @@ Api可以放在蓝图中，这样所有的 Resource 都会路由到蓝图中。
 注意：add_resource 需要在 register_blueprint 之前执行，否则 add_resource 无效。
 
 
+事件处理
+--------------------------
+
+Api提供before_request, after_request, error_handler这3个装饰器用来注册事件处理函数。
+
+.. code-block:: python
+
+    @api.before_request
+    def before_request():
+        # 此函数会在在请求到来的第一时间执行
+        # 若response不为None，则不再继续处理请求
+        return response 
+
+    @api.after_request
+    def after_request(rv, status, headers):
+        # 此处可以对Action中的返回值进行处理
+        return rv, status, headers
+
+    @api.error_handler
+    def error_handler(ex):
+        # 处理从before_request到Action过程中抛出的异常
+        # 若response不为None，则返回此response给客户端
+        return response
+
+
 Examples
 --------------------
 
@@ -363,7 +388,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
     Request Parsing 很繁琐，并且不能很好的重用代码。
 
-    restaction 的输出校验和输入校验差不多，不同的是可以校验自定义的 python 对象。
+    restaction 的输出校验和输入校验差不多，不同的是可以校验任意自定义的 python 对象。
 
     而 reslful 校验输出更加繁琐！
 
@@ -412,3 +437,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
 完善 res.js，对代码进行了重构和测试，支持模块化和标准 Promise。
 
+**2016年7月 - 8月**
+
+重写 validater，形成完善的Schema语法。
+重构 flask-restaction，使用YAML格式定义输入输出Schema。
