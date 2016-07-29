@@ -347,6 +347,23 @@ Api提供before_request, after_request, error_handler这3个装饰器用来注�
         return response
 
 
+自定义响应格式
+---------------------
+
+默认响应格式为JSON，你也可以很方便的添加自定义的响应格式。
+
+.. code-block:: python
+
+    from flask import make_response
+    from flask_restaction import exporter
+
+    @exporter('text/html')
+    def export_text(data, status, headers):
+        return make_response(str(data), status, headers)
+    
+框架会根据请求头中Accept的值选择合适的响应格式。
+
+
 Examples
 --------------------
 
