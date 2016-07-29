@@ -32,6 +32,7 @@ Flask-Restaction 依赖 `Validater <https://github.com/guyskk/validater>`_ 校�
    :maxdepth: 2
 
    quickstart
+   schema
    resjs
 
 

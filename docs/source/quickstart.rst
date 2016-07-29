@@ -14,20 +14,25 @@
     app = Flask(__name__)
     api = Api(app)
 
+    class Welcome:
+
+        def __init__(self, name):
+            self.name = name
+            self.message = "Hello %s, Welcome to flask-restaction!" % name
+            
     class Hello:
         """Hello world"""
 
         def get(self, name):
-            """Get welcome message
+            """
+            Get welcome message
 
             $input:
                 name?str&escape&default="world": Your name
             $output:
                 message?str: Welcome message
             """
-            return {
-                "message": "Hello %s, Welcome to flask-restaction!" % name
-            }
+            return Welcome(name)
 
     api.add_resource(Hello)
 
@@ -66,9 +71,10 @@
 那么，这些代码是什么意思呢？
 
 1. 创建一个 Api 对象，把 app 作为参数
-2. 创建一个 Hello 类，定义 get 方法
-3. 在 get 方法文档字符串中描述输入参数和输出的格式
-4. 调用 api.add_resource(Hello)
+2. 创建 Welcome 类，描述欢迎信息(框架可以序列化任意类型的对象)
+3. 创建一个 Hello 类，定义 get 方法
+4. 在 get 方法文档字符串中描述输入参数和输出的格式
+5. 调用 api.add_resource(Hello)
 
 .. glossary:: 两个概念
     *resource*
@@ -97,7 +103,7 @@
     输出格式，如果没有$output，则不校验输出。
 
 *$error*
-    用来生成API文档，描述可能返回的错误，例如::
+    描述可能返回的错误，例如::
 
         $error:
             InvalidData: 输入参数错误
@@ -106,20 +112,7 @@
 Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串，JSON的语法是YAML语法的子集，因此大部分的JSON文件都可以被YAML的解析器解析。
 由于YAML的运作主要依赖缩进来决定结构，且字符串不需要双引号，写出的Schema会更加精简。
 
-Schema语法见 `Validater <https://github.com/guyskk/validater>`_ 。
-
-.. Note::
-
-    ``@`` 符号是YAML的保留符号，所以在用到引用时，需加上双引号。
-
-    例如::
-        
-        "@user"
-
-        userid: "@userid"
-
-        friends:
-            - "@user"
+Schema语法见 :ref:`schema` 
 
 **自定义 Validater**
 

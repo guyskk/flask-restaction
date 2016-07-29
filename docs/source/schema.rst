@@ -1,0 +1,144 @@
+.. _schema:
+
+YAML与Schema语法
+================
+
+`Validater <https://github.com/guyskk/validater>`_ 中使用JSON格式表示Schema，
+而JSON的语法是YAML语法的子集，在文档字符串中用YAML格式表示Schema更加精简。
+
+YAML语法比JSON语法略复杂一些，新手学习过程中可能会遇到一些问题，这里总结了一些与Schema相关的语法。
+
+可以通过 `YAML 语言教程 <http://www.ruanyifeng.com/blog/2016/07/yaml.html>`_ 对YAML语法进行初步了解。
+
+
+字符串
+-----------
+
+YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示锚，这两个与Schema语法有冲突，
+所以 ``@`` , ``&`` 开头的字符串都需要加上引号。
+
+例如::
+        
+        "@user"
+
+        userid: "@userid"
+
+        friends:
+            - "@user"
+
+        "&optional&unique"
+
+
+列表
+-----------
+
+简单的列表::
+
+    # tags
+    - "&unique&minlen=1"
+    - str
+
+嵌套的列表::
+
+    # time_table
+    # 星期一
+    - - 上午写BUG
+      - 下午改BUG
+      - 晚上又写BUG
+    # 星期二
+    - - 上午改昨天的BUG
+      - 下午又写一堆BUG
+      - 晚上改不完的BUG
+    # ...
+
+    # schema_of_time_table
+    - "&minlen=7&maxlen=7" # 一周七天
+    - - "&minlen=3&maxlen=3" # 每天有三个时间段
+      - str&optional # 这个时间段的安排
+
+
+字典
+-----------
+
+简单的字典::
+
+    user:
+        id?int: user id
+        name?str: user name
+
+嵌套的字典::
+
+    friends:
+        best:
+            $self: best friend
+            id?int: user id
+            name?str: user name
+        bad:
+            $self: bad friend
+            id?int: user id
+            name?str: user name
+
+    friends:
+        best@user: best friend
+        bad@user: bad friend
+
+
+复杂的嵌套
+----------
+
+列表里面是字典::
+
+    - my friends
+    - id?int: user id
+      name?str: user name
+
+    - my friends
+    - "@user"
+
+字典里面有列表::
+
+    friends:
+        - my friends
+        - id?int: user id
+          name?str: user name
+
+    friends:
+        - my friends
+        - "@user"
+
+
+Shared Schema
+---------------
+
+普通的Shared::
+
+    $shared:
+        userid: int
+        tags:
+            - "&unique&minlen=1"
+            - str
+        user:
+            id?int: user id
+            name?str: user name
+
+下面的可以引用上面的::
+
+    $shared:
+        userid: int
+        user:
+            id@userid: user id
+            name?str: user name
+        
+继承和拓展::
+
+    $shared:
+        paging:
+            page_num?int&min=1&default=1: 第几页
+            page_size?int&min=1&default=10: 每页的数量
+        query:
+            $self@paging: 查询参数
+            tag?str: 标签
+            date?date: 日期
+
+
+
