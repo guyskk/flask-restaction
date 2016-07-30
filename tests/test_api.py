@@ -1,12 +1,13 @@
 import json
 import yaml
 import pytest
+from collections import OrderedDict
 from validater import Invalid, SchemaError
 from validater.validaters import handle_default_optional_desc
 from flask import Flask, Blueprint, url_for, request, make_response, g
 from flask_restaction import exporter
 from flask_restaction.api import (
-    Api, abort, unpack, export, parse_docs,
+    Api, abort, unpack, export, ordered_load, parse_docs,
     get_request_data, parse_request
 )
 from werkzeug.exceptions import BadRequest
@@ -114,6 +115,25 @@ def test_export_custom():
         resp = export("hello world")
         assert resp.mimetype == "text/html"
         assert resp.data == b"hello world"
+
+
+def test_ordered_load():
+    yamltext = """
+        a:
+            x: 1
+            y: 2
+            z: 3
+        b: 0
+        c: 0
+        d: 0
+    """
+    for i in range(100):
+        data = ordered_load(yamltext)
+        assert isinstance(data, OrderedDict)
+        assert isinstance(data['a'], OrderedDict)
+        assert list(data['a'].items()) == [('x', 1), ('y', 2), ('z', 3)]
+        del data['a']
+        assert list(data.items()) == [('b', 0), ('c', 0), ('d', 0)]
 
 
 def test_parse_docs():
@@ -689,6 +709,45 @@ def test_docs_and_shared_schema():
         assert resp.status_code == 400
         assert resp_json(resp)["error"] == "InvalidData"
         assert "userid" in resp_json(resp)["message"]
+
+
+def test_shared_schema_order():
+    docs = """
+    Hello World
+
+    $shared:
+        a: int
+        b: "@a"
+    """
+    app = Flask(__name__)
+    api = Api(app, docs=docs)
+
+    class Hello:
+        """
+        $shared:
+            c: str
+            d: "@c"
+            e: "@b"
+        """
+
+        def get(self, x, y, z):
+            """
+            $input:
+                x@b: x
+                y@d: y
+                z@e: z
+            """
+            return {'x': x, 'y': y, 'z': z}
+
+    api.add_resource(Hello)
+    with app.test_client() as c:
+        resp = c.get("/hello?x=123&y=kk&z=321")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {
+            "x": 123,
+            "y": "kk",
+            "z": 321
+        }
 
 
 def test_before_request():

@@ -5,7 +5,7 @@ import json
 import yaml
 import textwrap
 from functools import lru_cache
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 from flask import request, make_response, current_app, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
@@ -63,6 +63,20 @@ def export(rv, code=None, headers=None):
         return exporters[mediatype](rv, code, headers)
 
 
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    """Load-yaml-mappings-as-ordereddicts"""
+    class OrderedLoader(Loader):
+        pass
+
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)
+        return object_pairs_hook(loader.construct_pairs(node))
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        construct_mapping)
+    return yaml.load(stream, OrderedLoader)
+
+
 def parse_docs(docs, marks):
     """Parse YAML syntax content from docs
 
@@ -85,7 +99,7 @@ def parse_docs(docs, marks):
     start = min(indexs)
     start = docs.rfind("\n", 0, start)
     yamltext = textwrap.dedent(docs[start + 1:])
-    meta = yaml.load(yamltext)
+    meta = ordered_load(yamltext)
     meta["$desc"] = textwrap.dedent(docs[:start]).strip()
     return meta
 
