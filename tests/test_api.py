@@ -4,7 +4,7 @@ import pytest
 from collections import OrderedDict
 from validater import Invalid, SchemaError
 from validater.validaters import handle_default_optional_desc
-from flask import Flask, Blueprint, url_for, request, make_response, g
+from flask import Flask, Blueprint, jsonify, url_for, request, make_response, g
 from flask_restaction import exporter
 from flask_restaction.api import (
     Api, abort, unpack, export, ordered_load, parse_docs,
@@ -22,21 +22,42 @@ def test_abort():
 
     @app.route("/")
     def index():
-        abort(400, {"error": "AbortTest"})
+        abort(400, "AbortTest")
 
-    @app.route("/headers")
-    def headers():
-        abort(403, {"error": "AbortHeadersTest"}, {"Authorization": "XXXX"})
+    @app.route("/flask")
+    def flask_abort():
+        abort(400)
+
+    @app.route("/response")
+    def response():
+        resp = jsonify({"reason": "error reason"})
+        abort(403, resp)
+
+    @app.route("/message")
+    def message():
+        abort(403, "AbortMessage", "message")
 
     with app.test_client() as c:
         resp = c.get("/")
         assert resp.status_code == 400
-        assert resp_json(resp) == {"error": "AbortTest"}
-
-        resp = c.get("/headers")
+        assert resp_json(resp) == {
+            "status": 400,
+            "error": "AbortTest",
+            "message": None
+        }
+        resp = c.get("/flask")
+        assert resp.status_code == 400
+        assert resp.mimetype == "text/html"
+        resp = c.get("/response")
         assert resp.status_code == 403
-        assert resp_json(resp) == {"error": "AbortHeadersTest"}
-        assert resp.headers["Authorization"] == "XXXX"
+        assert resp_json(resp) == {"reason": "error reason"}
+        resp = c.get("/message")
+        assert resp.status_code == 403
+        assert resp_json(resp) == {
+            "status": 403,
+            "error": "AbortMessage",
+            "message": "message"
+        }
 
 
 def test_unpack():

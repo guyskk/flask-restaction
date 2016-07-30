@@ -103,11 +103,30 @@
     输出格式，如果没有$output，则不校验输出。
 
 *$error*
-    描述可能返回的错误，例如::
+    描述可能返回的错误，作为API文档的一部分，例如::
 
         $error:
-            InvalidData: 输入参数错误
-            PermissionDeny: 权限不足
+            400.InvalidData: 输入参数错误
+            403.PermissionDeny: 权限不足
+    
+    格式为: ``status.ErrorSymbol: message``。
+
+
+请求参数校验失败会返回::
+
+    {
+        "status": 400,
+        "error": "InvalidData",
+        "message": "xxx xxxx"
+    }
+
+响应内容校验失败会返回::
+
+    {
+        "status": 500,
+        "error": "ServerError",
+        "message": "xxx xxxx"
+    }
 
 Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串，JSON的语法是YAML语法的子集，因此大部分的JSON文件都可以被YAML的解析器解析。
 由于YAML的运作主要依赖缩进来决定结构，且字符串不需要双引号，写出的Schema会更加精简。
@@ -192,14 +211,24 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 返回错误信息
 ----------------------------
 
-.. code-block::python
+.. code-block:: python
 
     from flask_restaction import abort
 
     # 函数原型
-    abort(status_code, body=None, headers=None)
+    abort(code, error=None, message=None)
 
-如果没有body参数，效果和flask.abort一样。如果有body，会序列化为适当的格式返回。
+如果没有error参数，效果和flask.abort(code)一样。
+如果有error是flask.Response类型，效果和flask.abort(code, error)一样。
+其他情况返回内容为::
+
+    {
+        "status": code,
+        "error": error,
+        "message": message
+    }
+
+返回内容会序列化为适当的格式。
 
 
 身份验证&权限控制
@@ -265,6 +294,14 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
 res.js 的令牌保存在浏览器的 LocalStorage 中。
+
+身份验证失败会返回::
+
+    {
+        "status": 403,
+        "error": "PermissionDeny",
+        "message": "xxx can't access xxxx"
+    }
 
 
 处理依赖关系

@@ -7,7 +7,7 @@ import textwrap
 from functools import lru_cache
 from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
-from flask import request, make_response, current_app, abort as flask_abort
+from flask import Response, request, make_response, current_app, abort as flask_abort
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from validater.schema import MarkKey
@@ -24,18 +24,25 @@ DEFAULT_AUTH = {
 }
 
 
-def abort(code, body=None, headers=None):
+def abort(code, error=None, message=None):
     """Abort with suitable error response
 
     :param code: status code
-    :parma body: error content
-    :param headers: response headers
+    :parma error: error symbol or flask.Response
+    :param message: error message
     """
-    if body is None:
+    if error is None:
         flask_abort(code)
+    elif isinstance(error, Response):
+        error.status_code = code
+        flask_abort(code, response=error)
     else:
-        resp = export(body, code, headers)
-        flask_abort(code, response=resp)
+        body = {
+            "status": code,
+            "error": error,
+            "message": message
+        }
+        flask_abort(code, response=export(body, code))
 
 
 def unpack(rv):
@@ -266,10 +273,7 @@ class Api:
                 try:
                     data = validate_input(data)
                 except Invalid as ex:
-                    return abort(400, {
-                        "error": "InvalidData",
-                        "message": str(ex)
-                    })
+                    return abort(400, "InvalidData", str(ex))
                 if isinstance(data, dict):
                     rv = fn(**data)
                 else:
@@ -281,10 +285,7 @@ class Api:
                 try:
                     rv = validate_output(rv)
                 except Invalid as ex:
-                    return abort(500, {
-                        "error": "ServerError",
-                        "message": str(ex)
-                    })
+                    return abort(500, "ServerError", str(ex))
             return rv, status, headers
         return action
 
@@ -321,12 +322,11 @@ class Api:
             role = self.get_role_func(token)
             roles = self.meta.get("$roles", {})
             message = "%s can't access %s.%s" % (role, resource, action)
-            body = {"error": "PermissionDeny", "message": message}
             try:
                 if action not in roles[role][resource]:
-                    abort(403, body)
+                    abort(403, "PermissionDeny", message)
             except KeyError:
-                abort(403, body)
+                abort(403, "PermissionDeny", message)
 
     def get_role(self, f):
         """Decorater for registing get_role_func"""
