@@ -750,6 +750,38 @@ def test_shared_schema_order():
         }
 
 
+def test_shared_schema_override():
+    docs = """
+    Hello World
+
+    $shared:
+        x: int&min=0
+    """
+    app = Flask(__name__)
+    api = Api(app, docs=docs)
+
+    class Hello:
+        """
+        $shared:
+            x: int&max=0
+        """
+
+        def get(self, x):
+            """
+            $input:
+                x@x: x
+            """
+            return {'x': x}
+
+    api.add_resource(Hello)
+    with app.test_client() as c:
+        resp = c.get("/hello?x=1")
+        assert resp.status_code == 400
+        resp = c.get("/hello?x=-1")
+        assert resp.status_code == 200
+        assert resp_json(resp) == {"x": -1}
+
+
 def test_before_request():
     app = Flask(__name__)
     api = Api(app)
