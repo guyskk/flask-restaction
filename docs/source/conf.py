@@ -24,7 +24,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Flask-Restaction'
-copyright = u'2015, guyskk'
+copyright = u'2016, guyskk'
 author = u'guyskk'
 
 # The short X.Y version.

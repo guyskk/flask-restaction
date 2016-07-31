@@ -286,13 +286,13 @@ user.py 登录接口
 ``meta["$roles"]["guest"]["hello"]`` 中有没有 ``get``，发现没有，框架直接拒绝此次请求。
 
 用户A调用 ``user.post`` 接口，框架的处理流程同上，因为 ``meta["$roles"]["guest"]["user"]`` 中有 post，
-框架允许此次请求，请求到达 ``user.login`` 方法，验证用户名和密码，如果验证成功，就调用
+框架允许此次请求，请求到达 ``user.post`` 方法，验证用户名和密码，如果验证成功，就调用
 ``api.gen_auth_headers`` 方法生成一个 ``token``，``token`` 里面保存了用户ID和过期时间，并用JWT进行签名。
 这个 ``token`` 通过响应头的 ``Authorization`` 返回给用户。
 
 用户A再次调用 ``hello.get`` 接口，在请求头的 ``Authorization`` 中带上了刚才得到的 ``token`` ，
 框架先用JWT验证 ``token`` 的完整性和过期时间，如果没问题，再调用 ``get_role(token)``，得到用户角色。
-假设得到的角色是 ``admin``，因为 ``meta["$roles"]["guest"]["user"]`` 中有 ``post``，框架允许此次请求，
+假设得到的角色是 ``admin``，因为 ``meta["$roles"]["admin"]["user"]`` 中有 ``post``，框架允许此次请求，
 请求到达 ``hello.get`` 方法。
 
 
