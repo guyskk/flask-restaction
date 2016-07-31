@@ -440,36 +440,36 @@ Examples
 
 flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
-- restaction 更灵活。
-
-    restful 的方法只能是 http method，就是 get, post, put, delete 那几个，而
-    restaction 的方法除了 http method，还可以是任何以 http method 加下划线开头的方法。
-
 - 输入输出校验
 
     restaction 是声明式的，简单明确::
         
-        from flask_restaction import reqparse
+        class Hello:
 
-        name = "safestr&required&default='world'", "your name"
-        schema_inputs = {
-            "get": {"name": name}
-        }
+            def get(self, name):
+                """
+                Get welcome message
 
-    在 reslful 中叫做 Request Parsing::
+                $input:
+                    name?str&escape&default="world": Your name
+                $output:
+                    message?str: Welcome message
+                """
+    restaction 的输出校验和输入校验一样简单，而且可以序列化任意类型的对象。
+
+    restful 中叫做 Request Parsing::
 
         from flask_restful import reqparse
 
         parser = reqparse.RequestParser()
-        parser.add_argument('rate', type=int, help='Rate cannot be converted')
-        parser.add_argument('name')
+        parser.add_argument('name', type=str, help='Your name')
         args = parser.parse_args()
 
-    Request Parsing 很繁琐，并且不能很好的重用代码。
+    Request Parsing 很繁琐，不能很好的重用代码。
 
-    restaction 的输出校验和输入校验差不多，不同的是可以校验任意自定义的 python 对象。
+- 清晰的URL规则
 
-    而 reslful 校验输出更加繁琐！
+    restaction 的 URL 规则清晰，并始终保持一致，减少了编码和阅读API文档的负担。
 
 - 身份验证及权限控制
     
@@ -478,7 +478,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
 - 自动生成文档和res.js
 
-    用 res.js 可以方便的调用 api。
+    restaction 可以自动生成文档和 res.js，用 res.js 可以方便的调用 api。
 
 
 历程
