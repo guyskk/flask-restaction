@@ -103,7 +103,7 @@ Welcome
     输出格式，如果没有$output，则不校验输出。
 
 *$error*
-    描述可能返回的错误，作为API文档的一部分，例如::
+    描述可能返回的错误，仅作为API文档，例如::
 
         $error:
             400.InvalidData: 输入参数错误
@@ -314,6 +314,10 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 
 请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求。
+
+提示：flask 的 `Development Server <http://flask.pocoo.org/docs/0.11/server/>`_ 
+不能检测到 python 代码文件之外变动，所以修改 metafile 的内容之后需要手动重启才能生效。
+
 
 **注册 get_role 函数**
 
