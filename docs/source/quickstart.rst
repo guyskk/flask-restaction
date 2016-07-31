@@ -3,7 +3,7 @@
 快速上手
 ========
 
-一个最小的应用
+Welcome
 -------------------
 
 .. code-block:: python
@@ -128,10 +128,7 @@
         "message": "xxx xxxx"
     }
 
-Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串，JSON的语法是YAML语法的子集，因此大部分的JSON文件都可以被YAML的解析器解析。
-由于YAML的运作主要依赖缩进来决定结构，且字符串不需要双引号，写出的Schema会更加精简。
-
-Schema语法见 :ref:`schema` 
+Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串, Schema语法见 :ref:`schema` 
 
 **自定义 Validater**
 
@@ -139,50 +136,6 @@ Schema语法见 :ref:`schema`
 Api(validaters=validaters) 进行注册。
 
 关于 Validater, 请移步 `Validater <https://github.com/guyskk/validater>`_
-
-
-使用 res.js
------------
-
-res.js是对AJAX的封装，用res.js调用API非常简单，回调是Promise风格的。
-
-用框架提供的命令行工具生成 res.js 和 res.min.js::
-
-    resjs url -d dest
-
-例如::
-
-    resjs http://127.0.0.1:5000 -d static
-
-会将生成的文件保存在 static 目录中。
-
-res.js用法::
-
-    res.resource.action({
-        ...some data
-    }).then(function(value) {
-        ...
-    }).catch(function(error) {
-        ...
-    })
-
-例如调用Hello的API::
-
-    res.hello.get({name:"kk"})
-
-
-详细用法见 :ref:`resjs`
-
-
-使用 res.py
----------------------------
-
-res.py 的用法类似于 res.js，网络请求用的是requests库。
-
-.. code-block:: python
-
-    >>> from flask_restaction import Res
-    >>> help(Res)
 
 
 构建 URL
@@ -231,17 +184,125 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 返回内容会序列化为适当的格式。
 
 
+处理依赖关系
+-----------------------------
+
+一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
+使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
+
+例如，User需要api对象来生成token::
+
+    class User:
+
+        def __init__(self, api):
+            self.api = api
+
+    api.add_resource(User, api=api)
+
+
+或是依赖于其他对象::
+    
+    class User:
+
+        def __init__(self, dependecy):
+            self.dependecy = dependecy
+
+    dependecy = Xxx()
+    api.add_resource(User, dependecy=dependecy)
+
+传给add_resource的参数都会原封不动的传给Resource的 `__init__` 方法。
+
+
 身份验证&权限控制
 -------------------
 
-flask_restaction 使用 *json web token* 作为身份验证工具。
 
-见 `https://github.com/jpadilla/pyjwt <https://github.com/jpadilla/pyjwt>`_
+**举个栗子**:
+
+meta.json 设定角色和权限
+
+.. code-block:: json
+
+    {
+        "$roles": {
+            "admin": {
+                "hello": ["get", "post"],
+                "user": ["post"]
+            },
+            "guest": {
+                "user": ["post"]
+            }
+        }
+    }
+
+
+__init__.py 根据token确定角色
+
+.. code-block:: python
+    
+    api = Api(metafile='meta.json')
+
+    @api.get_role
+    def get_role(token):
+        if token and 'id' in token:
+            user_id = token[id]
+            # query user from database
+            return user_role
+        else:
+            return "guest"
+    
+hello.py 业务代码
+
+.. code-block:: python
+    
+    class Hello:
+
+        def get(self):
+            pass
+        
+        def post(self):
+            pass
+
+user.py 登录接口
+
+.. code-block:: python
+    
+    class User:
+
+        def __init__(self, api):
+            self.api = api
+
+        def post(self, username, password):
+            # query user from database
+            headers = api.gen_auth_headers({"id": user.id})
+            return user, headers
+
+
+
+**使用情景**
+
+用户A直接调用 ``hello.get`` 接口，框架收到请求后，从请求头的 ``Authorization`` 中取出 ``token`` ，
+此时 ``token`` 为 ``None``，然后框架调用 ``get_role(None)`` ，得到角色 ``guest`` ，再判断
+``meta["$roles"]["guest"]["hello"]`` 中有没有 ``get``，发现没有，框架直接拒绝此次请求。
+
+用户A调用 ``user.post`` 接口，框架的处理流程同上，因为 ``meta["$roles"]["guest"]["user"]`` 中有 post，
+框架允许此次请求，请求到达 ``user.login`` 方法，验证用户名和密码，如果验证成功，就调用
+``api.gen_auth_headers`` 方法生成一个 ``token``，``token`` 里面保存了用户ID和过期时间，并用JWT进行签名。
+这个 ``token`` 通过响应头的 ``Authorization`` 返回给用户。
+
+用户A再次调用 ``hello.get`` 接口，在请求头的 ``Authorization`` 中带上了刚才得到的 ``token`` ，
+框架先用JWT验证 ``token`` 的完整性和过期时间，如果没问题，再调用 ``get_role(token)``，得到用户角色。
+假设得到的角色是 ``admin``，因为 ``meta["$roles"]["guest"]["user"]`` 中有 ``post``，框架允许此次请求，
+请求到达 ``hello.get`` 方法。
+
+
+
+**在 metafile 中设定角色和权限**
 
 metafile是一个描述API信息的文件，通常放在应用的根目录下，文件名 meta.json。
 在Api初始化的时候通过 Api(metafile="meta.json") 加载。
 
-在 metafile 中设定角色和权限::
+.. code::
     
     {
         "$roles": {
@@ -252,85 +313,35 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
     }
 
 
-请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求
-(通过判断 Action 是否在 ``meta["$roles"][Resource]`` 中)。 如果不许可此次请求，返回 403 状态码。
+请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求。
 
-**get_role 函数**
+**注册 get_role 函数**
 
-框架通过URL能解析出Resource, Action，但是无法知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数
+框架通过URL能解析出Resource, Action，但是无法知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数。
+如果没有注册 get_role 函数，则框架不进行权限控制，允许所有请求通过。
 
-.. code-block:: python
-    
-    @api.get_role
-    def get_role(token):
-        if token and 'id' in token:
-            user_id = token[id]
-            # query user from database
-            return user_role
-        else:
-            return "Guest"
+**生成 token**
 
-如果没有用 api.get_role 注册返回用户角色的函数，则框架不进行权限控制，允许所有请求通过。
+为了能够确认用户的身份，你需要在用户登录成功后生成一个 token，将 token 通过响应头(``Authorization``)返回给用户。
+token 一般会储存用户ID和过期时间，用户在发送请求时需要将 token 通过请求头发送给服务器。
 
-**api.gen_auth_headers(token)**
+框架使用 *json web token* 作为身份验证工具，见 `pyjwt <https://github.com/jpadilla/pyjwt>`_ 。
 
-为了能够确认用户的身份，你需要在用户登录成功后生成一个令牌(auth token)，
-将令牌通过响应头(``Authorization``)返回给用户。令牌一般会储存用户ID和过期时间，
-用户在发送请求时需要将令牌通过请求头发送给服务器。
-
-.. code-block:: python
-
-    def post_login(self, username, password):
-        """登录"""
-        # query user from database
-        headers = api.gen_auth_headers({"id": user.id})
-        return user, headers
+可以用 api.gen_auth_headers 直接生成含 token 的响应头，也可以用 api.gen_auth_token 只生成 token。
 
 .. Note:: 
 
-    令牌会用密钥(app.secret_key)对 token 进行签名，无法篡改，生成令牌前需要先设置 app.secret_key，或通过 flask 配置。
-    令牌是未加密的，不要把敏感信息保存在里面。
+     token 会用密钥(app.secret_key)对 token 进行签名，无法篡改，生成 token 前需要先设置 app.secret_key，或通过 flask 配置。
+     token 是未加密的，不要把敏感信息保存在里面。
 
 
-res.js 和 res.py 收到响应时，会自动将响应头中的令牌保存，发出请求时，会自动将令牌添加到请求头中。
-res.js 的令牌保存在浏览器的 LocalStorage 中。
-
-身份验证失败会返回::
+身份/权限验证失败会返回::
 
     {
         "status": 403,
         "error": "PermissionDeny",
         "message": "xxx can't access xxxx"
     }
-
-
-处理依赖关系
------------------------------
-
-一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
-使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
-
-例如，User需要api对象来生成auth token::
-
-    class User:
-
-        def __init__(self, api):
-            self.api = api
-
-    api.add_resource(User, api=api)
-
-
-或是依赖于网络上的另一个API::
-    
-    class User:
-
-        def __init__(self, dependecy):
-            self.dependecy = dependecy
-
-    dependecy = Res("url_prefix")
-    api.add_resource(User, dependecy=dependecy)
-
-传给add_resource的参数都会原封不动的传给Resource的 `__init__` 方法。
 
 
 使用蓝图
@@ -392,6 +403,23 @@ Api提供before_request, after_request, error_handler这3个装饰器用来注�
         return make_response(str(data), status, headers)
     
 框架会根据请求头中Accept的值选择合适的响应格式。
+
+
+使用 res.js
+---------------------------
+
+详细用法见 :ref:`resjs`
+
+
+使用 res.py
+---------------------------
+
+res.py 的用法类似于 res.js，网络请求用的是requests库。
+
+.. code-block:: python
+
+    >>> from flask_restaction import Res
+    >>> help(Res)
 
 
 Examples

@@ -3,7 +3,17 @@
 res.js
 ======
 
-res.js是用框架提供的命令行工具自动生成的。
+res.js是对AJAX的封装，用res.js调用API非常简单，回调是Promise风格的。
+
+用框架提供的命令行工具生成 res.js 和 res.min.js::
+
+    resjs url -d dest
+
+例如::
+
+    resjs http://127.0.0.1:5000 -d static
+
+会将生成的文件保存在 static 目录中。
 
 HTTP请求使用的是 `axios <https://github.com/mzabriskie/axios>`_ 。
 
@@ -12,13 +22,27 @@ Promise使用的是 `es6-promise <https://github.com/stefanpenner/es6-promise>`_
 发出请求时会自动添加 auth token(Authorization) 请求头,
 收到响应后会自动将响应头中的 auth token(Authorization) 储存在浏览器 localStorage 中。
 
-用法::
+使用res.js::
 
     // 模块加载方式(UMD)
     var res = require('./res');
 
     //或引用 res.js 文件
     <script type="text/javascript" src="/static/res.js"></script>
+
+res.js用法::
+
+    res.resource.action({
+        ...some data
+    }).then(function(value) {
+        ...
+    }).catch(function(error) {
+        ...
+    })
+
+例如调用Hello的API::
+
+    res.hello.get({name:"kk"})
 
 
 res.ajax

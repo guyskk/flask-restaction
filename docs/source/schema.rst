@@ -3,12 +3,20 @@
 YAML与Schema语法
 ================
 
+JSON的语法是YAML语法的子集，因此大部分的JSON文件都可以被YAML的解析器解析。
+由于YAML的运作主要依赖缩进来决定结构，且字符串不需要双引号，写出的Schema会更加精简，更适合写在文档字符串中。
+
 `Validater <https://github.com/guyskk/validater>`_ 中使用JSON格式表示Schema，
-而JSON的语法是YAML语法的子集，在文档字符串中用YAML格式表示Schema更加精简。
+框架中则用的是YAML，是为了适合不同的使用环境。
 
-YAML语法比JSON语法略复杂一些，新手学习过程中可能会遇到一些问题，这里总结了一些与Schema相关的语法。
+学习Schema语法需要先学会基本的JSON和YAML语法，YAML语法比JSON语法略复杂一些，可以通过 `YAML 语言教程
+<http://www.ruanyifeng.com/blog/2016/07/yaml.html>`_ 对YAML语法进行初步了解。
 
-可以通过 `YAML 语言教程 <http://www.ruanyifeng.com/blog/2016/07/yaml.html>`_ 对YAML语法进行初步了解。
+之后可以看一下 `Validater <https://github.com/guyskk/validater>`_ 的文档，
+Schema语法是基于JSON的，并且与实际数据结构相同，很容易学会。
+
+然后再转换到YAML格式的Schema，新手学习过程中可能会遇到一些问题，
+这里总结了一些与Schema相关的语法，方便上手。
 
 
 字符串
