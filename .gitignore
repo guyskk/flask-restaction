@@ -8,6 +8,7 @@ permission.html
 !flask_restaction/resjs/dist/res.js
 !flask_restaction/resjs/dist/res.min.js
 !flask_restaction/resjs/src/res.js
+!/resjs/dist/
 
 tests/static/
 node_modules/

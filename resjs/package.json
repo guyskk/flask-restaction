@@ -1,0 +1,30 @@
+{
+    "name": "resjs",
+    "version": "0.0.1",
+    "description": "flask-restaction res.js generator",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "gulp build",
+        "test": "mocha"
+    },
+    "author": "guyskk",
+    "license": "MIT",
+    "devDependencies": {
+        "babel-core": "^6.14.0",
+        "babel-loader": "^6.2.5",
+        "babel-plugin-transform-runtime": "^6.12.0",
+        "babel-preset-es2015": "^6.14.0",
+        "gulp": "^3.9.1",
+        "webpack": "^1.13.2",
+        "webpack-stream": "^3.2.0"
+    },
+    "dependencies": {
+        "babel-runtime": "^6.11.6",
+        "handlebars": "^4.0.5",
+        "commander": "^2.9.0",
+        "axios": "^0.13.1"
+    },
+    "engines": {
+        "node": ">=6.5.0"
+    }
+}
