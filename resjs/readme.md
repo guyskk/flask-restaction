@@ -15,7 +15,8 @@
       -h, --help             output usage information
       -V, --version          output the version number
       -p, --prefix [prefix]  urlPrefix of generated res.js
-      -n, --node [node]      generate for nodejs, default for browser
+      -n, --node [node]      generate res.js for nodejs, default for browser
+      -m, --min [min]        minimize generated res.js, default not minimize
 
 
 构建

@@ -91,8 +91,9 @@ function parseTemplate() {
 
 function parseResjs() {
     var node = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+    var min = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-    var filename = 'res.web.js';
+    var filename = min ? 'res.web.min.js' : 'res.web.js';
     if (node) {
         filename = 'res.node.js';
     }
@@ -114,8 +115,9 @@ function resjs(url) {
     var dest = arguments.length <= 1 || arguments[1] === undefined ? './res.js' : arguments[1];
     var urlPrefix = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
     var node = arguments.length <= 3 || arguments[3] === undefined ? undefined : arguments[3];
+    var min = arguments.length <= 4 || arguments[4] === undefined ? undefined : arguments[4];
 
-    return _promise2.default.all([parseMeta(url), parseTemplate(), parseResjs(node)]).then(function (_ref) {
+    return _promise2.default.all([parseMeta(url), parseTemplate(), parseResjs(node, min)]).then(function (_ref) {
         var _ref2 = (0, _slicedToArray3.default)(_ref, 3);
 
         var meta = _ref2[0];

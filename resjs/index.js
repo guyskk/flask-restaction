@@ -70,8 +70,8 @@ function parseTemplate() {
     })
 }
 
-function parseResjs(node = false) {
-    let filename = 'res.web.js'
+function parseResjs(node = false, min = false) {
+    let filename = min ? 'res.web.min.js' : 'res.web.js'
     if (node) {
         filename = 'res.node.js'
     }
@@ -89,8 +89,8 @@ function parseResjs(node = false) {
     })
 }
 
-function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined) {
-    return Promise.all([parseMeta(url), parseTemplate(), parseResjs(node)])
+function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined, min = undefined) {
+    return Promise.all([parseMeta(url), parseTemplate(), parseResjs(node, min)])
         .then(([meta, template, generate]) => {
             if (urlPrefix) {
                 meta.urlPrefix = urlPrefix

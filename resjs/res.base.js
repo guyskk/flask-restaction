@@ -1,4 +1,3 @@
-require('es6-promise').polyfill()
 import ajax from 'superagent'
 
 let base = { ajax }
@@ -7,29 +6,25 @@ function init(authHeader, urlPrefix) {
     base.config = { authHeader, urlPrefix }
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
         let token = null
-        Object.assign(base, {
-            clearToken() {
-                token = null
-            },
-            setToken(token) {
-                token = token
-            },
-            getToken() {
-                return token
-            }
-        })
+        base.clearToken = () => {
+            token = null
+        }
+        base.setToken = (token) => {
+            token = token
+        }
+        base.getToken = () => {
+            return token
+        }
     } else {
-        Object.assign(base, {
-            clearToken() {
-                window.localStorage.removeItem('resjs-auth-token')
-            },
-            setToken(token) {
-                window.localStorage['resjs-auth-token'] = token
-            },
-            getToken() {
-                return window.localStorage['resjs-auth-token']
-            }
-        })
+        base.clearToken = () => {
+            window.localStorage.removeItem('resjs-auth-token')
+        }
+        base.setToken = (token) => {
+            window.localStorage['resjs-auth-token'] = token
+        }
+        base.getToken = () => {
+            return window.localStorage['resjs-auth-token']
+        }
     }
     return function(url, method) {
         return function(data) {
@@ -74,7 +69,6 @@ function init(authHeader, urlPrefix) {
                             // unparsed response
                             resolve(response)
                         }
-
                     }
                 })
             })

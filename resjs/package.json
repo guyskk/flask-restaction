@@ -1,6 +1,6 @@
 {
     "name": "resjs",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "flask-restaction res.js generator",
     "main": "dist/index.js",
     "bin": {
@@ -15,7 +15,9 @@
     ],
     "scripts": {
         "build": "gulp build",
-        "resjs": "node bin/resjs http://127.0.0.1:5000 --prefix http://127.0.0.1:5000 test/res.js",
+        "resjs": "node bin/resjs http://127.0.0.1:5000 test/res.js --prefix http://127.0.0.1:5000",
+        "resjs-min": "node bin/resjs http://127.0.0.1:5000 test/res.js --prefix http://127.0.0.1:5000 --min",
+        "resjs-node": "node bin/resjs http://127.0.0.1:5000 test/res.js --prefix http://127.0.0.1:5000 --node",
         "test": "export CHROME_BIN=chromium && karma start --no-single-run"
     },
     "author": "guyskk",
@@ -46,7 +48,6 @@
     },
     "dependencies": {
         "babel-runtime": "^6.11.6",
-        "es6-promise": "^3.2.1",
         "handlebars": "^4.0.5",
         "commander": "^2.9.0",
         "superagent": "^2.2.0"

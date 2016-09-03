@@ -4,18 +4,11 @@ var _promise = require('babel-runtime/core-js/promise');
 
 var _promise2 = _interopRequireDefault(_promise);
 
-var _assign = require('babel-runtime/core-js/object/assign');
-
-var _assign2 = _interopRequireDefault(_assign);
-
 var _superagent = require('superagent');
 
 var _superagent2 = _interopRequireDefault(_superagent);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-require('es6-promise').polyfill();
-
 
 var base = { ajax: _superagent2.default };
 
@@ -24,30 +17,26 @@ function init(authHeader, urlPrefix) {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
         (function () {
             var token = null;
-            (0, _assign2.default)(base, {
-                clearToken: function clearToken() {
-                    token = null;
-                },
-                setToken: function setToken(token) {
-                    token = token;
-                },
-                getToken: function getToken() {
-                    return token;
-                }
-            });
+            base.clearToken = function () {
+                token = null;
+            };
+            base.setToken = function (token) {
+                token = token;
+            };
+            base.getToken = function () {
+                return token;
+            };
         })();
     } else {
-        (0, _assign2.default)(base, {
-            clearToken: function clearToken() {
-                window.localStorage.removeItem('resjs-auth-token');
-            },
-            setToken: function setToken(token) {
-                window.localStorage['resjs-auth-token'] = token;
-            },
-            getToken: function getToken() {
-                return window.localStorage['resjs-auth-token'];
-            }
-        });
+        base.clearToken = function () {
+            window.localStorage.removeItem('resjs-auth-token');
+        };
+        base.setToken = function (token) {
+            window.localStorage['resjs-auth-token'] = token;
+        };
+        base.getToken = function () {
+            return window.localStorage['resjs-auth-token'];
+        };
     }
     return function (url, method) {
         return function (data) {
