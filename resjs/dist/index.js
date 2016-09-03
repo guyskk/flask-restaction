@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 'use strict';
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
@@ -18,10 +17,6 @@ var _path = require('path');
 var _superagent = require('superagent');
 
 var _superagent2 = _interopRequireDefault(_superagent);
-
-var _commander = require('commander');
-
-var _commander2 = _interopRequireDefault(_commander);
 
 var _handlebars = require('handlebars');
 
@@ -148,9 +143,3 @@ function resjs(url) {
 }
 
 module.exports = resjs;
-
-// cli
-_commander2.default.version('0.0.1').description('generate res.js for browser or nodejs').arguments('<url> [dest]').option('-p, --prefix [prefix]', 'urlPrefix of generated res.js').option('-n, --node [node]', 'generate for nodejs, default for browser').action(function (url, dest, options) {
-    return resjs(url, dest, options.prefix, options.node);
-});
-_commander2.default.parse(process.argv);

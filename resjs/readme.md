@@ -2,7 +2,7 @@
 
 用法
 
-    npm install resjs --save-dev
+    npm install -g resjs
 
     resjs --help
 

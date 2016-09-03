@@ -1,15 +1,29 @@
 {
     "name": "resjs",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "flask-restaction res.js generator",
     "main": "dist/index.js",
+    "bin": {
+        "resjs": "bin/resjs"
+    },
+    "files": [
+        "dist",
+        "bin"
+    ],
+    "keywords": [
+        "cli"
+    ],
     "scripts": {
         "build": "gulp build",
-        "resjs": "node . http://127.0.0.1:5000 --prefix http://127.0.0.1:5000 test/res.js",
+        "resjs": "node bin/resjs http://127.0.0.1:5000 --prefix http://127.0.0.1:5000 test/res.js",
         "test": "export CHROME_BIN=chromium && karma start --no-single-run"
     },
     "author": "guyskk",
     "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/guyskk/flask-restaction/issues",
+        "email": "guyskk@qq.com"
+    },
     "devDependencies": {
         "babel-core": "^6.14.0",
         "babel-loader": "^6.2.5",

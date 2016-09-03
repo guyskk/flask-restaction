@@ -1,9 +1,6 @@
-#!/usr/bin/env node
-
 import fs from 'fs'
 import { join } from 'path'
 import ajax from 'superagent'
-import program from 'commander'
 import Handlebars from 'handlebars'
 
 function toUrl(resource, action) {
@@ -116,15 +113,3 @@ function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined) 
 }
 
 module.exports = resjs
-
-// cli
-program
-    .version('0.0.1')
-    .description('generate res.js for browser or nodejs')
-    .arguments('<url> [dest]')
-    .option('-p, --prefix [prefix]', 'urlPrefix of generated res.js')
-    .option('-n, --node [node]', 'generate for nodejs, default for browser')
-    .action(function(url, dest, options) {
-        return resjs(url, dest, options.prefix, options.node)
-    })
-program.parse(process.argv);
