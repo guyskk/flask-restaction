@@ -1,5 +1,23 @@
 # res.js
 
+用法
+
+    npm install resjs --save-dev
+
+    resjs --help
+
+    Usage: resjs [options] <url> [dest]
+
+    generate res.js for browser or nodejs
+
+    Options:
+
+      -h, --help             output usage information
+      -V, --version          output the version number
+      -p, --prefix [prefix]  urlPrefix of generated res.js
+      -n, --node [node]      generate for nodejs, default for browser
+
+
 构建
 
     cd resjs

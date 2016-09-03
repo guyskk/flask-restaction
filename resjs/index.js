@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from 'fs'
 import { join } from 'path'
 import ajax from 'superagent'
@@ -118,10 +120,10 @@ module.exports = resjs
 // cli
 program
     .version('0.0.1')
-    .description('generate res.js')
+    .description('generate res.js for browser or nodejs')
     .arguments('<url> [dest]')
     .option('-p, --prefix [prefix]', 'urlPrefix of generated res.js')
-    .option('-n, --node [node]', 'generate for nodejs or not')
+    .option('-n, --node [node]', 'generate for nodejs, default for browser')
     .action(function(url, dest, options) {
         return resjs(url, dest, options.prefix, options.node)
     })

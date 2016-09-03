@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
@@ -149,7 +150,7 @@ function resjs(url) {
 module.exports = resjs;
 
 // cli
-_commander2.default.version('0.0.1').description('generate res.js').arguments('<url> [dest]').option('-p, --prefix [prefix]', 'urlPrefix of generated res.js').option('-n, --node [node]', 'generate for nodejs or not').action(function (url, dest, options) {
+_commander2.default.version('0.0.1').description('generate res.js for browser or nodejs').arguments('<url> [dest]').option('-p, --prefix [prefix]', 'urlPrefix of generated res.js').option('-n, --node [node]', 'generate for nodejs, default for browser').action(function (url, dest, options) {
     return resjs(url, dest, options.prefix, options.node);
 });
 _commander2.default.parse(process.argv);
