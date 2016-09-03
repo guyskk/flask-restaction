@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Docs</title>
+    <link rel="stylesheet" href="?f=docs.css" charset="utf-8">
+    <script src="?f=vue.min.js" charset="utf-8"></script>
+    <script src="$(res.js)" charset="utf-8"></script>
+</head>
+
+<body>
+    <div id="app">
+        <pre style="display:none;" v-show="showRaw">{{meta}}</pre>
+        <div style="display:none;" v-show="!showRaw">
+            {{message}}
+            <button type="button" name="button" @click="toggleRaw">toggleRaw</button>
+        </div>
+    </div>
+    <script src="?f=docs.min.js" charset="utf-8"></script>
+</body>
+
+</html>

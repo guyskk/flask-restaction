@@ -9,6 +9,10 @@ permission.html
 !flask_restaction/resjs/dist/res.min.js
 !flask_restaction/resjs/src/res.js
 !/resjs/dist/
+!flask_restaction/docs/dist/
+!flask_restaction/docs/dist/docs.css
+!flask_restaction/docs/dist/docs.min.js
+!flask_restaction/docs/dist/vue.min.js
 
 tests/static/
 node_modules/
