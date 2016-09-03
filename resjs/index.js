@@ -118,7 +118,7 @@ module.exports = resjs
 // cli
 program
     .version('0.0.1')
-    .description('generated res.js')
+    .description('generate res.js')
     .arguments('<url> [dest]')
     .option('-p, --prefix [prefix]', 'urlPrefix of generated res.js')
     .option('-n, --node [node]', 'generate for nodejs or not')

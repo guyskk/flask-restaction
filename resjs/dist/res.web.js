@@ -110,9 +110,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var request = (0, _superagent2.default)(method, base.config.urlPrefix + url);
 	            request = request.set('accept', 'application/json');
 	            if (base.config.authHeader) {
-	                var token = base.getToken();
-	                if (token) {
-	                    request = request.set(base.config.authHeader, token);
+	                var _token = base.getToken();
+	                if (_token) {
+	                    request = request.set(base.config.authHeader, _token);
 	                }
 	            }
 	            if (method == 'PUT' || method == 'POST' || method == 'PATCH') {
@@ -136,9 +136,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                    } else {
 	                        if (base.config.authHeader) {
-	                            var _token = response.header[base.config.authHeader];
-	                            if (_token) {
-	                                base.setToken(_token);
+	                            var _token2 = response.header[base.config.authHeader];
+	                            if (_token2) {
+	                                base.setToken(_token2);
 	                            }
 	                        }
 	                        if (response.body) {

@@ -36,7 +36,7 @@ function init(authHeader, urlPrefix) {
             let request = ajax(method, base.config.urlPrefix + url)
             request = request.set('accept', 'application/json')
             if (base.config.authHeader) {
-                var token = base.getToken()
+                let token = base.getToken()
                 if (token) {
                     request = request.set(base.config.authHeader, token)
                 }
