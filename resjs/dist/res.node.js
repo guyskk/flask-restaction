@@ -17,7 +17,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 require('es6-promise').polyfill();
 
 
-var base = {};
+var base = { ajax: _superagent2.default };
 
 function init(authHeader, urlPrefix) {
     base.config = { authHeader: authHeader, urlPrefix: urlPrefix };
@@ -52,7 +52,7 @@ function init(authHeader, urlPrefix) {
     return function (url, method) {
         return function (data) {
             var request = (0, _superagent2.default)(method, base.config.urlPrefix + url);
-            request = request.set('Accept', 'application/json');
+            request = request.set('accept', 'application/json');
             if (base.config.authHeader) {
                 var token = base.getToken();
                 if (token) {
@@ -85,7 +85,13 @@ function init(authHeader, urlPrefix) {
                                 base.setToken(_token);
                             }
                         }
-                        resolve(response.body);
+                        if (response.body) {
+                            // JSON response
+                            resolve(response.body);
+                        } else {
+                            // unparsed response
+                            resolve(response);
+                        }
                     }
                 });
             });

@@ -29,7 +29,7 @@ var _handlebars2 = _interopRequireDefault(_handlebars);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function toUrl(resource, action) {
-    //Convert resource.action to {url, method}
+    //Convert resource.action to {url, method}, method is UpperCase
     var i = action.indexOf("_");
     if (i < 0) {
         return {
@@ -57,8 +57,9 @@ function readMeta(url) {
 }
 
 function parseMeta(url) {
+    // authHeader is LowerCase
     return readMeta(url).then(function (meta) {
-        var authHeader = meta.$auth ? meta.$auth.header : null;
+        var authHeader = meta.$auth ? meta.$auth.header.toLowerCase() : null;
         var urlPrefix = meta.$url_prefix ? meta.$url_prefix : '';
         var resources = {};
         for (var k in meta) {
@@ -134,7 +135,7 @@ function resjs(url) {
                 if (error) {
                     reject(error);
                 } else {
-                    resolve('OK');
+                    resolve('OK, saved in: ' + dest);
                 }
             });
         });

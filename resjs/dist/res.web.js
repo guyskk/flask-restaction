@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(77).polyfill();
 
 
-	var base = {};
+	var base = { ajax: _superagent2.default };
 
 	function init(authHeader, urlPrefix) {
 	    base.config = { authHeader: authHeader, urlPrefix: urlPrefix };
@@ -108,7 +108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return function (url, method) {
 	        return function (data) {
 	            var request = (0, _superagent2.default)(method, base.config.urlPrefix + url);
-	            request = request.set('Accept', 'application/json');
+	            request = request.set('accept', 'application/json');
 	            if (base.config.authHeader) {
 	                var token = base.getToken();
 	                if (token) {
@@ -141,7 +141,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                base.setToken(_token);
 	                            }
 	                        }
-	                        resolve(response.body);
+	                        if (response.body) {
+	                            // JSON response
+	                            resolve(response.body);
+	                        } else {
+	                            // unparsed response
+	                            resolve(response);
+	                        }
 	                    }
 	                });
 	            });

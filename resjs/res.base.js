@@ -1,7 +1,7 @@
 require('es6-promise').polyfill()
 import ajax from 'superagent'
 
-let base = {}
+let base = { ajax }
 
 function init(authHeader, urlPrefix) {
     base.config = { authHeader, urlPrefix }
@@ -34,7 +34,7 @@ function init(authHeader, urlPrefix) {
     return function(url, method) {
         return function(data) {
             let request = ajax(method, base.config.urlPrefix + url)
-            request = request.set('Accept', 'application/json')
+            request = request.set('accept', 'application/json')
             if (base.config.authHeader) {
                 var token = base.getToken()
                 if (token) {
@@ -67,7 +67,14 @@ function init(authHeader, urlPrefix) {
                                 base.setToken(token)
                             }
                         }
-                        resolve(response.body)
+                        if (response.body) {
+                            // JSON response
+                            resolve(response.body)
+                        } else {
+                            // unparsed response
+                            resolve(response)
+                        }
+
                     }
                 })
             })

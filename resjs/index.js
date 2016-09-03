@@ -5,7 +5,7 @@ import program from 'commander'
 import Handlebars from 'handlebars'
 
 function toUrl(resource, action) {
-    //Convert resource.action to {url, method}
+    //Convert resource.action to {url, method}, method is UpperCase
     let i = action.indexOf("_")
     if (i < 0) {
         return {
@@ -35,8 +35,9 @@ function readMeta(url) {
 }
 
 function parseMeta(url) {
+    // authHeader is LowerCase
     return readMeta(url).then(meta => {
-        let authHeader = meta.$auth ? meta.$auth.header : null
+        let authHeader = meta.$auth ? meta.$auth.header.toLowerCase() : null
         let urlPrefix = meta.$url_prefix ? meta.$url_prefix : ''
         let resources = {}
         for (let k in meta) {
@@ -101,7 +102,7 @@ function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined) 
                     if (error) {
                         reject(error)
                     } else {
-                        resolve('OK')
+                        resolve(`OK, saved in: ${dest}`)
                     }
                 })
             })
