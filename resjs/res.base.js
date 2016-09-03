@@ -1,13 +1,10 @@
-import ajax from 'axios'
+require('es6-promise').polyfill()
+import ajax from 'superagent'
 
-let base = { ajax: ajax }
+let base = {}
 
-function init(urlPrefix, authHeader) {
-    base.config = { urlPrefix, authHeader }
-        // {
-        //     urlPrefix: urlPrefix,
-        //     authHeader: authHeader.toLowerCase()
-        // }
+function init(authHeader, urlPrefix) {
+    base.config = { authHeader, urlPrefix }
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
         let token = null
         Object.assign(base, {
@@ -36,42 +33,49 @@ function init(urlPrefix, authHeader) {
     }
     return function(url, method) {
         return function(data) {
-            var options = {
-                url: base.config.urlPrefix + url,
-                method: method,
-                headers: { 'Accept': 'application/json' }
-            }
+            let request = ajax(method, base.config.urlPrefix + url)
+            request = request.set('Accept', 'application/json')
             if (base.config.authHeader) {
                 var token = base.getToken()
                 if (token) {
-                    options.headers[base.config.authHeader] = token
+                    request = request.set(base.config.authHeader, token)
                 }
             }
             if (method == 'PUT' || method == 'POST' || method == 'PATCH') {
-                options.data = data
+                request = request.send(data)
             } else {
-                options.params = data
+                request = request.query(data)
             }
-            return base.ajax(options).then(function(response) {
-                if (base.config.authHeader) {
-                    var token = response.headers[base.config.authHeader]
-                    if (token) {
-                        base.setToken(token)
+            return new Promise((resolve, reject) => {
+                request.end((error, response) => {
+                    if (error) {
+                        if (error.response) {
+                            // 4xx or 5xx response
+                            if (error.response.body) {
+                                reject(error.response.body)
+                            } else {
+                                reject(error.response)
+                            }
+                        } else {
+                            // Network failures, timeouts, and other errors
+                            reject(error)
+                        }
+                    } else {
+                        if (base.config.authHeader) {
+                            let token = response.header[base.config.authHeader]
+                            if (token) {
+                                base.setToken(token)
+                            }
+                        }
+                        resolve(response.body)
                     }
-                }
-                return response.data
-            }).catch(function(error) {
-                if (error.response) {
-                    throw error.response.data
-                } else {
-                    throw error.message
-                }
+                })
             })
         }
     }
 }
 
-let core = "#res.core.js#";
-core(base, init);
+let core = "#res.core.js#"
+core(base, init)
 
-module.exports = base;
+module.exports = base

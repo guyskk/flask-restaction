@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { join } from 'path'
-import ajax from 'axios'
+import ajax from 'superagent'
 import program from 'commander'
 import Handlebars from 'handlebars'
 
@@ -10,25 +10,27 @@ function toUrl(resource, action) {
     if (i < 0) {
         return {
             url: "/" + resource,
-            method: action
+            method: action.toUpperCase()
         }
     } else {
         return {
             url: `/${resource}/${action.slice(i+1)}`,
-            method: action.slice(0, i)
+            method: action.slice(0, i).toUpperCase()
         }
     }
 }
 
 function readMeta(url) {
-    return ajax(url, { 'Accept': 'application/json' }).then(response => {
-        return response.data
-    }).catch(error => {
-        if (error.response) {
-            throw `$(error.response.status) $(error.response.statusText)`
-        } else {
-            throw error.message
-        }
+    return new Promise((resolve, reject) => {
+        ajax('GET', url)
+            .set('Accept', 'application/json')
+            .end((error, response) => {
+                if (error) {
+                    reject(error)
+                } else {
+                    resolve(response.body)
+                }
+            })
     })
 }
 
@@ -52,8 +54,6 @@ function parseMeta(url) {
 }
 
 function parseTemplate() {
-    console.log(__dirname)
-    console.log(__filename)
     let filename = join(__dirname, 'res.core.hbs')
     return new Promise((resolve, reject) => {
         fs.readFile(filename, { encoding: 'utf-8' }, (error, data) => {
@@ -70,8 +70,12 @@ function parseTemplate() {
     })
 }
 
-function parseResjs() {
-    let filename = join(__dirname, 'res.base.js')
+function parseResjs(node = false) {
+    let filename = 'res.web.js'
+    if (node) {
+        filename = 'res.node.js'
+    }
+    filename = join(__dirname, filename)
     return new Promise((resolve, reject) => {
         fs.readFile(filename, { encoding: 'utf-8' }, (error, data) => {
             if (error) {
@@ -85,8 +89,8 @@ function parseResjs() {
     })
 }
 
-function resjs(url, dest = './res.js', urlPrefix = undefined) {
-    return Promise.all([parseMeta(url), parseTemplate(), parseResjs()])
+function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined) {
+    return Promise.all([parseMeta(url), parseTemplate(), parseResjs(node)])
         .then(([meta, template, generate]) => {
             if (urlPrefix) {
                 meta.urlPrefix = urlPrefix
@@ -116,8 +120,8 @@ program
     .description('generated res.js')
     .arguments('<url> [dest]')
     .option('-p, --prefix [prefix]', 'urlPrefix of generated res.js')
+    .option('-n, --node [node]', 'generate for nodejs or not')
     .action(function(url, dest, options) {
-        console.log('%s %s %s', url, dest, options.prefix);
-        return resjs(url, dest, options.prefix)
+        return resjs(url, dest, options.prefix, options.node)
     })
 program.parse(process.argv);

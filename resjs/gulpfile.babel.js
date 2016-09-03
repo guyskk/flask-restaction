@@ -1,4 +1,6 @@
 import gulp from 'gulp'
+import rename from 'gulp-rename'
+import babel from 'gulp-babel'
 import webpack from 'webpack-stream'
 
 let webpackModule = {
@@ -9,42 +11,35 @@ let webpackModule = {
     }]
 }
 
-gulp.task('build:res', () => {
+gulp.task('build:res-web', () => {
     return gulp.src('res.base.js')
         .pipe(webpack({
             entry: './res.base.js',
             output: {
                 library: 'res',
                 libraryTarget: 'umd',
-                filename: 'res.base.js'
+                filename: 'res.web.js'
             },
             module: webpackModule
         }))
+        .pipe(gulp.dest('./dist/'))
+})
+
+gulp.task('build:res-node', () => {
+    return gulp.src('res.base.js')
+        .pipe(babel())
+        .pipe(rename('res.node.js'))
         .pipe(gulp.dest('./dist/'))
 })
 
 gulp.task('build:index', () => {
     return gulp.src('index.js')
-        .pipe(webpack({
-            entry: './index.js',
-            output: {
-                library: 'resjs',
-                libraryTarget: 'commonjs2',
-                filename: 'index.js'
-            },
-            target: 'node',
-            externals: ['handlebars', 'commander', 'axios'],
-            node: {
-                __dirname: false,
-                __filename: false
-            },
-            module: webpackModule
-        }))
+        .pipe(babel())
         .pipe(gulp.dest('./dist/'))
 })
 
 
-gulp.task('build', ['build:res', 'build:index'])
+gulp.task('build', ['build:res-web', 'build:res-node', 'build:index'])
 gulp.task('default', ['build'])
 gulp.task('watch', ['build'], () => {
     gulp.watch('*.js', ['build'])
