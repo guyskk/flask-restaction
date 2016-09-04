@@ -48,7 +48,9 @@ gulp.task('build:js-min', () => {
 })
 gulp.task('build:css', () => {
     return gulp.src('docs.less')
-        .pipe(less())
+        .pipe(less({
+            paths: ['./']
+        }))
         .pipe(autoprefixer())
         .pipe(gulp.dest('dist'))
 })

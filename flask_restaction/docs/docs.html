@@ -3,21 +3,81 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Docs</title>
     <link rel="stylesheet" href="?f=docs.css" charset="utf-8">
+    <script src="?f=pace.min.js" charset="utf-8"></script>
     <script src="?f=vue.min.js" charset="utf-8"></script>
+    <script src="?f=marked.min.js" charset="utf-8"></script>
     <script src="$(res.js)" charset="utf-8"></script>
 </head>
 
 <body>
     <div id="app">
-        <pre style="display:none;" v-show="showRaw">{{meta}}</pre>
-        <div style="display:none;" v-show="!showRaw">
-            {{message}}
-            <button type="button" name="button" @click="toggleRaw">toggleRaw</button>
+        <nav class="header">
+            <button class="btn" type="button" name="button" @click="toggleRaw">toggleRaw</button>
+        </nav>
+        <div class="container-side">
+            <h3><a href="#" @click="showBasic">简介</a></h3>
+            <h3><a href="#">角色</a></h3>
+            <ul>
+                <li v-for="(item,role) in roles">
+                    <a href="#" @click="showRole(role)">{{role}}</a>
+                </li>
+            </ul>
+            <h3><a href="#">资源</a></h3>
+            <ul>
+                <li v-for="(item,resource) in resources">
+                    <a href="#" @click="showResource(resource)">{{resource}}</a>
+                    <ul>
+                        <li v-for="(__,action) in item" v-if="action.slice(0,1)!='$'">
+                            <a :href="'#'+resource+'.'+action" @click="showResource(resource)">{{action}}</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="container">
+            <pre style="display:none;" v-show="showRaw">{{meta}}</pre>
+            <section style="display:none;" v-show="!showRaw">
+                <div style="display:none;" v-if="basic" v-show="currentView=='basic'">
+                    <div v-marked="basic.$desc"></div>
+                    <h3>授权信息</h3>
+                    <pre>{{basic.$auth|json}}</pre>
+                    <template v-if="basic.$shared&&Object.keys(basic.$shared).length>0">
+                      <h4>全局共享的数据结构</h4>
+                      <pre>{{basic.$shared}}</pre>
+                    </template>
+                </div>
+                <div style="display:none;" v-if="currentRole" v-show="currentView=='roles'">
+                    <pre>{{currentRole|json}}</pre>
+                </div>
+                <div style="display:none;" v-if="currentResource" v-show="currentView=='resources'">
+                    <h1>{{currentResourceName}}</h1>
+                    <p>
+                        {{currentResource.$desc}}
+                    </p>
+                    <template v-if="currentResource.$shared">
+                      <h4>资源内共享的数据结构</h4>
+                      <pre>{{currentResource.$shared}}</pre>
+                    </template>
+                    <template v-for="(item,action) in currentResource" v-if="action.slice(0,1)!='$'">
+                      <h3 :id="currentResourceName+'.'+action">{{action}}</h3>
+                      <p>{{item.$desc}}</p>
+                      <p class="mt-30">输入</p>
+                      <pre>{{item.$input?item.$input:'无'|json}}</pre>
+                      <p class="mt-30">输出</p>
+                      <pre>{{item.$output?item.$output:'无'|json}}</pre>
+                      <template v-if="item.$error">
+                        <p class="mt-30">错误</p>
+                        <pre >{{item.$error|json}}</pre>
+                      </template>
+                    </template>
+                </div>
+            </section>
         </div>
     </div>
-    <script src="?f=docs.min.js" charset="utf-8"></script>
+    <script src="?f=docs.js" charset="utf-8"></script>
 </body>
 
 </html>
