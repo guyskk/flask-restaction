@@ -1,8 +1,11 @@
 import gulp from 'gulp'
 import less from 'gulp-less'
+import rename from 'gulp-rename'
 import autoprefixer from 'gulp-autoprefixer'
 import webpack from 'webpack'
 import webpackStream from 'webpack-stream'
+import cleanCss from 'gulp-clean-css'
+
 
 let webpackModule = {
     loaders: [{
@@ -52,6 +55,9 @@ gulp.task('build:css', () => {
             paths: ['./']
         }))
         .pipe(autoprefixer())
+        .pipe(gulp.dest('dist'))
+        .pipe(cleanCss())
+        .pipe(rename('docs.min.css'))
         .pipe(gulp.dest('dist'))
 })
 

@@ -1,0 +1,70 @@
+html {
+  text-size-adjust: 100%;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  background-color: @color-background-light;
+  color: @color-text-dark;
+  font-family: @font-family;
+  line-height: @line-height;
+  font-size: @font-size;
+}
+
+a {
+  color: @color-link;
+  text-decoration: none;
+
+  &:hover {
+    color: darken(@color-link, 15%);
+    cursor: pointer;
+  }
+
+  &:active,
+  &:hover {
+    text-decoration: underline;
+  }
+}
+code,pre {
+  font-family: @font-family-monospace;
+  background-color: @color-background-gray;
+}
+code {
+  padding: @padding-small;
+}
+pre {
+  line-height: @line-height-small;
+  font-size: @font-size-small;
+  padding: @width-gap;
+  overflow: auto;
+  code {
+    background-color: transparent;
+    padding: 0;
+  }
+}
+
+blockquote {
+  border-left: @width-gap / 3 solid @color-text-gray;
+  padding-left: @width-gap;
+}
+
+@media (max-width: @width-breakpoint) {
+  pre {
+    padding: @padding-small;
+  }
+  blockquote{
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+img {
+  max-width: 100%;
+  vertical-align: middle;
+}

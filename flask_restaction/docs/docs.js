@@ -15,7 +15,15 @@ function parseMeta(meta) {
     }
     return { basic, roles, resources }
 }
-marked('# Marked in browser\n\nRendered by **marked**.');
+
+window.isEmpty = function(value) {
+    return !value || Object.keys(value).length === 0
+}
+
+window.isSpecial = function(value) {
+    return !value || value.slice(0, 1) == '$'
+}
+
 let app = new Vue({
     el: '#app',
     data: {
@@ -23,55 +31,47 @@ let app = new Vue({
         basic: null,
         roles: null,
         resources: null,
-        showRaw: false,
-        currentView: null,
-        currentRole: null,
-        currentRoleName: null,
-        currentResource: null,
-        currentResourceName: null
+        view: null,
+        role: null,
+        roleName: null,
+        resource: null,
+        resourceName: null
     },
     methods: {
-        toggleRaw: function() {
-            app.showRaw = !app.showRaw
+        showMeta: function() {
+            this.view = 'meta'
+        },
+        showTerminal: function() {
+            this.view = 'terminal'
         },
         showBasic: function() {
-            app.currentView = 'basic'
+            this.view = 'basic'
         },
-        showRole: function(role) {
-            app.currentRoleName = role
-            app.currentRole = app.roles[role]
-            app.currentView = 'roles'
+        showRole: function(name) {
+            this.roleName = name
+            this.role = this.roles[name]
+            this.view = 'role'
         },
-        showResource: function(resource) {
-            app.currentResourceName = resource
-            app.currentResource = app.resources[resource]
-            app.currentView = 'resources'
+        showResource: function(name) {
+            this.resourceName = name
+            this.resource = this.resources[name]
+            this.view = 'resource'
         }
     },
     created: function() {
-        res.ajax('')
-            .set('Accept', 'application/json')
-            .then(function(response) {
-                if (response.status >= 200 && response.status <= 299) {
-                    app.meta = response.body
-                    let meta = parseMeta(response.body)
-                    app.basic = meta.basic
-                    app.roles = meta.roles
-                    app.resources = meta.resources
-                    app.currentView = 'basic'
-                } else {
-                    app.message = JSON.stringify(response.body) || response.statusText
-                }
-            })
+        let metaText = document.getElementById('meta').value
+        let meta = parseMeta(JSON.parse(metaText))
+        this.meta = meta
+        this.basic = meta.basic
+        this.roles = meta.roles
+        this.resources = meta.resources
+    },
+    mounted: function() {
+        this.showBasic()
     },
     directives: {
         marked: {
             bind: function(el, binding) {
-                if (binding.value && binding.value != binding.oldValue) {
-                    el.innerHTML = marked(binding.value)
-                }
-            },
-            update: function(el, binding) {
                 if (binding.value && binding.value != binding.oldValue) {
                     el.innerHTML = marked(binding.value)
                 }
