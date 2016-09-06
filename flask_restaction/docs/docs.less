@@ -4,6 +4,7 @@
 @import "iconfont.less";
 @import "pace.less";
 
+
 .container {
   position: relative;
   width: 100%;
@@ -14,6 +15,7 @@
   position: fixed;
   top: 0;
   bottom: 0;
+  left: 0;
   width: 210px;
   padding: @width-gap;
   overflow-x: hidden;
@@ -34,6 +36,10 @@
   }
 }
 
+.sidebar-mobile{
+  display: block;
+}
+
 .content{
   margin-left: 210px;
   padding: 0 @width-gap*4 @width-gap*2;
@@ -46,20 +52,33 @@
   margin-bottom: 10px;
   a {
     color: @color-text-gray;
+    margin-left: 8px;
+    margin-right: 8px;
+    float: right;
     &:hover{
       color: @color-text-dark;
+      text-decoration: none;
+    }
+    i{
+      font-size: 32px;
     }
   }
+}
+.show-on-mobile{
+  display: none;
 }
 @media (max-width: @width-breakpoint) {
   .container{
     padding: @padding-small;
   }
-  .sidebar{
-    display: none;
-  }
   .content {
     margin-left: 0;
     padding: @padding-small;
+  }
+  .show-on-mobile{
+    display: block;
+  }
+  .hide-on-mobile{
+    display: none;
   }
 }

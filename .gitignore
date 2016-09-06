@@ -1,18 +1,12 @@
-dist/
-res.js
-res.min.js
-resdocs.html
-permission.html
-!flask_restaction/tmpl/*
-!flask_restaction/resjs/dist/
-!flask_restaction/resjs/dist/res.js
-!flask_restaction/resjs/dist/res.min.js
-!flask_restaction/resjs/src/res.js
-!/resjs/dist/
-!flask_restaction/docs/dist/
-!flask_restaction/docs/dist/docs.css
-!flask_restaction/docs/dist/docs.min.js
-!flask_restaction/docs/dist/vue.min.js
+/dist
+**/examples/**/res.js
+**/examples/**/res.min.js
+**/tests/**/res.js
+**/tests/**/res.min.js
+**/test/**/res.js
+**/test/**/res.min.js
+**/docs/**/res.js
+**/docs/**/res.min.js
 
 tests/static/
 node_modules/

@@ -89,7 +89,8 @@
 	        role: null,
 	        roleName: null,
 	        resource: null,
-	        resourceName: null
+	        resourceName: null,
+	        sidebar: true
 	    },
 	    methods: {
 	        showMeta: function showMeta() {
@@ -110,6 +111,14 @@
 	            this.resourceName = name;
 	            this.resource = this.resources[name];
 	            this.view = 'resource';
+	        },
+	        toggleSidebar: function toggleSidebar() {
+	            this.sidebar = !this.sidebar;
+	        },
+	        hideSidebar: function hideSidebar() {
+	            if (window.innerWidth < 768) {
+	                this.sidebar = false;
+	            }
 	        }
 	    },
 	    created: function created() {

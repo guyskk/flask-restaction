@@ -35,7 +35,8 @@ let app = new Vue({
         role: null,
         roleName: null,
         resource: null,
-        resourceName: null
+        resourceName: null,
+        sidebar: true
     },
     methods: {
         showMeta: function() {
@@ -56,6 +57,14 @@ let app = new Vue({
             this.resourceName = name
             this.resource = this.resources[name]
             this.view = 'resource'
+        },
+        toggleSidebar: function() {
+            this.sidebar = !this.sidebar
+        },
+        hideSidebar: function() {
+            if (window.innerWidth < 768) {
+                this.sidebar = false
+            }
         }
     },
     created: function() {

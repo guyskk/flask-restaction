@@ -447,8 +447,11 @@ img {
   -webkit-text-stroke-width: 0.2px;
   -moz-osx-font-smoothing: grayscale;
 }
+.icon-index:before {
+  content: "\f0006";
+}
 .icon-terminal:before {
-  content: "\e685";
+  content: "\e784";
 }
 .pace {
   -webkit-pointer-events: none;
@@ -479,6 +482,7 @@ img {
   position: fixed;
   top: 0;
   bottom: 0;
+  left: 0;
   width: 210px;
   padding: 15px;
   overflow-x: hidden;
@@ -497,6 +501,9 @@ img {
 .sidebar a {
   color: #fff;
 }
+.sidebar-mobile {
+  display: block;
+}
 .content {
   margin-left: 210px;
   padding: 0 60px 30px;
@@ -510,19 +517,32 @@ img {
 }
 .toolbar a {
   color: #757575;
+  margin-left: 8px;
+  margin-right: 8px;
+  float: right;
 }
 .toolbar a:hover {
   color: #212121;
+  text-decoration: none;
+}
+.toolbar a i {
+  font-size: 32px;
+}
+.show-on-mobile {
+  display: none;
 }
 @media (max-width: 768px) {
   .container {
     padding: 2px 3px;
   }
-  .sidebar {
-    display: none;
-  }
   .content {
     margin-left: 0;
     padding: 2px 3px;
+  }
+  .show-on-mobile {
+    display: block;
+  }
+  .hide-on-mobile {
+    display: none;
   }
 }
