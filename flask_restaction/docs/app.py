@@ -32,7 +32,11 @@ app.debug = True
 api = Api(app, docs=__doc__)
 api.meta["$roles"] = {
     "管理员": {
-        "hello": ["get", "post_login", "delete", "put", "post"]
+        "hello": ["get", "post_login", "delete", "put", "post", "put_login"],
+        "User": ["get", "post_login", "delete", "put", "post"],
+        "Article": ["get", "post_login", "delete", "put"],
+        "hello5": ["get", "post_login", "delete"],
+        "hello6": ["get", "post_login"]
     },
     "普通用户": {
         "hello": ["get", "post_login"]
@@ -48,7 +52,7 @@ class Hello:
 
     def get(self, name):
         """
-        Get hello
+        Get helloGet helloGet helloGet helloGet helloGet helloGet helloGet he
 
         $input:
             name?str: your name

@@ -70,13 +70,41 @@
 	    return { basic: basic, roles: roles, resources: resources };
 	}
 
-	window.isEmpty = function (value) {
-	    return !value || (0, _keys2.default)(value).length === 0;
-	};
+	function isAllow(role, resource, action) {
+	    if (role[resource]) {
+	        if (role[resource].indexOf(action) > 0) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
 
-	window.isSpecial = function (value) {
+	function parseRole(role, resources) {
+	    var result = {};
+	    for (var resource in resources) {
+	        result[resource] = {};
+	        for (var action in resources[resource]) {
+	            if (isSpecial(action)) {
+	                continue;
+	            }
+	            result[resource][action] = {
+	                desc: resources[resource][action].$desc,
+	                allow: isAllow(role, resource, action)
+	            };
+	        }
+	    }
+	    return result;
+	}
+
+	function isEmpty(value) {
+	    return !value || (0, _keys2.default)(value).length === 0;
+	}
+
+	function isSpecial(value) {
 	    return !value || value.slice(0, 1) == '$';
-	};
+	}
+	window.isEmpty = isEmpty;
+	window.isSpecial = isSpecial;
 
 	var app = new Vue({
 	    el: '#app',
@@ -104,7 +132,7 @@
 	        },
 	        showRole: function showRole(name) {
 	            this.roleName = name;
-	            this.role = this.roles[name];
+	            this.role = parseRole(this.roles[name], this.resources);
 	            this.view = 'role';
 	        },
 	        showResource: function showResource(name) {

@@ -16,13 +16,41 @@ function parseMeta(meta) {
     return { basic, roles, resources }
 }
 
-window.isEmpty = function(value) {
+function isAllow(role, resource, action) {
+    if (role[resource]) {
+        if (role[resource].indexOf(action) > 0) {
+            return true
+        }
+    }
+    return false
+}
+
+function parseRole(role, resources) {
+    let result = {}
+    for (let resource in resources) {
+        result[resource] = {}
+        for (let action in resources[resource]) {
+            if (isSpecial(action)) {
+                continue
+            }
+            result[resource][action] = {
+                desc: resources[resource][action].$desc,
+                allow: isAllow(role, resource, action)
+            }
+        }
+    }
+    return result
+}
+
+function isEmpty(value) {
     return !value || Object.keys(value).length === 0
 }
 
-window.isSpecial = function(value) {
+function isSpecial(value) {
     return !value || value.slice(0, 1) == '$'
 }
+window.isEmpty = isEmpty
+window.isSpecial = isSpecial
 
 let app = new Vue({
     el: '#app',
@@ -39,33 +67,34 @@ let app = new Vue({
         sidebar: true
     },
     methods: {
-        showMeta: function() {
+        showMeta() {
             this.view = 'meta'
         },
-        showTerminal: function() {
+        showTerminal() {
             this.view = 'terminal'
         },
-        showBasic: function() {
+        showBasic() {
             this.view = 'basic'
         },
-        showRole: function(name) {
+        showRole(name) {
             this.roleName = name
-            this.role = this.roles[name]
+            this.role = parseRole(this.roles[name], this.resources)
             this.view = 'role'
         },
-        showResource: function(name) {
+        showResource(name) {
             this.resourceName = name
             this.resource = this.resources[name]
             this.view = 'resource'
         },
-        toggleSidebar: function() {
+        toggleSidebar() {
             this.sidebar = !this.sidebar
         },
-        hideSidebar: function() {
+        hideSidebar() {
             if (window.innerWidth < 768) {
                 this.sidebar = false
             }
-        }
+        },
+
     },
     created: function() {
         let metaText = document.getElementById('meta').value

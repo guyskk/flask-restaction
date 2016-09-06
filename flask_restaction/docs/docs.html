@@ -65,8 +65,19 @@
                   <pre>{{basic.$shared}}</pre>
                 </template>
             </section>
-            <section style="display:none;" v-if="role" v-show="view=='role'">
-                <pre>{{role|json}}</pre>
+            <section style="display:none;" class="section-role" v-if="role" v-show="view=='role'">
+                <table>
+                    <tr v-for="(item,resource) in role">
+                        <td class="role-resource">{{resource}}</td>
+                        <td v-for="(info,action) in item" class="role-item">
+                            <div class="role-item-title">
+                                <i class="iconfont" :class="{'icon-allow':info.allow, 'icon-block':!info.allow}"></i>
+                                <span>{{action}}</span>
+                            </div>
+                            <div class="role-item-desc">{{info.desc}}</div>
+                        </td>
+                    </tr>
+                </table>
             </section>
             <section style="display:none;" v-if="resource" v-show="view=='resource'">
                 <h1>{{resourceName}}</h1>

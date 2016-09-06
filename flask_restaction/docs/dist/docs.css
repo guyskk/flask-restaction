@@ -453,6 +453,12 @@ img {
 .icon-terminal:before {
   content: "\e784";
 }
+.icon-allow:before {
+  content: "\e644";
+}
+.icon-block:before {
+  content: "\e670";
+}
 .pace {
   -webkit-pointer-events: none;
   pointer-events: none;
@@ -545,4 +551,31 @@ img {
   .hide-on-mobile {
     display: none;
   }
+}
+.section-role table {
+  border-collapse: collapse;
+  margin-top: 30px;
+}
+.section-role td {
+  border: 1px solid #ccc;
+  padding: 15px;
+}
+.section-role .role-resource {
+  font-weight: bold;
+  color: #fff;
+  background-color: #00897B;
+}
+.section-role .role-item {
+  max-width: 200px;
+  overflow: hidden;
+}
+.section-role .role-item-desc {
+  max-height: 27px;
+  overflow: hidden;
+}
+.section-role .role-item-title .icon-allow {
+  color: green;
+}
+.section-role .role-item-title .icon-block {
+  color: red;
 }

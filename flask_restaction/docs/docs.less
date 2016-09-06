@@ -82,3 +82,36 @@
     display: none;
   }
 }
+
+.section-role {
+  table {
+    border-collapse: collapse;
+    margin-top:2*@width-gap;
+  }
+  td {
+    border: 1px solid #ccc;
+    padding: @width-gap;
+
+  }
+  .role-resource{
+    font-weight: bold;
+    color: @color-text-light;
+    background-color: @color-background-dark;
+  }
+  .role-item{
+    max-width: 200px;
+    overflow: hidden;
+  }
+  .role-item-desc{
+    max-height: @font-size * @line-height;
+    overflow: hidden;
+  }
+  .role-item-title{
+    .icon-allow{
+      color: green;
+    }
+    .icon-block{
+      color: red;
+    }
+  }
+}
