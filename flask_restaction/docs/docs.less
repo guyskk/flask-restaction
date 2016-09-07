@@ -5,6 +5,13 @@
 @import "pace.less";
 
 
+.truncate(@width) {
+  max-width: @width;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .container {
   position: relative;
   width: 100%;
@@ -91,7 +98,6 @@
   td {
     border: 1px solid #ccc;
     padding: @width-gap;
-
   }
   .role-resource{
     font-weight: bold;
@@ -99,19 +105,17 @@
     background-color: @color-background-dark;
   }
   .role-item{
-    max-width: 200px;
     overflow: hidden;
   }
   .role-item-desc{
-    max-height: @font-size * @line-height;
-    overflow: hidden;
+    .truncate(200px)
   }
   .role-item-title{
     .icon-allow{
-      color: green;
+      color: #5cb85c;
     }
     .icon-block{
-      color: red;
+      color: @color-text-gray;
     }
   }
 }

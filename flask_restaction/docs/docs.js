@@ -49,6 +49,7 @@ function isEmpty(value) {
 function isSpecial(value) {
     return !value || value.slice(0, 1) == '$'
 }
+
 window.isEmpty = isEmpty
 window.isSpecial = isSpecial
 
@@ -70,8 +71,15 @@ let app = new Vue({
         showMeta() {
             this.view = 'meta'
         },
-        showTerminal() {
-            this.view = 'terminal'
+        toggleTerminal() {
+            console.log(
+                'You can use res to call all provided API, see\n' +
+                'http://flask-restaction.readthedocs.io/zh/stable/resjs.html'
+            )
+            alertify
+                .delay(3000)
+                .logPosition("top right")
+                .log('Press F12 to open console and play res.js')
         },
         showBasic() {
             this.view = 'basic'

@@ -1,21 +1,16 @@
 """
-# Hello World
+## PurePage
 
-简单介绍
+PurePage 致力于达到以下目标:
 
-**Mobi.css** 是一个*轻量、灵活*的移动端 CSS 框架。
+1. 良好的写作体验和阅读体验
+2. 易于分享和发现有价值的文章
+3. 运行稳定，安全，快速
+4. 开放API
 
-只有 `3.6kb after gzip` ，比 Skeleton, Pure.css, Bootstrap v4 等所有 css 库都小
-大量使用 Flexbox ，非常灵活， Homepage 基本上没有写额外的 css ，只有不到 10 行的 inline-style
-Focus on mobile ，在 desktop 端相当于展示的还是 mobile 的页面，不过可以在左侧或右侧加上侧边栏
+![PurePage](https://raw.githubusercontent.com/guyskk/purepage/master/artwork/logo.png)
 
-![V2EX](https://cdn.v2ex.co/site/logo@2x.png?m=1346064962)
-
-![Photo](https://www.acyba.com/images/documentation/acymailing/tutorials/frontnewsmanagement/hidden.png)
-
-> 只有 `3.6kb after gzip` ，比 Skeleton, Pure.css, Bootstrap v4 等所有 css 库都小
-  大量使用 Flexbox ，非常灵活， Homepage 基本上没有写额外的 css ，只有不到 10 行的 inline-style
-  Focus on mobile ，在 desktop 端相当于展示的还是 mobile 的页面，不过可以在左侧或右侧加上侧边栏
+> flask-restaction is awsome !!
 
 $shared:
     paging:
@@ -103,6 +98,15 @@ api.add_resource(type("Docs2", (), {"get": api.meta_view}))
 resjs = '?f=res.min.js'
 
 
+def get_title(desc):
+    if not desc:
+        return 'Docs'
+    lines = desc.strip('\n').split('\n')
+    if not lines:
+        return 'Docs'
+    return lines[0].strip('# ')
+
+
 @app.route('/docs')
 def docs():
     mediatype = request.accept_mimetypes.best_match(
@@ -114,6 +118,7 @@ def docs():
         return send_from_directory('./dist', basename(filename))
     with open('./docs.html') as f:
         content = f.read()\
+            .replace('$(title)', get_title(api.meta.get('$desc')))\
             .replace('$(meta)', json.dumps(api.meta, ensure_ascii=False))\
             .replace('$(res.js)', resjs)
     return make_response(content)

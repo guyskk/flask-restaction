@@ -103,6 +103,7 @@
 	function isSpecial(value) {
 	    return !value || value.slice(0, 1) == '$';
 	}
+
 	window.isEmpty = isEmpty;
 	window.isSpecial = isSpecial;
 
@@ -124,8 +125,9 @@
 	        showMeta: function showMeta() {
 	            this.view = 'meta';
 	        },
-	        showTerminal: function showTerminal() {
-	            this.view = 'terminal';
+	        toggleTerminal: function toggleTerminal() {
+	            console.log('You can use res to call all provided API, see\n' + 'http://flask-restaction.readthedocs.io/zh/stable/resjs.html');
+	            alertify.delay(3000).logPosition("top right").log('Press F12 to open console and play res.js');
 	        },
 	        showBasic: function showBasic() {
 	            this.view = 'basic';

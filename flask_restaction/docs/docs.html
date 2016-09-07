@@ -4,23 +4,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docs</title>
-    <link rel="stylesheet" href="?f=docs.css" charset="utf-8">
+    <title>$(title)</title>
+    <link rel="stylesheet" href="?f=docs.min.css" charset="utf-8">
     <script src="?f=pace.min.js" charset="utf-8"></script>
-    <script src="?f=vue.min.js" charset="utf-8"></script>
-    <script src="?f=marked.min.js" charset="utf-8"></script>
-    <script src="$(res.js)" charset="utf-8"></script>
 </head>
-
 
 <body>
     <textarea id="meta" hidden style="display:none">$(meta)</textarea>
+
     <div id="app" class="container">
         <section class="sidebar" v-show="sidebar">
             <ul style="display:none;" v-show="meta">
                 <li><a href="#" @click="showBasic">Desc</a></li>
                 <li><a href="#" @click="showMeta">Meta</a></li>
-
                 <li>
                     <a href="#">Roles</a>
                     <ul>
@@ -46,15 +42,12 @@
         </section>
         <div class="content" @click="hideSidebar">
             <nav class="toolbar">
-                <a href="#" @click="showTerminal"><i class="iconfont icon-terminal"></i></a>
+                <a href="#" @click.stop="toggleTerminal"><i class="iconfont icon-terminal"></i></a>
                 <a href="#" @click.stop="toggleSidebar" class="show-on-mobile"><i class="iconfont icon-index"></i></a>
             </nav>
             <section style="display:none;" v-if="meta" v-show="view=='meta'">
+                <h3>Meta</h3>
                 <pre>{{meta}}</pre>
-            </section>
-            <section style="display:none;" v-if="meta" v-show="view=='terminal'">
-                <h3>Terminal</h3>
-                <a href="#" @click="showTerminal"><i class="iconfont icon-terminal"></i>Terminal</a>
             </section>
             <section style="display:none;" v-if="basic" v-show="view=='basic'">
                 <div v-marked="basic.$desc"></div>
@@ -66,6 +59,7 @@
                 </template>
             </section>
             <section style="display:none;" class="section-role" v-if="role" v-show="view=='role'">
+                <h3>{{roleName}}</h3>
                 <table>
                     <tr v-for="(item,resource) in role">
                         <td class="role-resource">{{resource}}</td>
@@ -84,7 +78,7 @@
                 <p>
                     {{resource.$desc}}
                 </p>
-                <template v-if="resource.$shared">
+                <template v-if="!isEmpty(resource.$shared)">
                   <h4>资源内共享的数据结构</h4>
                   <pre>{{resource.$shared}}</pre>
                 </template>
@@ -103,7 +97,11 @@
             </section>
         </div>
     </div>
-    <script src="?f=docs.js" charset="utf-8"></script>
+    <script src="?f=vue.min.js" charset="utf-8"></script>
+    <script src="?f=marked.min.js" charset="utf-8"></script>
+    <script src="?f=alertify.min.js" charset="utf-8"></script>
+    <script src="?f=docs.min.js" charset="utf-8"></script>
+    <script src="$(res.js)" charset="utf-8"></script>
 </body>
 
 </html>
