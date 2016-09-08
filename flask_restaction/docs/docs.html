@@ -10,8 +10,7 @@
 </head>
 
 <body>
-    <textarea id="meta" hidden style="display:none">$(meta)</textarea>
-
+    <textarea id="meta-text" hidden style="display:none">$(meta)</textarea>
     <div id="app" class="container">
         <section class="sidebar" v-show="sidebar">
             <ul style="display:none;" v-show="meta">
@@ -45,12 +44,8 @@
                 <span @click.stop="toggleTerminal"><i class="iconfont icon-terminal"></i></span>
                 <span @click.stop="toggleSidebar" class="show-on-mobile"><i class="iconfont icon-index"></i></span>
             </nav>
-            <section style="display:none;" v-if="meta" v-show="view=='meta'">
-                <h3><span>Meta</span></h3>
-                <pre><code class="json">{{metaText}}</code></pre>
-            </section>
             <section style="display:none;" v-if="basic" v-show="view=='basic'">
-                <div v-marked="basic.$desc"></div>
+                <div id="desc" v-marked="basic.$desc"></div>
                 <h3>Auth</h3>
                 <pre><code class="json">{{basic.$auth}}</code></pre>
                 <template v-if="!isEmpty(basic.$shared)">
@@ -63,8 +58,12 @@
                 <h3>Error</h3>
                 <pre><code class="json">{{basic.$error?basic.$error:'No Error Info'}}</code></pre>
             </section>
+            <section style="display:none;" v-if="meta" v-show="view=='meta'">
+                <h3 id='meta'><span>Meta</span></h3>
+                <pre><code class="json">{{metaText}}</code></pre>
+            </section>
             <section style="display:none;" class="section-role" v-if="role" v-show="view=='role'">
-                <h3>{{roleName}}</h3>
+                <h3 :id="'roles.'+roleName">{{roleName}}</h3>
                 <table>
                     <tr v-for="(item,resource) in role">
                         <td class="role-resource">{{resource}}</td>

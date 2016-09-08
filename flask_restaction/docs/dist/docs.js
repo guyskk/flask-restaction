@@ -113,6 +113,37 @@
 	    return !value || value.slice(0, 1) == '$';
 	}
 
+	function route(app) {
+	    // 根据location.hash值显示对应的页面
+	    if (location.hash) {
+	        var state = location.hash.slice(1).split('.');
+	        if (state.length == 1) {
+	            if (state[0] == 'desc') {
+	                return app.showBasic();
+	            } else if (state[0] == 'meta') {
+	                return app.showMeta();
+	            }
+	        } else if (state.length == 2) {
+	            if (state[0] == 'roles') {
+	                if (state[1] in app.roles) {
+	                    return app.showRole(state[1]);
+	                }
+	            } else if (state[0] == 'res') {
+	                if (state[1] in app.resources) {
+	                    return app.showResource(state[1]);
+	                }
+	            }
+	        } else if (state.length == 3) {
+	            if (state[0] == 'res') {
+	                if (state[1] in app.resources) {
+	                    return app.showResource(state[1]);
+	                }
+	            }
+	        }
+	    }
+	    app.showBasic();
+	}
+
 	var app = new Vue({
 	    el: '#app',
 	    data: {
@@ -142,14 +173,18 @@
 	            this.view = 'basic';
 	        },
 	        showRole: function showRole(name) {
-	            this.roleName = name;
-	            this.role = parseRole(this.roles[name], this.resources);
-	            this.view = 'role';
+	            if (name in this.roles) {
+	                this.roleName = name;
+	                this.role = parseRole(this.roles[name], this.resources);
+	                this.view = 'role';
+	            }
 	        },
 	        showResource: function showResource(name) {
-	            this.resourceName = name;
-	            this.resource = this.resources[name];
-	            this.view = 'resource';
+	            if (name in this.resources) {
+	                this.resourceName = name;
+	                this.resource = this.resources[name];
+	                this.view = 'resource';
+	            }
 	        },
 	        toggleSidebar: function toggleSidebar() {
 	            this.sidebar = !this.sidebar;
@@ -161,7 +196,7 @@
 	        }
 	    },
 	    created: function created() {
-	        var metaText = document.getElementById('meta').value;
+	        var metaText = document.getElementById('meta-text').value;
 	        var meta = parseMeta(JSON.parse(metaText));
 	        this.metaText = metaText;
 	        this.meta = meta;
@@ -170,7 +205,7 @@
 	        this.resources = meta.resources;
 	    },
 	    mounted: function mounted() {
-	        this.showBasic();
+	        route(this);
 	        hljs.initHighlightingOnLoad();
 	    },
 	    directives: {

@@ -59,6 +59,37 @@ function isSpecial(value) {
     return !value || value.slice(0, 1) == '$'
 }
 
+function route(app) {
+    // 根据location.hash值显示对应的页面
+    if (location.hash) {
+        let state = location.hash.slice(1).split('.')
+        if (state.length == 1) {
+            if (state[0] == 'desc') {
+                return app.showBasic()
+            } else if (state[0] == 'meta') {
+                return app.showMeta()
+            }
+        } else if (state.length == 2) {
+            if (state[0] == 'roles') {
+                if (state[1] in app.roles) {
+                    return app.showRole(state[1])
+                }
+            } else if (state[0] == 'res') {
+                if (state[1] in app.resources) {
+                    return app.showResource(state[1])
+                }
+            }
+        } else if (state.length == 3) {
+            if (state[0] == 'res') {
+                if (state[1] in app.resources) {
+                    return app.showResource(state[1])
+                }
+            }
+        }
+    }
+    app.showBasic()
+}
+
 let app = new Vue({
     el: '#app',
     data: {
@@ -94,14 +125,18 @@ let app = new Vue({
             this.view = 'basic'
         },
         showRole(name) {
-            this.roleName = name
-            this.role = parseRole(this.roles[name], this.resources)
-            this.view = 'role'
+            if (name in this.roles) {
+                this.roleName = name
+                this.role = parseRole(this.roles[name], this.resources)
+                this.view = 'role'
+            }
         },
         showResource(name) {
-            this.resourceName = name
-            this.resource = this.resources[name]
-            this.view = 'resource'
+            if (name in this.resources) {
+                this.resourceName = name
+                this.resource = this.resources[name]
+                this.view = 'resource'
+            }
         },
         toggleSidebar() {
             this.sidebar = !this.sidebar
@@ -114,7 +149,7 @@ let app = new Vue({
 
     },
     created: function() {
-        let metaText = document.getElementById('meta').value
+        let metaText = document.getElementById('meta-text').value
         let meta = parseMeta(JSON.parse(metaText))
         this.metaText = metaText
         this.meta = meta
@@ -123,7 +158,7 @@ let app = new Vue({
         this.resources = meta.resources
     },
     mounted: function() {
-        this.showBasic()
+        route(this)
         hljs.initHighlightingOnLoad()
     },
     directives: {
