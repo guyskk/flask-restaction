@@ -63,7 +63,7 @@ class Hello:
         return "OK", headers
 
 api.add_resource(Hello, api)
-
+api.add_resource(type('Docs', (), {'get': api.meta_view}))
 
 if __name__ == '__main__':
     app.run(debug=True)

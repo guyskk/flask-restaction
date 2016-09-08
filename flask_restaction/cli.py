@@ -47,6 +47,11 @@ def resjs(url, dest):
     :param url: url of api
     :param dest: dest dir path
     """
+    from warnings import warn
+    warn(DeprecationWarning(
+        'resjs writen by python is deprecated. '
+        'Use https://www.npmjs.com/package/resjs instead.'
+    ), stacklevel=2)
     url_prefix, auth_header, meta = parse_meta(url)
     tmpl = read_file('tmpl/res-core.js')
     rendered = Template(tmpl).render(

@@ -18,11 +18,20 @@ function parseMeta(meta) {
 
 function isAllow(role, resource, action) {
     if (role[resource]) {
-        if (role[resource].indexOf(action) > 0) {
+        if (role[resource].indexOf(action) >= 0) {
             return true
         }
     }
     return false
+}
+
+function strm(value) {
+    // 去除字符串开头的 '#' 和 空白
+    if (!value) {
+        return value
+    } else {
+        return value.replace(/^[#\s]+/, '')
+    }
 }
 
 function parseRole(role, resources) {
@@ -34,7 +43,7 @@ function parseRole(role, resources) {
                 continue
             }
             result[resource][action] = {
-                desc: resources[resource][action].$desc,
+                desc: strm(resources[resource][action].$desc),
                 allow: isAllow(role, resource, action)
             }
         }
@@ -50,13 +59,11 @@ function isSpecial(value) {
     return !value || value.slice(0, 1) == '$'
 }
 
-window.isEmpty = isEmpty
-window.isSpecial = isSpecial
-
 let app = new Vue({
     el: '#app',
     data: {
         meta: null,
+        metaText: null,
         basic: null,
         roles: null,
         resources: null,
@@ -65,7 +72,9 @@ let app = new Vue({
         roleName: null,
         resource: null,
         resourceName: null,
-        sidebar: true
+        sidebar: true,
+        isSpecial,
+        isEmpty
     },
     methods: {
         showMeta() {
@@ -107,6 +116,7 @@ let app = new Vue({
     created: function() {
         let metaText = document.getElementById('meta').value
         let meta = parseMeta(JSON.parse(metaText))
+        this.metaText = metaText
         this.meta = meta
         this.basic = meta.basic
         this.roles = meta.roles
@@ -114,6 +124,7 @@ let app = new Vue({
     },
     mounted: function() {
         this.showBasic()
+        hljs.initHighlightingOnLoad()
     },
     directives: {
         marked: {

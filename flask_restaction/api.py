@@ -4,10 +4,13 @@ import jwt
 import json
 import yaml
 import textwrap
-from functools import lru_cache
+from os.path import join, basename, dirname
 from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
-from flask import Response, request, make_response, current_app, abort as flask_abort
+from flask import (
+    Response, request, make_response, current_app, send_from_directory,
+    abort as flask_abort
+)
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from validater.schema import MarkKey
@@ -22,6 +25,13 @@ DEFAULT_AUTH = {
     "algorithm": "HS256",
     "expiration": 3600
 }
+BUILTIN_ERROR = {
+    "400.InvalidData": "request data invalid",
+    "403.PermissionDeny": "permission deny",
+    "500.ServerError": "internal server error"
+}
+DOCS_DIST = join(dirname(__file__), 'docs/dist')
+DOCS_HTML = join(dirname(__file__), 'docs/docs.html')
 
 
 def abort(code, error=None, message=None):
@@ -151,6 +161,16 @@ def parse_request():
     return resource, action
 
 
+def get_title(desc, default=None):
+    """Get title of desc"""
+    if not desc:
+        return default
+    lines = desc.strip('\n').split('\n')
+    if not lines:
+        return default
+    return lines[0].strip('# ')
+
+
 class Api:
     """Manager of Resource
 
@@ -175,9 +195,12 @@ class Api:
         else:
             with open(metafile) as f:
                 self.meta = json.load(f)
-        meta_api = parse_docs(docs, ["$shared"])
+        meta_api = parse_docs(docs, ["$shared", "$error"])
         self.meta["$desc"] = meta_api.get("$desc", "")
+        self.meta["$title"] = get_title(self.meta.get('$desc'), 'Document')
         self.meta["$shared"] = meta_api.get("$shared", {})
+        self.meta["$error"] = BUILTIN_ERROR.copy()
+        self.meta["$error"].update(meta_api.get("$error", {}))
         # check shared is valid or not
         if self.meta["$shared"]:
             with MarkKey("$shared"):
@@ -185,20 +208,30 @@ class Api:
         auth = DEFAULT_AUTH.copy()
         auth.update(self.meta.get("$auth", {}))
         self.meta["$auth"] = auth
-        self.app.add_url_rule("/", view_func=self.meta_view)
         # TODO
         self.requires = {}
         for k, v in self.meta.get("$requires", {}).items():
             self.requires[k] = Res(v)
 
-    @lru_cache()
     def meta_view(self):
         """Meta data as API"""
+        mediatype = request.accept_mimetypes.best_match(
+            ['text/html', 'application/json'], default='text/html')
         dumped = json.dumps(
             self.meta, indent=4, sort_keys=True, ensure_ascii=False)
-        return make_response(dumped, {
-            "Content-Type": "application/json; charset=utf-8"
-        })
+        if mediatype == 'application/json' or 'json' in request.args:
+            return make_response(dumped, {
+                "Content-Type": "application/json; charset=utf-8"
+            })
+        filename = request.args.get('f')
+        if filename:
+            return send_from_directory(DOCS_DIST, basename(filename))
+        with open(DOCS_HTML) as f:
+            content = f.read()\
+                .replace('$(title)', self.meta.get('$title', ''))\
+                .replace('$(meta)', dumped)\
+                .replace('$(resjs)', self.meta.get('$resjs', ''))
+        return make_response(content)
 
     def add_resource(self, resource, *class_args, **class_kwargs):
         """Add resource

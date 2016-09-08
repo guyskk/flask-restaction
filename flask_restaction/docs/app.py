@@ -16,6 +16,9 @@ $shared:
     paging:
         page_num?int&min=1&default=1: 第几页，从1开始计算
         page_size?int&min=1&default=10: 每页的数量
+$error:
+    404.NotFound: 未找到页面
+    500.ServerError: 服务器错误
 """
 import json
 from os.path import basename
@@ -23,7 +26,6 @@ from flask_restaction import Api
 from flask import Flask, request, send_from_directory, make_response
 app = Flask(__name__)
 app.debug = True
-
 api = Api(app, docs=__doc__)
 api.meta["$roles"] = {
     "管理员": {
@@ -113,6 +115,8 @@ def docs():
         ['text/html', 'application/json'], default='text/html')
     if mediatype == 'application/json':
         return api.meta_view()
+    if 'json' in request.args:
+        return api.meta_view()
     filename = request.args.get('f')
     if filename:
         return send_from_directory('./dist', basename(filename))
@@ -120,7 +124,7 @@ def docs():
         content = f.read()\
             .replace('$(title)', get_title(api.meta.get('$desc')))\
             .replace('$(meta)', json.dumps(api.meta, ensure_ascii=False))\
-            .replace('$(res.js)', resjs)
+            .replace('$(resjs)', resjs)
     return make_response(content)
 
 if __name__ == '__main__':

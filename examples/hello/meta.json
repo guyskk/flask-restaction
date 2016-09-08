@@ -2,10 +2,12 @@
     "$url_prefix": "http://127.0.0.1:5000",
     "$roles": {
         "guest": {
-            "hello": ["get", "post"]
+            "hello": ["get", "post"],
+            "docs": ["get"]
         },
         "normal": {
-            "hello": ["get", "post", "get_me"]
+            "hello": ["get", "post", "get_me"],
+            "docs": ["get"]
         }
     }
 }

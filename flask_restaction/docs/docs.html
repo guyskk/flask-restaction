@@ -15,24 +15,24 @@
     <div id="app" class="container">
         <section class="sidebar" v-show="sidebar">
             <ul style="display:none;" v-show="meta">
-                <li><a href="#" @click="showBasic">Desc</a></li>
-                <li><a href="#" @click="showMeta">Meta</a></li>
+                <li><a href="#desc" @click="showBasic">Desc</a></li>
+                <li><a href="#meta" @click="showMeta">Meta</a></li>
                 <li>
-                    <a href="#">Roles</a>
+                    <span>Roles</span>
                     <ul>
                         <li v-for="(item,role) in roles">
-                            <a href="#" @click="showRole(role)">{{role}}</a>
+                            <a :href="'#roles.'+role" @click="showRole(role)">{{role}}</a>
                         </li>
                     </ul>
                 </li>
                 <li>
-                    <a href="#">Resources</a>
+                    <span>Resources</span>
                     <ul>
                         <li v-for="(item,resource) in resources">
-                            <a href="#" @click="showResource(resource)">{{resource}}</a>
+                            <a :href="'#res.'+resource" @click="showResource(resource)">{{resource}}</a>
                             <ul>
                                 <li v-for="(__,action) in item" v-if="!isSpecial(action)">
-                                    <a :href="'#'+resource+'.'+action" @click="showResource(resource)">{{action}}</a>
+                                    <a :href="'#res.'+resource+'.'+action" @click="showResource(resource)">{{action}}</a>
                                 </li>
                             </ul>
                         </li>
@@ -42,21 +42,26 @@
         </section>
         <div class="content" @click="hideSidebar">
             <nav class="toolbar">
-                <a href="#" @click.stop="toggleTerminal"><i class="iconfont icon-terminal"></i></a>
-                <a href="#" @click.stop="toggleSidebar" class="show-on-mobile"><i class="iconfont icon-index"></i></a>
+                <span @click.stop="toggleTerminal"><i class="iconfont icon-terminal"></i></span>
+                <span @click.stop="toggleSidebar" class="show-on-mobile"><i class="iconfont icon-index"></i></span>
             </nav>
             <section style="display:none;" v-if="meta" v-show="view=='meta'">
-                <h3>Meta</h3>
-                <pre>{{meta}}</pre>
+                <h3><span>Meta</span></h3>
+                <pre><code class="json">{{metaText}}</code></pre>
             </section>
             <section style="display:none;" v-if="basic" v-show="view=='basic'">
                 <div v-marked="basic.$desc"></div>
                 <h3>Auth</h3>
-                <pre>{{basic.$auth|json}}</pre>
+                <pre><code class="json">{{basic.$auth}}</code></pre>
                 <template v-if="!isEmpty(basic.$shared)">
-                  <h4>Shared Schema</h4>
-                  <pre>{{basic.$shared}}</pre>
+                  <h3><span>Shared</span></h3>
+                  <template v-for="(schema,name) in basic.$shared">
+                    <h4>@{{name}}</h4>
+                    <pre><code class="json">{{schema}}</code></pre>
+                  </template>
                 </template>
+                <h3>Error</h3>
+                <pre><code class="json">{{basic.$error?basic.$error:'No Error Info'}}</code></pre>
             </section>
             <section style="display:none;" class="section-role" v-if="role" v-show="view=='role'">
                 <h3>{{roleName}}</h3>
@@ -74,25 +79,24 @@
                 </table>
             </section>
             <section style="display:none;" v-if="resource" v-show="view=='resource'">
-                <h1>{{resourceName}}</h1>
-                <p>
-                    {{resource.$desc}}
-                </p>
+                <h1 :id="'res.'+resourceName">{{resourceName}}</h1>
+                <p v-marked="resource.$desc"></p>
                 <template v-if="!isEmpty(resource.$shared)">
-                  <h4>资源内共享的数据结构</h4>
-                  <pre>{{resource.$shared}}</pre>
+                  <h3><span>Shared</span></h3>
+                  <template v-for="(schema,name) in resource.$shared" :key="index">
+                    <h4>@{{name}}</h4>
+                    <pre><code class="json">{{schema}}</code></pre>
+                  </template>
                 </template>
-                <template v-for="(item,action) in resource" v-if="!isSpecial(action)">
-                    <h3 :id="resourceName+'.'+action">{{action}}</h3>
-                    <p>{{item.$desc}}</p>
-                    <p>输入</p>
-                    <pre>{{item.$input?item.$input:'无'|json}}</pre>
-                    <p>输出</p>
-                    <pre>{{item.$output?item.$output:'无'|json}}</pre>
-                    <template v-if="item.$error">
-                      <p>错误</p>
-                      <pre >{{item.$error|json}}</pre>
-                    </template>
+                <template v-for="(item,action) in resource" :key="index" v-if="!isSpecial(action)">
+                    <h2 :id="'res.'+resourceName+'.'+action"><span>{{action}}</span></h2>
+                    <p v-marked="item.$desc"></p>
+                    <p>Input</p>
+                    <pre><code class="json">{{item.$input?item.$input:'No Input Schema'}}</code></pre>
+                    <p>Output</p>
+                    <pre><code class="json">{{item.$output?item.$output:'No Output Schema'}}</code></pre>
+                    <p>Error</p>
+                    <pre><code class="json">{{item.$error?item.$error:'No Error Info'}}</code></pre>
                 </template>
             </section>
         </div>
@@ -100,8 +104,9 @@
     <script src="?f=vue.min.js" charset="utf-8"></script>
     <script src="?f=marked.min.js" charset="utf-8"></script>
     <script src="?f=alertify.min.js" charset="utf-8"></script>
+    <script src="?f=highlight.min.js" charset="utf-8"></script>
     <script src="?f=docs.min.js" charset="utf-8"></script>
-    <script src="$(res.js)" charset="utf-8"></script>
+    <script src="$(resjs)" charset="utf-8"></script>
 </body>
 
 </html>
