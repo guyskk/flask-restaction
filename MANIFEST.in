@@ -4,5 +4,9 @@ include readme.md
 include requires.txt
 include pytest.ini
 include tox.ini
+
 recursive-include flask_restaction/tmpl *
 recursive-include flask_restaction/resjs/dist *
+
+include flask_restaction/docs/docs.html
+recursive-include flask_restaction/docs/dist *
