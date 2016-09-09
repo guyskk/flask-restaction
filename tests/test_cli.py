@@ -8,6 +8,5 @@ def test_url_prefix():
 
 
 def test_cli(tmpdir):
-    resjs("http://127.0.0.1:5000", tmpdir.strpath)
+    resjs("http://127.0.0.1:5000", tmpdir.join("res.js").strpath)
     assert tmpdir.join("res.js").check()
-    assert tmpdir.join("res.min.js").check()

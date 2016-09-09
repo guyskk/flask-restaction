@@ -1,6 +1,10 @@
 {
     "undef": true,
     "unused": true,
+    "esversion": 6,
+    "asi": true,
+    "browser": true,
     "node": true,
-    "browser":true
+    "devel": true,
+    "predef": ["describe", "it", "assert", "res", "Vue"]
 }
