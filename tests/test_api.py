@@ -601,9 +601,10 @@ def test_metafile(tmpdir):
         def get(self):
             """Get hello"""
     api.add_resource(Hello)
+    app.route('/')(api.meta_view)
 
     with app.test_client() as c:
-        resp = c.get("/")
+        resp = c.get("/", headers={'Accept': 'application/json'})
         assert resp.status_code == 200
         assert resp_json(resp)["$xxx"] == "test"
         assert resp_json(resp)["$roles"] == {}

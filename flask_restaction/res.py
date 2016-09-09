@@ -55,12 +55,9 @@ def res_to_url(resource, action):
 class TestClientSession:
     """Wrapper Flask.test_client like requests.Session"""
 
-    def __init__(self, test_client, headers=None, *args, **kwargs):
+    def __init__(self, test_client):
         self.test_client = test_client
-        if headers is None:
-            self.headers = {}
-        else:
-            self.headers = headers
+        self.headers = {}
 
     def request(self, method, url, params=None, data=None,
                 headers=None, json=None):
@@ -105,18 +102,18 @@ class Res:
 
     :param url_prefix: url prefix of API
     :param auth_header: auth header name of API
-    :parma *args, **kwargs: params passed to requests.Session
     :return: requests.Response
     """
 
     def __init__(self, url_prefix="", test_client=None,
-                 auth_header="Authorization", *args, **kwargs):
+                 auth_header="Authorization"):
         self.url_prefix = url_prefix
         self.auth_header = auth_header
         if test_client is None:
-            self.session = requests.Session(*args, **kwargs)
+            self.session = requests.Session()
         else:
-            self.session = TestClientSession(test_client, *args, **kwargs)
+            self.session = TestClientSession(test_client)
+        self.session.headers.update({'Accept': 'application/json'})
 
     def ajax(self, url, method="GET", data=None, headers=None):
         params = {

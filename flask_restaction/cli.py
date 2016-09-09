@@ -12,7 +12,9 @@ def parse_meta(url_prefix):
     Use meta["$url_prefix"] if exists, url_prefix otherwise.
     :return: (url_prefix, auth_header, meta)
     """
-    meta = requests.get(url_prefix).json()
+    meta = requests.get(
+        url_prefix,
+        headers={'Accept': 'application/json'}).json()
     meta2 = {}
     for resource_name in meta:
         if resource_name.startswith("$"):

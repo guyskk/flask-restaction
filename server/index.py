@@ -113,6 +113,7 @@ class Test:
 
 
 api.add_resource(Test, api)
+app.route('/')(api.meta_view)
 
 if __name__ == '__main__':
     app.run(debug=True)
