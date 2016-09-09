@@ -18,10 +18,6 @@ var _superagent = require('superagent');
 
 var _superagent2 = _interopRequireDefault(_superagent);
 
-var _handlebars = require('handlebars');
-
-var _handlebars2 = _interopRequireDefault(_handlebars);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function toUrl(resource, action) {
@@ -72,21 +68,21 @@ function parseMeta(url) {
     });
 }
 
-function parseTemplate() {
-    var filename = (0, _path.join)(__dirname, 'res.core.hbs');
-    return new _promise2.default(function (resolve, reject) {
-        _fs2.default.readFile(filename, { encoding: 'utf-8' }, function (error, data) {
-            if (error) {
-                reject(error);
-            } else {
-                try {
-                    resolve(_handlebars2.default.compile(data));
-                } catch (ex) {
-                    reject(ex);
-                }
-            }
-        });
-    });
+function renderCore(meta) {
+    /*Generate res.code.js*/
+    var code = '';
+    code += 'function(root, init) {\n';
+    code += '  var q = init(\'' + meta.authHeader + '\', \'' + meta.urlPrefix + '\');\n';
+    code += '  var r = null;\n';
+    for (var key in meta.resources) {
+        code += '  r = root.' + key + ' = {};\n';
+        for (var action in meta.resources[key]) {
+            var item = meta.resources[key][action];
+            code += '    r.' + action + ' = q(\'' + item.url + '\', \'' + item.method + '\');\n';
+        }
+    }
+    code += '}';
+    return code;
 }
 
 function parseResjs() {
@@ -117,17 +113,16 @@ function resjs(url) {
     var node = arguments.length <= 3 || arguments[3] === undefined ? undefined : arguments[3];
     var min = arguments.length <= 4 || arguments[4] === undefined ? undefined : arguments[4];
 
-    return _promise2.default.all([parseMeta(url), parseTemplate(), parseResjs(node, min)]).then(function (_ref) {
-        var _ref2 = (0, _slicedToArray3.default)(_ref, 3);
+    return _promise2.default.all([parseMeta(url), parseResjs(node, min)]).then(function (_ref) {
+        var _ref2 = (0, _slicedToArray3.default)(_ref, 2);
 
         var meta = _ref2[0];
-        var template = _ref2[1];
-        var generate = _ref2[2];
+        var generate = _ref2[1];
 
         if (urlPrefix) {
             meta.urlPrefix = urlPrefix;
         }
-        var code = generate(template(meta));
+        var code = generate(renderCore(meta));
         return new _promise2.default(function (resolve, reject) {
             _fs2.default.writeFile(dest, code, function (error) {
                 if (error) {

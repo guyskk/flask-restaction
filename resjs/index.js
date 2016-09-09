@@ -1,7 +1,6 @@
 import fs from 'fs'
 import { join } from 'path'
 import ajax from 'superagent'
-import Handlebars from 'handlebars'
 
 function toUrl(resource, action) {
     //Convert resource.action to {url, method}, method is UpperCase
@@ -53,21 +52,21 @@ function parseMeta(url) {
     })
 }
 
-function parseTemplate() {
-    let filename = join(__dirname, 'res.core.hbs')
-    return new Promise((resolve, reject) => {
-        fs.readFile(filename, { encoding: 'utf-8' }, (error, data) => {
-            if (error) {
-                reject(error)
-            } else {
-                try {
-                    resolve(Handlebars.compile(data))
-                } catch (ex) {
-                    reject(ex)
-                }
-            }
-        })
-    })
+function renderCore(meta) {
+    /*Generate res.code.js*/
+    let code = ''
+    code += `function(root, init) {\n`
+    code += `  var q = init('${meta.authHeader}', '${meta.urlPrefix}');\n`
+    code += `  var r = null;\n`
+    for (let key in meta.resources) {
+        code += `  r = root.${key} = {};\n`
+        for (let action in meta.resources[key]) {
+            let item = meta.resources[key][action]
+            code += `    r.${action} = q('${item.url}', '${item.method}');\n`
+        }
+    }
+    code += `}`
+    return code
 }
 
 function parseResjs(node = false, min = false) {
@@ -90,12 +89,12 @@ function parseResjs(node = false, min = false) {
 }
 
 function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined, min = undefined) {
-    return Promise.all([parseMeta(url), parseTemplate(), parseResjs(node, min)])
-        .then(([meta, template, generate]) => {
+    return Promise.all([parseMeta(url), parseResjs(node, min)])
+        .then(([meta, generate]) => {
             if (urlPrefix) {
                 meta.urlPrefix = urlPrefix
             }
-            let code = generate(template(meta))
+            let code = generate(renderCore(meta))
             return new Promise((resolve, reject) => {
                 fs.writeFile(dest, code, (error) => {
                     if (error) {

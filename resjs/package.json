@@ -1,6 +1,6 @@
 {
     "name": "resjs",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "flask-restaction res.js generator",
     "main": "dist/index.js",
     "bin": {
@@ -48,7 +48,6 @@
     },
     "dependencies": {
         "babel-runtime": "^6.11.6",
-        "handlebars": "^4.0.5",
         "commander": "^2.9.0",
         "superagent": "^2.2.0"
     },
