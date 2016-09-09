@@ -386,10 +386,6 @@ class Api:
             )
         except jwt.InvalidTokenError:
             pass
-        except AttributeError:
-            # jwt's bug when token is None or int
-            # https://github.com/jpadilla/pyjwt/issues/183
-            pass
         return None
 
     def gen_auth_token(self, token, auth_exp=None):
