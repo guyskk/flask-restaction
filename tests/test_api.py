@@ -8,7 +8,7 @@ from flask import Flask, Blueprint, jsonify, url_for, request, make_response, g
 from flask_restaction import exporter
 from flask_restaction.api import (
     Api, abort, unpack, export, ordered_load, parse_docs,
-    get_request_data, parse_request
+    get_request_data, parse_request, get_title
 )
 from werkzeug.exceptions import BadRequest
 
@@ -131,11 +131,21 @@ def test_export_custom():
     def export_html(rv, code, headers):
         return make_response(rv, code, headers)
 
-    accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    accept = "text/html,application/xhtml+xml,application/xml;"\
+        "q=0.9,image/webp,*/*;q=0.8"
     with app.test_request_context(headers={"Accept": accept}):
         resp = export("hello world")
         assert resp.mimetype == "text/html"
         assert resp.data == b"hello world"
+
+
+def test_get_title():
+    assert get_title('#Hello') == 'Hello'
+    assert get_title('# Hello ') == 'Hello'
+    assert get_title('#Hello 中文##') == 'Hello 中文##'
+    assert get_title('') is None
+    assert get_title(None) is None
+    assert get_title('', 'Hello') == 'Hello'
 
 
 def test_ordered_load():
@@ -589,6 +599,17 @@ def test_validaters():
         assert resp_json(resp)["error"] == "InvalidData"
 
 
+def test_meta():
+    app = Flask(__name__)
+    api = Api(app)
+    # builtin keys
+    assert '$desc' in api.meta
+    assert '$title' in api.meta
+    assert '$auth' in api.meta
+    assert '$shared' in api.meta
+    assert '$error' in api.meta
+
+
 def test_metafile(tmpdir):
     metafile = tmpdir.join("meta.json")
     json.dump({"$xxx": "test", "$roles": {}}, metafile.open("w"))
@@ -610,6 +631,19 @@ def test_metafile(tmpdir):
         assert resp_json(resp)["$roles"] == {}
         assert resp_json(resp)["hello"]["$desc"] == "docstring for Hello"
         assert resp_json(resp)["hello"]["get"]["$desc"] == "Get hello"
+
+
+def test_meta_view():
+    app = Flask(__name__)
+    api = Api(app)
+    app.route('/')(api.meta_view)
+    with app.test_client() as c:
+        resp = c.get("/")
+        assert resp.status_code == 200
+        assert resp.mimetype == 'text/html'
+        resp = c.get("/?json")
+        assert resp.status_code == 200
+        assert resp.mimetype == 'application/json'
 
 
 def test_auth(tmpdir):

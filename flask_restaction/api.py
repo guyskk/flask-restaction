@@ -168,7 +168,7 @@ def get_title(desc, default=None):
     lines = desc.strip('\n').split('\n')
     if not lines:
         return default
-    return lines[0].strip('# ')
+    return lines[0].lstrip('# ').rstrip(' ')
 
 
 class Api:
