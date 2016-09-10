@@ -7,34 +7,41 @@ Welcome
 -------------------
 
 .. code-block:: python
-    
+
     from flask import Flask
     from flask_restaction import Api
 
     app = Flask(__name__)
+    # 创建一个 Api 对象，把 app 作为参数
     api = Api(app)
 
+    # 创建 Welcome 类，描述欢迎信息(框架可以序列化任意类型的对象)
     class Welcome:
 
         def __init__(self, name):
             self.name = name
             self.message = "Hello %s, Welcome to flask-restaction!" % name
-            
+
+    # 创建一个 Hello 类，定义 get 方法
     class Hello:
         """Hello world"""
 
+        # 在 get 方法文档字符串中描述输入参数和输出的格式
         def get(self, name):
             """
             Get welcome message
 
             $input:
-                name?str&escape&default="world": Your name
+                name?str&default="world": Your name
             $output:
                 message?str: Welcome message
             """
             return Welcome(name)
 
+    # 添加资源
     api.add_resource(Hello)
+    # 配置API文档的访问路径
+    app.route('/')(api.meta_view)
 
     if __name__ == '__main__':
         app.run(debug=True)
@@ -57,7 +64,7 @@ Welcome
 
 再访问 http://127.0.0.1:5000/hello?name=kk
 
-你将会看到 
+你将会看到
 
 .. code::
 
@@ -65,22 +72,14 @@ Welcome
       "message": "Hello kk, Welcome to flask-restaction!"
     }
 
-访问 http://127.0.0.1:5000 可以查看自动生成的文档(JSON格式)，
-此文档为API全部接口信息，建议用 Chrome 安装 `WEB前端助手 <https://www.baidufe.com/fehelper>`_ 查看。
+访问 http://127.0.0.1:5000 可以查看自动生成的文档。
 
-那么，这些代码是什么意思呢？
-
-1. 创建一个 Api 对象，把 app 作为参数
-2. 创建 Welcome 类，描述欢迎信息(框架可以序列化任意类型的对象)
-3. 创建一个 Hello 类，定义 get 方法
-4. 在 get 方法文档字符串中描述输入参数和输出的格式
-5. 调用 api.add_resource(Hello)
 
 .. glossary:: 两个概念
     *resource*
         资源，比如这里的 Hello 类
-    
-    *action* 
+
+    *action*
         操作，例如 get, post, delete, get_list, post_login。
         只要是 HTTP 方法或 HTTP 方法加下划线 _ 开头就行
 
@@ -108,7 +107,7 @@ Welcome
         $error:
             400.InvalidData: 输入参数错误
             403.PermissionDeny: 权限不足
-    
+
     格式为: ``status.ErrorSymbol: message``。
 
 
@@ -128,7 +127,7 @@ Welcome
         "message": "xxx xxxx"
     }
 
-Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串, Schema语法见 :ref:`schema` 
+Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串, Schema语法见 :ref:`schema`
 
 **自定义 Validater**
 
@@ -144,7 +143,7 @@ Api(validaters=validaters) 进行注册。
 可以使用 flask 中的 url_for() 函数构建指定 action 的 URL。
 
 endpoint (url_for 的参数) 是 ``resource@action_name``
-    
+
 *resource*
     Resource类名称的小写
 
@@ -156,7 +155,7 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
     url_for("resource@action_name") -> /resource/action_name
 
 示例::
-    
+
     url_for("hello") -> /hello
     url_for("hello@login") -> /hello/login
 
@@ -171,8 +170,8 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
     # 函数原型
     abort(code, error=None, message=None)
 
-如果没有error参数，效果和flask.abort(code)一样。
-如果有error是flask.Response类型，效果和flask.abort(code, error)一样。
+如果没有error参数，效果和 ``flask.abort(code)`` 一样。
+如果有error是 ``flask.Response`` 类型，效果和 ``flask.abort(code, error)`` 一样。
 其他情况返回内容为::
 
     {
@@ -183,34 +182,6 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 
 返回内容会序列化为适当的格式。
 
-
-处理依赖关系
------------------------------
-
-一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
-使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
-
-例如，User需要api对象来生成token::
-
-    class User:
-
-        def __init__(self, api):
-            self.api = api
-
-    api.add_resource(User, api=api)
-
-
-或是依赖于其他对象::
-    
-    class User:
-
-        def __init__(self, dependecy):
-            self.dependecy = dependecy
-
-    dependecy = Xxx()
-    api.add_resource(User, dependecy=dependecy)
-
-传给add_resource的参数都会原封不动的传给Resource的 `__init__` 方法。
 
 
 身份验证&权限控制
@@ -239,34 +210,34 @@ meta.json 设定角色和权限
 __init__.py 根据token确定角色
 
 .. code-block:: python
-    
+
     api = Api(metafile='meta.json')
 
     @api.get_role
     def get_role(token):
         if token and 'id' in token:
-            user_id = token[id]
+            user_id = token['id']
             # query user from database
             return user_role
         else:
             return "guest"
-    
+
 hello.py 业务代码
 
 .. code-block:: python
-    
+
     class Hello:
 
         def get(self):
             pass
-        
+
         def post(self):
             pass
 
 user.py 登录接口
 
 .. code-block:: python
-    
+
     class User:
 
         def __init__(self, api):
@@ -303,7 +274,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 在Api初始化的时候通过 Api(metafile="meta.json") 加载。
 
 .. code::
-    
+
     {
         "$roles": {
             "Role": {
@@ -315,7 +286,7 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 
 请求到来时，根据 Role, Resource, Action 可以快速确定是否许可此次请求。
 
-提示：flask 的 `Development Server <http://flask.pocoo.org/docs/0.11/server/>`_ 
+提示：flask 的 `Development Server <http://flask.pocoo.org/docs/0.11/server/>`_
 不能检测到 python 代码文件之外变动，所以修改 metafile 的内容之后需要手动重启才能生效。
 
 
@@ -333,7 +304,7 @@ token 一般会储存用户ID和过期时间，用户在发送请求时需要将
 
 可以用 api.gen_auth_headers 直接生成含 token 的响应头，也可以用 api.gen_auth_token 只生成 token。
 
-.. Note:: 
+.. Note::
 
      token 会用密钥(app.secret_key)对 token 进行签名，无法篡改，生成 token 前需要先设置 app.secret_key，或通过 flask 配置。
      token 是未加密的，不要把敏感信息保存在里面。
@@ -346,6 +317,61 @@ token 一般会储存用户ID和过期时间，用户在发送请求时需要将
         "error": "PermissionDeny",
         "message": "xxx can't access xxxx"
     }
+
+
+添加资源
+-----------------------------
+
+使用 ``Api.add_resource`` 方法添加资源，传给 ``add_resource`` 的参数都会原封不动的传给Resource的 ``__init__`` 方法。
+
+一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
+使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
+
+例如，User需要api对象来生成token::
+
+    class User:
+
+        def __init__(self, api):
+            self.api = api
+
+    api.add_resource(User, api=api)
+
+
+或是依赖于其他对象::
+
+    class User:
+
+        def __init__(self, dependecy):
+            self.dependecy = dependecy
+
+    dependecy = Xxx()
+    api.add_resource(User, dependecy=dependecy)
+
+
+API文档
+-------------------
+
+有两种方式配置API文档的访问路径。
+
+**Flask.route**
+
+.. code-block:: python
+
+    app.route('/')(api.meta_view)
+
+
+**Api.add_resource**
+
+这种方式把文档作为一种资源添加到API中，可以方便的控制文档的访问权限。
+
+.. code-block:: python
+
+    api.add_resource(type('Docs', (), {'get': api.meta_view}))
+
+
+Api.meta_view也能返回JSON格式的API元数据，只需要设置请求头 ``Accept`` 为 ``application/json`` 即可。
+
+在 metafile 里面配置 $resjs 为生成的 res.js 文件的 URL，则可以在文档页面通过浏览器控制台使用 res.js。
 
 
 使用蓝图
@@ -378,7 +404,7 @@ Api提供before_request, after_request, error_handler这3个装饰器用来注�
     def before_request():
         # 此函数会在在请求到来的第一时间执行
         # 若response不为None，则不再继续处理请求
-        return response 
+        return response
 
     @api.after_request
     def after_request(rv, status, headers):
@@ -405,7 +431,7 @@ Api提供before_request, after_request, error_handler这3个装饰器用来注�
     @exporter('text/html')
     def export_text(data, status, headers):
         return make_response(str(data), status, headers)
-    
+
 框架会根据请求头中Accept的值选择合适的响应格式。
 
 
@@ -443,7 +469,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 - 输入输出校验
 
     restaction 是声明式的，简单明确::
-        
+
         class Hello:
 
             def get(self, name):
@@ -455,6 +481,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
                 $output:
                     message?str: Welcome message
                 """
+
     restaction 的输出校验和输入校验一样简单，而且可以序列化任意类型的对象。
 
     restful 中叫做 Request Parsing::
@@ -472,7 +499,7 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
     restaction 的 URL 规则清晰，并始终保持一致，减少了编码和阅读API文档的负担。
 
 - 身份验证及权限控制
-    
+
     restaction 提供一个灵活的权限系统，身份验证基于 jwt(json web token)，
     权限验证是通过json配置文件，而不是散布在代码中的装饰器(decorator)。
 

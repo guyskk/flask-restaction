@@ -29,7 +29,7 @@ class Hello:
 
     $shared:
         name:
-            name?str&escape&default="world": Your name
+            name?str&default="world": Your name
         message:
             message?str: Welcome message
     """
