@@ -55,24 +55,18 @@
     margin-left: 240px;
     padding: 0 @width-gap*4 @width-gap*2;
 }
-.toolbar {
-    height: 48px;
-    margin-bottom: -@width-gap;
-    line-height: 48px;
-    border-bottom: 1px solid @color-text-gray;
-    margin-bottom: 10px;
-    span {
-        color: @color-text-gray;
-        margin-left: 8px;
-        margin-right: 8px;
-        float: right;
-        &:hover {
-            color: @color-text-dark;
-            cursor: pointer;
-        }
-        i {
-            font-size: 32px;
-        }
+
+.toggle-sidebar {
+    position: fixed;
+    top: 0;
+    right: 4px;
+    color: @color-text-gray;
+    &:hover {
+        color: @color-text-dark;
+        cursor: pointer;
+    }
+    i {
+        font-size: 32px;
     }
 }
 

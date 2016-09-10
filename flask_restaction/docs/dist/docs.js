@@ -165,10 +165,6 @@
 	        showMeta: function showMeta() {
 	            this.view = 'meta';
 	        },
-	        toggleTerminal: function toggleTerminal() {
-	            console.log('You can use res to call all provided API, see\n' + 'http://flask-restaction.readthedocs.io/zh/stable/resjs.html');
-	            alertify.delay(3000).logPosition("top right").log('Press F12 to open console and play res.js');
-	        },
 	        showBasic: function showBasic() {
 	            this.view = 'basic';
 	        },

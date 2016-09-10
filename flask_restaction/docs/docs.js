@@ -111,16 +111,6 @@ let app = new Vue({
         showMeta() {
             this.view = 'meta'
         },
-        toggleTerminal() {
-            console.log(
-                'You can use res to call all provided API, see\n' +
-                'http://flask-restaction.readthedocs.io/zh/stable/resjs.html'
-            )
-            alertify
-                .delay(3000)
-                .logPosition("top right")
-                .log('Press F12 to open console and play res.js')
-        },
         showBasic() {
             this.view = 'basic'
         },

@@ -40,10 +40,7 @@
             </ul>
         </section>
         <div class="content" @click="hideSidebar">
-            <nav class="toolbar">
-                <span @click.stop="toggleTerminal"><i class="iconfont icon-terminal"></i></span>
-                <span @click.stop="toggleSidebar" class="show-on-mobile"><i class="iconfont icon-index"></i></span>
-            </nav>
+            <span @click.stop="toggleSidebar" class="show-on-mobile toggle-sidebar"><i class="iconfont icon-index"></i></span>
             <section style="display:none;" v-if="basic" v-show="view=='basic'">
                 <div id="desc" v-marked="basic.$desc"></div>
                 <h3>Auth</h3>

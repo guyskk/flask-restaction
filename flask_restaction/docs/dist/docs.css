@@ -491,14 +491,11 @@ figure {
 .icon-index:before {
   content: "\f0006";
 }
-.icon-terminal:before {
-  content: "\e784";
-}
 .icon-allow:before {
   content: "\e644";
 }
 .icon-block:before {
-  content: "\e670";
+  content: "\e62e";
 }
 .pace {
   -webkit-user-select: none;
@@ -617,24 +614,17 @@ figure {
   margin-left: 240px;
   padding: 0 60px 30px;
 }
-.toolbar {
-  height: 48px;
-  margin-bottom: -15px;
-  line-height: 48px;
-  border-bottom: 1px solid #757575;
-  margin-bottom: 10px;
-}
-.toolbar span {
+.toggle-sidebar {
+  position: fixed;
+  top: 0;
+  right: 4px;
   color: #757575;
-  margin-left: 8px;
-  margin-right: 8px;
-  float: right;
 }
-.toolbar span:hover {
+.toggle-sidebar:hover {
   color: #212121;
   cursor: pointer;
 }
-.toolbar span i {
+.toggle-sidebar i {
   font-size: 32px;
 }
 .show-on-mobile {
