@@ -214,7 +214,12 @@ class Api:
             self.requires[k] = Res(v)
 
     def meta_view(self):
-        """Meta data as API"""
+        """Meta data / API document
+
+        By default, this view func will return API document(HTML),
+        you can set request header `Accept` to `application/json`
+        or set query string `json` to get meta data(JSON).
+        """
         mediatype = request.accept_mimetypes.best_match(
             ['text/html', 'application/json'], default='text/html')
         dumped = json.dumps(

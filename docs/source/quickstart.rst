@@ -324,6 +324,13 @@ token 一般会储存用户ID和过期时间，用户在发送请求时需要将
 
 使用 ``Api.add_resource`` 方法添加资源，传给 ``add_resource`` 的参数都会原封不动的传给Resource的 ``__init__`` 方法。
 
+路由路径是和Resource名称相同的，如果需要指定不同的路径，可以通过创建一个新Resource实现:
+
+.. code-block:: python
+
+    api.add_resource(type('NewName', (MyResource,), {}))
+
+
 一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
 使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
 
