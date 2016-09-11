@@ -214,7 +214,8 @@ class Api:
             self.requires[k] = Res(v)
 
     def meta_view(self):
-        """Meta data / API document
+        """
+        Meta data / API document
 
         By default, this view func will return API document(HTML),
         you can set request header `Accept` to `application/json`

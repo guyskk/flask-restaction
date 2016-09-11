@@ -358,6 +358,8 @@ token 一般会储存用户ID和过期时间，用户在发送请求时需要将
 API文档
 -------------------
 
+.. image:: _static/docs.png
+
 有两种方式配置API文档的访问路径。
 
 **Flask.route**
