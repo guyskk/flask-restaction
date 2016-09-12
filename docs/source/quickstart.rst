@@ -556,3 +556,8 @@ flask-restaction 相对于 flask-restful 有什么优势，或是什么特性?
 
 重写 validater，形成完善的Schema语法。
 重构 flask-restaction，使用YAML格式定义输入输出Schema。
+
+**2016年9月 - 9月12日**
+
+用NodeJS重写res.js，支持用NodeJS和Python两种方式生成res.js。
+支持生成HTML格式的API文档。
