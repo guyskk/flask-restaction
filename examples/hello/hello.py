@@ -5,12 +5,11 @@ Support markdown in docs:
 
 ![markdown](https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Markdown-mark.svg/500px-Markdown-mark.svg.png)
 
-为RESTful API而生的Web框架：
-
-- 创建RESTful API
-- 校验用户输入以及将输出转化成合适的响应格式
-- 身份验证和权限控制
-- 自动生成Javascript SDK和API文档
+执行以下命令，将会在static目录下生成res.js文件:
+```
+resjs http://127.0.0.1:5000/docs -d static/res.js
+```
+之后打开chrome控制台就可以用res.js调用API了。
 """
 from flask import Flask, g
 from flask_restaction import Api
