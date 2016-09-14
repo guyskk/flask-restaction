@@ -1,14 +1,12 @@
 """API - Resource Manager"""
 import re
-import jwt
 import json
 import yaml
 import textwrap
 from os.path import join, basename, dirname
 from collections import defaultdict, OrderedDict
-from datetime import datetime, timedelta
 from flask import (
-    Response, request, make_response, current_app, send_from_directory,
+    Response, request, make_response, send_from_directory,
     abort as flask_abort
 )
 from werkzeug.wrappers import Response as ResponseBase
@@ -23,7 +21,9 @@ PATTERN_ENDPOINT = re.compile(r"^(?:(.*)\.)?(\w*)(?:@(.*))?$")
 DEFAULT_AUTH = {
     "header": "Authorization",
     "algorithm": "HS256",
-    "expiration": 3600
+    "expiration": 3600,
+    "cookie": None,
+    "refresh": True
 }
 BUILTIN_ERROR = {
     "400.InvalidData": "request data invalid",
@@ -184,7 +184,6 @@ class Api:
         self.before_request_funcs = []
         self.after_request_funcs = []
         self.handle_error_func = None
-        self.get_role_func = None
         self.app = app
         if validaters:
             self.validaters = validaters
@@ -335,16 +334,13 @@ class Api:
         """
         def view(*args, **kwargs):
             try:
+                httpmathod = request.method.lower()
+                if httpmathod not in action_group:
+                    abort(405)
                 resp = self._before_request()
                 if resp is None:
-                    httpmathod = request.method.lower()
-                    if httpmathod not in action_group:
-                        abort(405)
-                    # check permission
-                    self.authorize()
                     fn = action_group[httpmathod]
-                    data = get_request_data()
-                    resp = fn(data)
+                    resp = fn(get_request_data())
             except Exception as ex:
                 resp = self._handle_error(ex)
                 if resp is None:
@@ -353,62 +349,16 @@ class Api:
             return export(*resp)
         return view
 
-    def authorize(self):
+    def authorize(self, role):
         """Check permission"""
-        if self.get_role_func:
-            resource, action = parse_request()
-            token = self.parse_auth_headers()
-            role = self.get_role_func(token)
-            roles = self.meta.get("$roles", {})
-            message = "%s can't access %s.%s" % (role, resource, action)
-            try:
-                if action not in roles[role][resource]:
-                    abort(403, "PermissionDeny", message)
-            except KeyError:
-                abort(403, "PermissionDeny", message)
-
-    def get_role(self, f):
-        """Decorater for registing get_role_func"""
-        self.get_role_func = f
-        return f
-
-    def parse_auth_headers(self):
-        """Parse Authorization token from request headers"""
-        token = request.headers.get(self.meta["$auth"]["header"])
-        return self.parse_auth_token(token)
-
-    def parse_auth_token(self, token):
-        """Parse Authorization token"""
-        key = current_app.secret_key
-        if key is None:
-            if current_app.debug:
-                current_app.logger.debug("app.secret_key not set")
-            return None
+        resource, action = parse_request()
+        roles = self.meta.get("$roles", {})
+        message = "%s can't access %s.%s" % (role, resource, action)
         try:
-            return jwt.decode(
-                token, key,
-                algorithms=[self.meta["$auth"]["algorithm"]],
-                options={'require_exp': True}
-            )
-        except jwt.InvalidTokenError:
-            pass
-        return None
-
-    def gen_auth_token(self, token, auth_exp=None):
-        """Generate auth token"""
-        auth = self.meta["$auth"]
-        if auth_exp is None:
-            auth_exp = auth["expiration"]
-        token["exp"] = datetime.utcnow() + timedelta(seconds=auth_exp)
-        key = current_app.secret_key
-        if key is None:
-            raise ValueError("please set app.secret_key before generate token")
-        return jwt.encode(token, key, algorithm=auth["algorithm"])
-
-    def gen_auth_headers(self, token, auth_exp=None):
-        """Generate auth headers"""
-        auth = self.meta["$auth"]
-        return {auth["header"]: self.gen_auth_token(token, auth_exp)}
+            if action not in roles[role][resource]:
+                abort(403, "PermissionDeny", message)
+        except KeyError:
+            abort(403, "PermissionDeny", message)
 
     def _before_request(self):
         for fn in self.before_request_funcs:
