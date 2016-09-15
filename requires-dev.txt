@@ -1,0 +1,5 @@
+pytest>=2.9.1
+pytest-cov>=2.3.0
+codecov>=2.0.5
+flask-cors>=2.1.2
+freezegun>=0.3.7
