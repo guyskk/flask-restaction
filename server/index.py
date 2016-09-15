@@ -1,6 +1,6 @@
 """Test Server"""
 from flask import Flask, Response, request, abort, redirect, url_for, g
-from flask_restaction import Api
+from flask_restaction import Api, TokenAuth
 from flask_cors import CORS
 from os.path import abspath, dirname, join
 
@@ -10,12 +10,13 @@ CORS(app, expose_headers=['Authorization'])
 metafile = abspath(join(dirname(__file__), "meta.json"))
 api = Api(app, metafile=metafile)
 
+auth = TokenAuth(api)
 
-@api.get_role
+
+@auth.get_role
 def get_role(token):
-    g.token = token
-    if token and 'name' in token:
-        return "admin"
+    if token:
+        return token["role"]
     return "guest"
 
 
@@ -104,9 +105,8 @@ class Test:
         $input:
             name@name: Your name
         """
-        token = {'name': name}
-        headers = api.gen_auth_headers(token)
-        return token, headers
+        g.token = token = {'role': 'admin', 'name': name}
+        return token
 
     def get_me(self):
         return g.token

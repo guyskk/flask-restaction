@@ -25,7 +25,11 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
-    tests_require=['pytest'],
+    tests_require=[
+        'pytest>=2.9.1',
+        'freezegun>=0.3.7',
+        'mock>=2.0.0'
+    ],
     classifiers=[
         'Framework :: Flask',
         'Environment :: Web Environment',

@@ -28,7 +28,6 @@ DEFAULT_AUTH = {
 BUILTIN_ERROR = {
     "400.InvalidData": "request data invalid",
     "403.PermissionDeny": "permission deny",
-    "500.ServerError": "internal server error"
 }
 DOCS_DIST = join(dirname(__file__), 'docs/dist')
 DOCS_HTML = join(dirname(__file__), 'docs/docs.html')
@@ -125,7 +124,7 @@ def get_request_data():
     """Get request data based on request.method
 
     If method is GET or DELETE, get data from request.args
-    If method is POST or PUT, get data from request.form or request.json
+    If method is POST, PATCH or PUT, get data from request.form or request.json
     """
     method = request.method.lower()
     if method in ["get", "delete"]:
@@ -147,12 +146,11 @@ def get_request_data():
 
 def parse_request():
     """Parse endpoint and return (resource, action)"""
-    find = PATTERN_ENDPOINT.findall(request.endpoint)
+    find = None
+    if request.endpoint is not None:
+        find = PATTERN_ENDPOINT.findall(request.endpoint)
     if not find:
-        abort(500, {
-            "error": "ServerError",
-            "message": "invalid endpoint: %s" % request.endpoint
-        })
+        raise ValueError("invalid endpoint %s" % request.endpoint)
     __, resource, action_name = find[0]
     if action_name:
         action = request.method.lower() + "_" + action_name
