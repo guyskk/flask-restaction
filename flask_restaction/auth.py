@@ -5,45 +5,7 @@ from werkzeug.http import dump_cookie
 
 
 class TokenAuth:
-    """
-    处理Token授权
-
-    用法::
-
-        # meta.json
-        {
-            "$auth": {
-                "algorithm": "HS256",     # token签名算法
-                "expiration": 3600,       # token存活时间，单位为秒
-                "header": "Authorization" # 用于传递token的请求/响应头
-                "cookie": null            # 用于传递token的cookie, 默认不用cookie
-                "refresh": true           # 是否主动延长token过期时间
-            }
-        }
-
-        # __init__.py
-        auth = TokenAuth(api)
-        @auth.get_role
-        def get_role(self, token):
-            if token:
-                return token.get('role', 'guest')
-            return 'guest'
-
-        # user.py
-        class User:
-            def post_login(self, userid, password):
-                # query user from database, check userid and password
-                g.token={'userid': userid, 'role': role}
-                return "OK"
-
-    对安全性要求不同，授权相关的实现也会不同，这里的实现适用于对安全性要求不高的应用。
-
-    当收到请求时，检测到token即将过期，会主动颁发一个新的token给客户端，
-    这样能避免token过期导致中断用户正常使用的问题。
-
-    但这样也导致token能够被无限被刷新，有一定的安全隐患。
-    设置``"refresh": false``可以禁止主动颁发新的token给客户端。
-    """
+    """Token based authorize and permission control"""
 
     def __init__(self, api):
         self.api = api

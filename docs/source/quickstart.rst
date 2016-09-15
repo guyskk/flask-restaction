@@ -184,7 +184,7 @@ endpoint (url_for 的参数) 是 ``resource@action_name``
 
 
 
-身份验证&权限控制
+权限管理
 -------------------
 
 
@@ -211,14 +211,15 @@ __init__.py 根据token确定角色
 
 .. code-block:: python
 
-    api = Api(metafile='meta.json')
+    from flask_restaction import Api, TokenAuth
 
-    @api.get_role
+    api = Api(metafile='meta.json')
+    auth = TokenAuth(api)
+
+    @auth.get_role
     def get_role(token):
-        if token and 'id' in token:
-            user_id = token['id']
-            # query user from database
-            return user_role
+        if token:
+            return token["role"]
         else:
             return "guest"
 
@@ -238,6 +239,8 @@ user.py 登录接口
 
 .. code-block:: python
 
+    from flask import g
+
     class User:
 
         def __init__(self, api):
@@ -245,8 +248,8 @@ user.py 登录接口
 
         def post(self, username, password):
             # query user from database
-            headers = api.gen_auth_headers({"id": user.id})
-            return user, headers
+            g.token = {"id": user.id, "role": user.role}
+            return user
 
 
 
@@ -257,15 +260,14 @@ user.py 登录接口
 ``meta["$roles"]["guest"]["hello"]`` 中有没有 ``get``，发现没有，框架直接拒绝此次请求。
 
 用户A调用 ``user.post`` 接口，框架的处理流程同上，因为 ``meta["$roles"]["guest"]["user"]`` 中有 post，
-框架允许此次请求，请求到达 ``user.post`` 方法，验证用户名和密码，如果验证成功，就调用
-``api.gen_auth_headers`` 方法生成一个 ``token``，``token`` 里面保存了用户ID和过期时间，并用JWT进行签名。
-这个 ``token`` 通过响应头的 ``Authorization`` 返回给用户。
+框架允许此次请求，请求到达 ``user.post`` 方法，验证用户名和密码，如果验证成功，就设置
+``g.token``，``token`` 里面保存了用户ID，角色和过期时间。TokenAuth会将 ``g.token`` 用JWT进行签名，
+然后通过响应头的 ``Authorization`` 返回给用户。
 
 用户A再次调用 ``hello.get`` 接口，在请求头的 ``Authorization`` 中带上了刚才得到的 ``token`` ，
 框架先用JWT验证 ``token`` 的完整性和过期时间，如果没问题，再调用 ``get_role(token)``，得到用户角色。
 假设得到的角色是 ``admin``，因为 ``meta["$roles"]["admin"]["user"]`` 中有 ``post``，框架允许此次请求，
 请求到达 ``hello.get`` 方法。
-
 
 
 **在 metafile 中设定角色和权限**
@@ -293,16 +295,13 @@ metafile是一个描述API信息的文件，通常放在应用的根目录下，
 **注册 get_role 函数**
 
 框架通过URL能解析出Resource, Action，但是无法知道用户是什么角色, 所以需要你提供一个能返回用户角色的函数。
-如果没有注册 get_role 函数，则框架不进行权限控制，允许所有请求通过。
 
 **生成 token**
 
-为了能够确认用户的身份，你需要在用户登录成功后生成一个 token，将 token 通过响应头(``Authorization``)返回给用户。
+为了能够确认用户的身份，需要在用户登录成功后生成一个 token，将 token 通过响应头(``Authorization``)返回给用户。
 token 一般会储存用户ID和过期时间，用户在发送请求时需要将 token 通过请求头发送给服务器。
 
-框架使用 *json web token* 作为身份验证工具，见 `pyjwt <https://github.com/jpadilla/pyjwt>`_ 。
-
-可以用 api.gen_auth_headers 直接生成含 token 的响应头，也可以用 api.gen_auth_token 只生成 token。
+TokenAuth使用 *json web token* 作为身份验证工具，见 `pyjwt <https://github.com/jpadilla/pyjwt>`_ 。
 
 .. Note::
 
@@ -317,6 +316,53 @@ token 一般会储存用户ID和过期时间，用户在发送请求时需要将
         "error": "PermissionDeny",
         "message": "xxx can't access xxxx"
     }
+
+
+**安全性和设置**
+
+对安全性要求不同，权限管理的实现也会不同，TokenAuth的实现适用于对安全性要求不高的应用。
+
+当收到请求时，检测到token即将过期，会主动颁发一个新的token给客户端，这样能避免token过期
+导致中断用户正常使用的问题。但这样也导致token能够被无限被刷新，有一定的安全隐患。
+
+以下是默认设置::
+
+    {
+        "$auth": {
+              "algorithm": "HS256",     # token签名算法
+              "expiration": 3600,       # token存活时间，单位为秒
+              "header": "Authorization" # 用于传递token的请求/响应头
+              "cookie": null            # 用于传递token的cookie名称, 默认不用cookie
+              "refresh": true           # 是否主动延长token过期时间
+        }
+    }
+
+
+**自定义权限管理**
+
+``Api.authorize(role)`` 方法能根据 ``$roles`` 和请求URL判断该角色是否有权限调用API，
+利用它可以简化自定义权限管理实现。
+
+以下是基本结构，具体实现可以参考 ``flask_restaction/auth.py``。
+
+.. code-block:: python
+
+    class MyAuth:
+
+        def __init__(self, api):
+            self.api = api
+            self.config = api.meta["$auth"]
+            api.before_request(self.before_request)
+            api.after_request(self.after_request)
+
+        def before_request(self):
+            """Parse request, check permission"""
+            # parse role from request
+            self.api.authorize(role)
+
+        def after_request(self, rv, status, headers):
+            """Modify response"""
+            return rv, status, headers
 
 
 添加资源

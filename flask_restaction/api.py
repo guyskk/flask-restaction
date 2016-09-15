@@ -28,6 +28,7 @@ DEFAULT_AUTH = {
 BUILTIN_ERROR = {
     "400.InvalidData": "request data invalid",
     "403.PermissionDeny": "permission deny",
+    "500.ServerError": "internal server error"
 }
 DOCS_DIST = join(dirname(__file__), 'docs/dist')
 DOCS_HTML = join(dirname(__file__), 'docs/docs.html')
