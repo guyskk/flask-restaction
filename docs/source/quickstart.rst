@@ -273,7 +273,7 @@ user.py 登录接口
 **在 metafile 中设定角色和权限**
 
 metafile是一个描述API信息的文件，通常放在应用的根目录下，文件名 meta.json。
-在Api初始化的时候通过 Api(metafile="meta.json") 加载。
+在Api初始化的时候通过 ``Api(metafile="meta.json")`` 加载。
 
 .. code::
 
