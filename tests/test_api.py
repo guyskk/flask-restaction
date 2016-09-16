@@ -4,17 +4,14 @@ import pytest
 from collections import OrderedDict
 from validater import Invalid, SchemaError
 from validater.validaters import handle_default_optional_desc
-from flask import Flask, Blueprint, jsonify, url_for, request, make_response, g
+from flask import Flask, Blueprint, jsonify, url_for, request, make_response
 from flask_restaction import exporter
 from flask_restaction.api import (
     Api, abort, unpack, export, ordered_load, parse_docs,
     get_request_data, parse_request, get_title
 )
-from werkzeug.exceptions import BadRequest
-
-
-def resp_json(resp):
-    return json.loads(resp.data.decode("utf-8"))
+from werkzeug.exceptions import BadRequest, Forbidden
+from helper import resp_json
 
 
 def test_abort():
@@ -646,10 +643,9 @@ def test_meta_view():
         assert resp.mimetype == 'application/json'
 
 
-def test_auth(tmpdir):
+def test_authorize(tmpdir):
     metafile = tmpdir.join("meta.json")
     json.dump({
-        "$desc": "test",
         "$roles": {
             "admin": {
                 "hello": ["get", "post"]
@@ -661,63 +657,41 @@ def test_auth(tmpdir):
     }, metafile.open("w"))
 
     app = Flask(__name__)
-    app.secret_key = "secret_key"
     api = Api(app, metafile=metafile.strpath)
-
-    @api.get_role
-    def get_role(token):
-        g.name = None
-        if token and token["name"] == "kk":
-            g.name = token["name"]
-            return "admin"
-        else:
-            return "guest"
 
     class Hello:
 
-        def __init__(self, api):
-            self.api = api
-
         def get(self):
-            """
-            Get Name
+            pass
 
-            $output:
-                name?str&optional: Your name
-            """
-            return {"name": g.name}
+        def post(self):
+            pass
+    api.add_resource(Hello)
 
-        def post(self, name):
-            """
-            Generate Token
-
-            $input:
-                name?str: Your name
-            """
-            headers = self.api.gen_auth_headers({"name": name})
-            return "OK", headers
-
-    api.add_resource(Hello, api)
-    auth_header = api.meta["$auth"]["header"]
-
-    with app.test_client() as c:
-        resp = c.get("/hello")
-        assert resp.status_code == 403
-
-        resp = c.post("/hello", data={"name": "abc"})
-        assert resp.status_code == 200
-        headers = {auth_header: resp.headers[auth_header]}
-        resp = c.get("/hello", headers=headers)
-        assert resp.status_code == 403
-        assert resp_json(resp)["error"] == "PermissionDeny"
-        assert "guest" in resp_json(resp)["message"]
-
-        resp = c.post("/hello", data={"name": "kk"})
-        assert resp.status_code == 200
-        headers = {auth_header: resp.headers[auth_header]}
-        resp = c.get("/hello", headers=headers)
-        assert resp.status_code == 200
-        assert resp_json(resp) == {"name": "kk"}
+    with app.test_request_context("/hello", method="GET"):
+        api.authorize("admin")
+    with app.test_request_context("/hello", method="POST"):
+        api.authorize("admin")
+    with app.test_request_context("/hello", method="PUT"):
+        with pytest.raises(ValueError):
+            api.authorize("admin")
+    with app.test_request_context("/hello/world", method="GET"):
+        with pytest.raises(ValueError):
+            api.authorize("admin")
+    with app.test_request_context("/helloworld", method="POST"):
+        with pytest.raises(ValueError):
+            api.authorize("admin")
+    with app.test_request_context("/helo", method="PUT"):
+        with pytest.raises(ValueError):
+            api.authorize("admin")
+    with app.test_request_context("/hello", method="GET"):
+        with pytest.raises(Forbidden):
+            api.authorize("guest")
+    with app.test_request_context("/hello", method="POST"):
+        api.authorize("guest")
+    with app.test_request_context("/hello", method="PUT"):
+        with pytest.raises(ValueError):
+            api.authorize("guest")
 
 
 def test_docs_and_shared_schema():

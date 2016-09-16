@@ -25,7 +25,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
-    tests_require=['pytest'],
     classifiers=[
         'Framework :: Flask',
         'Environment :: Web Environment',

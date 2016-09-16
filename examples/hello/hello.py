@@ -12,20 +12,19 @@ resjs http://127.0.0.1:5000/docs -d static/res.js
 之后打开chrome控制台就可以用res.js调用API了。
 """
 from flask import Flask, g
-from flask_restaction import Api
+from flask_restaction import Api, TokenAuth
 
 app = Flask(__name__)
 api = Api(app, docs=__doc__, metafile="meta.json")
 app.secret_key = b'secret_key'
+auth = TokenAuth(api)
 
 
-@api.get_role
+@auth.get_role
 def get_role(token):
-    g.token = token
-    if token is None:
-        return "guest"
-    else:
-        return "normal"
+    if token:
+        return token.get('role', 'guest')
+    return 'guest'
 
 
 class Welcome:
@@ -71,8 +70,8 @@ class Hello:
 
         $input: "@name"
         """
-        headers = self.api.gen_auth_headers({"name": name})
-        return "OK", headers
+        g.token = {"name": name, "role": "normal"}
+        return "OK"
 
 api.add_resource(Hello, api)
 api.add_resource(type('Docs', (), {'get': api.meta_view}))

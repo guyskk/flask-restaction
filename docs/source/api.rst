@@ -15,6 +15,13 @@ Api
    :members:
    :undoc-members:
 
+TokenAuth
+------------------
+
+ .. autoclass:: flask_restaction.TokenAuth
+    :members:
+    :undoc-members:
+
 exporters
 -----------------
 .. automodule:: flask_restaction.exporters
@@ -26,4 +33,3 @@ Res
 .. autoclass:: flask_restaction.Res
    :members:
    :undoc-members:
-
