@@ -65,7 +65,7 @@ def render_core(url_prefix, auth_header, resources):
 def resjs(url, dest='./res.js', prefix=None, node=False, min=False):
     """Generate res.js"""
     url_prefix, auth_header, resources = parse_meta(url)
-    if prefix:
+    if prefix is not None:
         url_prefix = prefix
     core = render_core(url_prefix, auth_header, resources)
     if min:
