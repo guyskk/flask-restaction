@@ -31,20 +31,26 @@ class TokenAuth:
             g.token["exp"] = exp
             if headers is None:
                 headers = {}
-            token = self.encode_token(g.token)
-            if self.config["header"]:
-                headers[self.config["header"]] = token
-            if self.config["cookie"]:
-                headers["Set-Cookie"] = dump_cookie(
-                    self.config["cookie"], token, httponly=True,
-                    max_age=self.config["expiration"]
-                )
+            headers.update(self.generate_headers(g.token))
         return rv, status, headers
 
     def get_role(self, f):
         """Decorater for register get_role_func"""
         self.get_role_func = f
         return f
+
+    def generate_headers(self, token):
+        """Generate auth headers"""
+        headers = {}
+        token = self.encode_token(token)
+        if self.config["header"]:
+            headers[self.config["header"]] = token
+        if self.config["cookie"]:
+            headers["Set-Cookie"] = dump_cookie(
+                self.config["cookie"], token, httponly=True,
+                max_age=self.config["expiration"]
+            )
+        return headers
 
     def calculate_expiration(self, token):
         """Calculate token expiration
