@@ -380,17 +380,7 @@ TokenAuth使用 *json web token* 作为身份验证工具，见 `pyjwt <https://
 一个Resource可能要依赖其他对象，或者是依赖于网络上的另一个API。
 使用依赖注入的方式为Resource提供依赖，而不是使用全局变量。
 
-例如，User需要api对象来生成token::
-
-    class User:
-
-        def __init__(self, api):
-            self.api = api
-
-    api.add_resource(User, api=api)
-
-
-或是依赖于其他对象::
+例如，User依赖于其他对象::
 
     class User:
 
