@@ -416,8 +416,6 @@ API文档
 
 Api.meta_view也能返回JSON格式的API元数据，只需要设置请求头 ``Accept`` 为 ``application/json`` 即可。
 
-在 metafile 里面配置 $resjs 为生成的 res.js 文件的 URL，则可以在文档页面通过浏览器控制台使用 res.js。
-
 
 使用蓝图
 -----------------------------
@@ -482,6 +480,17 @@ Api提供before_request, after_request, error_handler这3个装饰器用来注�
 
 使用 res.js
 ---------------------------
+
+在API文档页面打开控制台即可使用 res.js。
+
+如果API路径不是网站根路径，则需要配置 **API_URL_PREFIX**。
+
+例如: ``http://127.0.0.1:5000/api``
+
+.. code-block:: python
+
+    app.config["API_URL_PREFIX"] = "/api"
+
 
 详细用法见 :ref:`resjs`
 
