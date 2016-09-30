@@ -6,16 +6,12 @@ from .res import res_to_url
 RESJS_DIST = os.path.join(os.path.dirname(__file__), 'resjs/dist')
 
 
-def parse_meta(url_prefix):
-    """
-    Parse metadata of API
+def parse_meta(meta):
+    """Parse metadata of API
 
-    Use meta["$url_prefix"] if exists, url_prefix otherwise.
-    :return: (url_prefix, auth_header, meta)
+    :param meta: metadata of API
+    :return: url_prefix, auth_header, resources
     """
-    meta = requests.get(
-        url_prefix,
-        headers={'Accept': 'application/json'}).json()
     resources = {}
     for name in meta:
         if name.startswith("$"):
@@ -29,7 +25,7 @@ def parse_meta(url_prefix):
                 "url": url,
                 "method": httpmethod
             }
-    url_prefix = meta.get("$url_prefix", url_prefix).rstrip("/")
+    url_prefix = meta.get("$url_prefix", "").rstrip("/")
     return url_prefix, meta["$auth"]["header"].lower(), resources
 
 
@@ -45,7 +41,7 @@ def save_file(dest, content):
 
 
 def render_core(url_prefix, auth_header, resources):
-    """Generate res.code.js"""
+    """Generate res.core.js"""
     code = ''
     code += "function(root, init) {\n"
     code += "  var q = init('%(auth_header)s', '%(url_prefix)s');\n" %\
@@ -62,9 +58,16 @@ def render_core(url_prefix, auth_header, resources):
     return code
 
 
-def resjs(url, dest='./res.js', prefix=None, node=False, min=False):
-    """Generate res.js"""
-    url_prefix, auth_header, resources = parse_meta(url)
+def generate_code(meta, prefix=None, node=False, min=False):
+    """Generate res.js
+
+    :param meta: tuple(url_prefix, auth_header, resources) or metadata of API
+    :return: res.js source code
+    """
+    if isinstance(meta, dict):
+        url_prefix, auth_header, resources = parse_meta(meta)
+    else:
+        url_prefix, auth_header, resources = meta
     if prefix is not None:
         url_prefix = prefix
     core = render_core(url_prefix, auth_header, resources)
@@ -75,8 +78,14 @@ def resjs(url, dest='./res.js', prefix=None, node=False, min=False):
     if node:
         filename = 'res.node.js'
     base = read_file(filename)
-    result = base.replace('"#res.core.js#"', core)
-    save_file(dest, result)
+    return base.replace('"#res.core.js#"', core)
+
+
+def resjs(url, dest='./res.js', prefix=None, node=False, min=False):
+    """Generate res.js and save it"""
+    meta = requests.get(url, headers={'Accept': 'application/json'}).json()
+    code = generate_code(meta, prefix, node, min)
+    save_file(dest, code)
 
 
 def main():

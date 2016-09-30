@@ -20,10 +20,8 @@ $error:
     404.NotFound: 未找到页面
     500.ServerError: 服务器错误
 """
-import json
-from os.path import basename
 from flask_restaction import Api
-from flask import Flask, request, send_from_directory, make_response
+from flask import Flask
 app = Flask(__name__)
 app.debug = True
 api = Api(app, docs=__doc__)
@@ -96,36 +94,9 @@ api.add_resource(User)
 api.add_resource(Hello)
 api.add_resource(Article)
 api.add_resource(World)
-api.add_resource(type("Docs2", (), {"get": api.meta_view}))
-resjs = '?f=res.min.js'
+api.add_resource(type("Docs", (), {"get": api.meta_view}))
 
 
-def get_title(desc):
-    if not desc:
-        return 'Docs'
-    lines = desc.strip('\n').split('\n')
-    if not lines:
-        return 'Docs'
-    return lines[0].strip('# ')
-
-
-@app.route('/docs')
-def docs():
-    mediatype = request.accept_mimetypes.best_match(
-        ['text/html', 'application/json'], default='text/html')
-    if mediatype == 'application/json':
-        return api.meta_view()
-    if 'json' in request.args:
-        return api.meta_view()
-    filename = request.args.get('f')
-    if filename:
-        return send_from_directory('./dist', basename(filename))
-    with open('./docs.html') as f:
-        content = f.read()\
-            .replace('$(title)', get_title(api.meta.get('$desc')))\
-            .replace('$(meta)', json.dumps(api.meta, ensure_ascii=False))\
-            .replace('$(resjs)', resjs)
-    return make_response(content)
-
+app.route('/')(api.meta_view)
 if __name__ == '__main__':
     app.run()

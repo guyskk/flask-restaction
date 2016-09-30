@@ -72,7 +72,7 @@ class TokenAuth:
         return None
 
     def decode_token(self, token):
-        """Decode Authorization token"""
+        """Decode Authorization token, return None if token invalid"""
         key = current_app.secret_key
         if key is None:
             if current_app.debug:
@@ -88,7 +88,7 @@ class TokenAuth:
             return None
 
     def encode_token(self, token):
-        """Encode Authorization token"""
+        """Encode Authorization token, return bytes token"""
         key = current_app.secret_key
         if key is None:
             raise ValueError("please set app.secret_key before generate token")

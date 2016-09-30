@@ -7,13 +7,15 @@ from os.path import join, basename, dirname
 from collections import defaultdict, OrderedDict
 from flask import (
     Response, request, make_response, send_from_directory,
-    abort as flask_abort
+    current_app, abort as flask_abort
 )
 from werkzeug.wrappers import Response as ResponseBase
 from validater import SchemaParser, Invalid
 from validater.schema import MarkKey
 from .exporters import exporters
 from .res import Res
+from .cli import generate_code, parse_meta
+
 
 PATTERN_ACTION = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')
@@ -210,6 +212,7 @@ class Api:
         self.requires = {}
         for k, v in self.meta.get("$requires", {}).items():
             self.requires[k] = Res(v)
+        self._resjs_cache = None
 
     def meta_view(self):
         """
@@ -228,13 +231,25 @@ class Api:
                 "Content-Type": "application/json; charset=utf-8"
             })
         filename = request.args.get('f')
+        if filename in ["res.js", "res.min.js"]:
+            # cache parsed meta
+            if self._resjs_cache is None:
+                self._resjs_cache = parse_meta(self.meta)
+            prefix = current_app.config.get("API_URL_PREFIX")
+            min = filename == "res.min.js"
+            code = generate_code(self._resjs_cache, prefix=prefix, min=min)
+            response = make_response(code, {
+                "Content-Type": "application/javascript"
+            })
+            # handle etag
+            response.add_etag()
+            return response.make_conditional(request)
         if filename:
             return send_from_directory(DOCS_DIST, basename(filename))
         with open(DOCS_HTML) as f:
             content = f.read()\
                 .replace('$(title)', self.meta.get('$title', ''))\
-                .replace('$(meta)', dumped)\
-                .replace('$(resjs)', self.meta.get('$resjs', ''))
+                .replace('$(meta)', dumped)
         return make_response(content)
 
     def add_resource(self, resource, *class_args, **class_kwargs):
