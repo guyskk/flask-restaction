@@ -44,20 +44,20 @@
             <section style="display:none;" v-if="basic" v-show="view=='basic'">
                 <div id="desc" v-marked="basic.$desc"></div>
                 <h3>Auth</h3>
-                <pre><code class="json">{{basic.$auth}}</code></pre>
+                <pre v-highlight="basic.$auth"></pre>
                 <template v-if="!isEmpty(basic.$shared)">
                   <h3><span>Shared</span></h3>
                   <template v-for="(schema,name) in basic.$shared">
                     <h4>@{{name}}</h4>
-                    <pre><code class="json">{{schema}}</code></pre>
+                    <pre v-highlight="schema"></pre>
                   </template>
                 </template>
                 <h3>Error</h3>
-                <pre><code class="json">{{basic.$error?basic.$error:'No Error Info'}}</code></pre>
+                <pre v-highlight="basic.$error">No Error Info</pre>
             </section>
             <section style="display:none;" v-if="meta" v-show="view=='meta'">
                 <h3 id='meta'><span>Meta</span></h3>
-                <pre><code class="json">{{metaText}}</code></pre>
+                <pre v-highlight="metaText"></pre>
             </section>
             <section style="display:none;" class="section-role" v-if="role" v-show="view=='role'">
                 <h3 :id="'roles.'+roleName">{{roleName}}</h3>
@@ -81,18 +81,18 @@
                   <h3><span>Shared</span></h3>
                   <template v-for="(schema,name) in resource.$shared" :key="index">
                     <h4>@{{name}}</h4>
-                    <pre><code class="json">{{schema}}</code></pre>
+                      <pre v-highlight="schema"></pre>
                   </template>
                 </template>
                 <template v-for="(item,action) in resource" :key="index" v-if="!isSpecial(action)">
                     <h2 :id="'res.'+resourceName+'.'+action"><span>{{action}}</span></h2>
                     <p v-marked="item.$desc"></p>
                     <p>Input</p>
-                    <pre><code class="json">{{item.$input?item.$input:'No Input Schema'}}</code></pre>
+                    <pre v-highlight="item.$input">No Input Schema</pre>
                     <p>Output</p>
-                    <pre><code class="json">{{item.$output?item.$output:'No Output Schema'}}</code></pre>
+                    <pre v-highlight="item.$output">No Output Schema</pre>
                     <p>Error</p>
-                    <pre><code class="json">{{item.$error?item.$error:'No Error Info'}}</code></pre>
+                    <pre v-highlight="item.$error">No Error Info</pre>
                 </template>
             </section>
         </div>

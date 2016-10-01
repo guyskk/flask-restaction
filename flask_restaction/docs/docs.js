@@ -1,6 +1,6 @@
 function parseMeta(meta) {
     let basic = {}
-    let roles = null;
+    let roles = null
     let resources = {}
     for (let k in meta) {
         if (k.slice(0, 1) == '$') {
@@ -149,14 +149,20 @@ let app = new Vue({
     },
     mounted: function() {
         route(this)
-        hljs.initHighlightingOnLoad()
     },
     directives: {
-        marked: {
-            bind: function(el, binding) {
-                if (binding.value && binding.value != binding.oldValue) {
-                    el.innerHTML = marked(binding.value)
+        marked: function(el, binding) {
+            el.innerHTML = marked(binding.value)
+        },
+        highlight: function(el, binding) {
+            if (binding.value) {
+                let value = null
+                if (typeof(binding.value) === "string") {
+                    value = binding.value
+                } else {
+                    value = JSON.stringify(binding.value, null, 4)
                 }
+                el.innerHTML = hljs.highlight("json", value, true).value
             }
         }
     }
