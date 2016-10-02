@@ -10,8 +10,8 @@ from flask import (
     current_app, abort as flask_abort
 )
 from werkzeug.wrappers import Response as ResponseBase
-from validater import SchemaParser, Invalid
-from validater.schema import MarkKey
+from validr import SchemaParser, Invalid
+from validr.schema import MarkKey
 from .exporters import exporters
 from .res import Res
 from .cli import generate_code, parse_meta
@@ -176,20 +176,20 @@ class Api:
     """Manager of Resource
 
     :param app: Flask or Blueprint
-    :param validaters: custom validaters
+    :param validators: custom validators
     :param metafile: path of metafile
     :param docs: api docs
     """
 
-    def __init__(self, app, validaters=None, metafile=None, docs=""):
+    def __init__(self, app, validators=None, metafile=None, docs=""):
         self.before_request_funcs = []
         self.after_request_funcs = []
         self.handle_error_func = None
         self.app = app
-        if validaters:
-            self.validaters = validaters
+        if validators:
+            self.validators = validators
         else:
-            self.validaters = {}
+            self.validators = {}
         if metafile is None:
             self.meta = {}
         else:
@@ -267,7 +267,7 @@ class Api:
         shared = self.meta["$shared"].copy()
         shared.update(meta_resource.get("$shared", {}))
         with MarkKey("%s.$shared" % resource.__name__):
-            sp = SchemaParser(validaters=self.validaters, shared=shared)
+            sp = SchemaParser(validators=self.validators, shared=shared)
         with MarkKey(resource.__name__):
             resource = resource(*class_args, **class_kwargs)
             # group actions by it's name, and

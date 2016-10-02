@@ -2,8 +2,8 @@ import json
 import yaml
 import pytest
 from collections import OrderedDict
-from validater import Invalid, SchemaError
-from validater.validaters import handle_default_optional_desc
+from validr import Invalid, SchemaError
+from validr.validators import handle_default_optional_desc
 from flask import Flask, Blueprint, jsonify, url_for, request, make_response
 from flask_restaction import exporter
 from flask_restaction.api import (
@@ -559,11 +559,11 @@ def test_blueprint():
         assert resp_json(resp)["error"] == "InvalidData"
 
 
-def test_validaters():
+def test_validators():
 
     @handle_default_optional_desc()
-    def even_validater():
-        def validater(value):
+    def even_validator():
+        def validator(value):
             try:
                 i = int(value)
             except:
@@ -572,10 +572,10 @@ def test_validaters():
                 return i
             else:
                 raise Invalid("not even number")
-        return validater
+        return validator
 
     app = Flask(__name__)
-    api = Api(app, validaters={"even": even_validater})
+    api = Api(app, validators={"even": even_validator})
 
     class Test:
 
