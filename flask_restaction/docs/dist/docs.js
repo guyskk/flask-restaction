@@ -219,10 +219,12 @@
 
 	            return marked;
 	        }(function (el, binding) {
-	            el.innerHTML = marked(binding.value);
+	            if (binding.value !== undefined) {
+	                el.innerHTML = marked(binding.value);
+	            }
 	        }),
 	        highlight: function highlight(el, binding) {
-	            if (binding.value) {
+	            if (binding.value !== undefined) {
 	                var value = null;
 	                if (typeof binding.value === "string") {
 	                    value = binding.value;

@@ -45,13 +45,13 @@
                 <div id="desc" v-marked="basic.$desc"></div>
                 <h3>Auth</h3>
                 <pre v-highlight="basic.$auth"></pre>
-                <template v-if="!isEmpty(basic.$shared)">
-                  <h3><span>Shared</span></h3>
-                  <template v-for="(schema,name) in basic.$shared">
-                    <h4>@{{name}}</h4>
-                    <pre v-highlight="schema"></pre>
-                  </template>
-                </template>
+                <div v-if="!isEmpty(basic.$shared)">
+                    <h3><span>Shared</span></h3>
+                    <div v-for="(schema,name) in basic.$shared">
+                        <h4>@{{name}}</h4>
+                        <pre v-highlight="schema"></pre>
+                    </div>
+                </div>
                 <h3>Error</h3>
                 <pre v-highlight="basic.$error">No Error Info</pre>
             </section>
@@ -77,14 +77,14 @@
             <section style="display:none;" v-if="resource" v-show="view=='resource'">
                 <h1 :id="'res.'+resourceName">{{resourceName}}</h1>
                 <p v-marked="resource.$desc"></p>
-                <template v-if="!isEmpty(resource.$shared)">
-                  <h3><span>Shared</span></h3>
-                  <template v-for="(schema,name) in resource.$shared" :key="index">
-                    <h4>@{{name}}</h4>
-                      <pre v-highlight="schema"></pre>
-                  </template>
-                </template>
-                <template v-for="(item,action) in resource" :key="index" v-if="!isSpecial(action)">
+                <div v-if="!isEmpty(resource.$shared)">
+                    <h3><span>Shared</span></h3>
+                    <div v-for="(schema,name,index) in resource.$shared" :key="index">
+                        <h4>@{{name}}</h4>
+                        <pre v-highlight="schema"></pre>
+                    </div>
+                </div>
+                <div v-for="(item,action,index) in resource" :key="index" v-if="!isSpecial(action)">
                     <h2 :id="'res.'+resourceName+'.'+action"><span>{{action}}</span></h2>
                     <p v-marked="item.$desc"></p>
                     <p>Input</p>
@@ -93,7 +93,7 @@
                     <pre v-highlight="item.$output">No Output Schema</pre>
                     <p>Error</p>
                     <pre v-highlight="item.$error">No Error Info</pre>
-                </template>
+                </div>
             </section>
         </div>
     </div>

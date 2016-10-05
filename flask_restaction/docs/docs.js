@@ -152,10 +152,12 @@ let app = new Vue({
     },
     directives: {
         marked: function(el, binding) {
+          if (binding.value!==undefined){
             el.innerHTML = marked(binding.value)
+          }
         },
         highlight: function(el, binding) {
-            if (binding.value) {
+            if (binding.value!==undefined){
                 let value = null
                 if (typeof(binding.value) === "string") {
                     value = binding.value
