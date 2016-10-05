@@ -1,7 +1,7 @@
 """
 Flask-Restaction
 
-http://flask-restaction.readthedocs.org/zh/latest/
+http://flask-restaction.readthedocs.org
 """
 from setuptools import setup
 from os.path import join, dirname
