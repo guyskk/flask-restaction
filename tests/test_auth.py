@@ -1,4 +1,5 @@
 import json
+import jwt
 from flask import Flask, g
 from flask_restaction import Api, TokenAuth
 from freezegun import freeze_time
@@ -89,6 +90,15 @@ def test_auth(tmpdir):
         resp = c.get("/hello", headers=headers)
         assert resp.status_code == 200
         assert resp_json(resp) == {"name": "admin"}
+
+
+def test_no_secret_key():
+    app = Flask(__name__)
+    api = Api(app)
+    auth = TokenAuth(api)
+    with app.test_request_context("/"):
+        token = jwt.encode({"user_id": 1}, "")
+        assert auth.decode_token(token) is None
 
 
 def test_expiration(tmpdir):

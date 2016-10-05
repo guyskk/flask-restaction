@@ -49,3 +49,23 @@ def test_auth(res):
     assert res.test.get_me()["name"] == "admin"
     assert res.test.post_login({"name": "kk"})
     assert res.test.get_me()["name"] == "kk"
+
+
+def test_api_meta_view():
+    with app.test_client() as c:
+        resjs = c.get("/?f=res.js")
+        assert resjs.status_code == 200
+        assert resjs.headers["Content-Type"] == "application/javascript"
+        resminjs = c.get("/?f=res.min.js")
+        assert resminjs.status_code == 200
+        assert resminjs.headers["Content-Type"] == "application/javascript"
+        resjs2 = c.get("/?f=res.js")
+        assert resjs.data == resjs2.data
+        resminjs2 = c.get("/?f=res.min.js")
+        assert resminjs.data == resminjs2.data
+        resp = c.get("/?f=docs.min.js")
+        assert resp.status_code == 200
+        resp = c.get("/?f=docs.min.css")
+        assert resp.status_code == 200
+        resp = c.get("/?f=unknown.js")
+        assert resp.status_code == 404

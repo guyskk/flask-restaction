@@ -1,5 +1,6 @@
 import requests
-from flask_restaction.cli import parse_meta, resjs
+from unittest import mock
+from flask_restaction.cli import parse_meta, resjs, main
 
 
 def test_url_prefix():
@@ -20,7 +21,7 @@ def test_resjs_node(tmpdir):
     assert tmpdir.join("res.js").check()
 
 
-def test_api_meta_view_cache():
+def test_api_meta_view():
     resjs = requests.get("http://127.0.0.1:5000?f=res.js")
     assert resjs.headers["Content-Type"] == "application/javascript"
     resminjs = requests.get("http://127.0.0.1:5000?f=res.min.js")
@@ -29,3 +30,16 @@ def test_api_meta_view_cache():
     assert resjs.content == resjs2.content
     resminjs2 = requests.get("http://127.0.0.1:5000?f=res.min.js")
     assert resminjs.content == resminjs2.content
+    resp = requests.get("http://127.0.0.1:5000?f=docs.min.js")
+    assert resp.status_code == 200
+    resp = requests.get("http://127.0.0.1:5000?f=docs.min.css")
+    assert resp.status_code == 200
+    resp = requests.get("http://127.0.0.1:5000?f=unknown.js")
+    assert resp.status_code == 404
+
+
+def test_cli(tmpdir):
+    dest = tmpdir.join("res.js").strpath
+    args = ["resjs", "http://127.0.0.1:5000", "-d", dest]
+    with mock.patch("sys.argv", new=args):
+        main()
