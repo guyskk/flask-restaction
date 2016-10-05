@@ -1,0 +1,6 @@
+flask_restaction/docs/dist/vue.min.js linguist-vendored
+flask_restaction/docs/dist/highlight.min.js linguist-vendored
+flask_restaction/docs/dist/marked.min.js linguist-vendored
+flask_restaction/docs/dist/pace.min.js linguist-vendored
+flask_restaction/docs/normalize.less linguist-vendored
+
