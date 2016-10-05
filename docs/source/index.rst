@@ -15,8 +15,6 @@ Flask-Restaction 是一个为 RESTful API 而生的 Web 框架
 
 注意：仅支持 Python3.3+
 
-Flask-Restaction 依赖 `Validater <https://github.com/guyskk/validater>`_ 校验输入输出。
-
 
 安装
 ~~~~~~~~~~~~~

@@ -129,12 +129,12 @@ Welcome
 
 Schema为 `YAML <https://zh.wikipedia.org/wiki/YAML>`_ 格式的字符串, Schema语法见 :ref:`schema`
 
-**自定义 Validater**
+**自定义校验器**
 
-在 Validater 的文档中讲述了自定义 Validater 的用法。所有自定义的 validater 通过
-Api(validaters=validaters) 进行注册。
+在 Validr 的文档中讲述了自定义校验器的用法。所有自定义的校验器通过
+Api(validators=validators) 进行注册。
 
-关于 Validater, 请移步 `Validater <https://github.com/guyskk/validater>`_
+关于 Validr, 请移步 `Validr <https://github.com/guyskk/validr>`_
 
 
 构建 URL

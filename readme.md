@@ -12,8 +12,6 @@
 
 注意：仅支持Python3.3+
 
-Flask-Restaction依赖[Validater](https://github.com/guyskk/validater)校验输入输出。
-
 
 ## 安装
 
