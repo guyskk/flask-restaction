@@ -28,7 +28,7 @@
 
 ## 文档
 
-在线文档：http://flask-restaction.readthedocs.org/zh/latest/
+在线文档：http://flask-restaction.readthedocs.io/
 
 手动构建文档：
 
