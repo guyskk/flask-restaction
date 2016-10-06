@@ -198,7 +198,7 @@ class Api:
         meta_api = parse_docs(docs, ["$shared", "$error"])
         self.meta["$desc"] = meta_api.get("$desc", "")
         self.meta["$title"] = get_title(self.meta.get('$desc'), 'Document')
-        self.meta["$shared"] = meta_api.get("$shared", {})
+        self.meta["$shared"] = meta_api.get("$shared", OrderedDict())
         self.meta["$error"] = BUILTIN_ERROR.copy()
         self.meta["$error"].update(meta_api.get("$error", {}))
         # check shared is valid or not
