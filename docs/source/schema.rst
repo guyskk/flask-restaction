@@ -19,22 +19,11 @@ Schema语法是基于JSON的，并且与实际数据结构相同，很容易掌�
 这里总结了一些与Schema相关的语法，方便上手。
 
 
-字符串
+YAML解析器
 -----------
 
-YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示锚，这两个与Schema语法有冲突，
-所以 ``@`` , ``&`` 开头的字符串都需要加上引号。
-
-例如::
-
-        "@user"
-
-        userid: "@userid"
-
-        friends:
-            - "@user"
-
-        "&optional&unique"
+YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示 `锚 <http://pyyaml.org/wiki/PyYAMLDocumentation#Aliases>`_ ，
+这两个与Schema语法有冲突，框架对YAML解析器进行了修改，将 ``@``，``&`` 视为普通字符串，同时不再支持YAML的锚语法。
 
 
 列表
@@ -45,7 +34,7 @@ YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示
 简单的列表::
 
     # tags
-    - "&unique&minlen=1"
+    - &unique&minlen=1
     - str
 
 嵌套的列表::
@@ -62,8 +51,8 @@ YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示
     # ...
 
     # schema_of_time_table
-    - "&minlen=7&maxlen=7" # 一周七天
-    - - "&minlen=3&maxlen=3" # 每天有三个时间段
+    - &minlen=7&maxlen=7 # 一周七天
+    - - &minlen=3&maxlen=3 # 每天有三个时间段
       - str&optional # 这个时间段的安排
 
 
@@ -105,7 +94,7 @@ YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示
       name?str: user name
 
     - my friends
-    - "@user"
+    - @user
 
 字典里面有列表::
 
@@ -116,7 +105,7 @@ YAML中有一些特殊符号，``@`` 是YAML的保留符号，``&`` 用于表示
 
     friends:
         - my friends
-        - "@user"
+        - @user
 
 
 Shared Schema
@@ -127,7 +116,7 @@ Shared Schema
     $shared:
         userid: int
         tags:
-            - "&unique&minlen=1"
+            - &unique&minlen=1
             - str
         user:
             id?int: user id
