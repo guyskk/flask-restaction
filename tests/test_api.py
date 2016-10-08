@@ -1,13 +1,11 @@
 import json
-import yaml
 import pytest
-from collections import OrderedDict
 from validr import Invalid, SchemaError
 from validr.validators import handle_default_optional_desc
 from flask import Flask, Blueprint, jsonify, url_for, request, make_response
 from flask_restaction import exporter
 from flask_restaction.api import (
-    Api, abort, unpack, export, ordered_load, parse_docs,
+    Api, abort, unpack, export, yaml, parse_docs,
     get_request_data, parse_request, get_title
 )
 from werkzeug.exceptions import BadRequest, Forbidden
@@ -145,25 +143,6 @@ def test_get_title():
     assert get_title('', 'Hello') == 'Hello'
 
 
-def test_ordered_load():
-    yamltext = """
-        a:
-            x: 1
-            y: 2
-            z: 3
-        b: 0
-        c: 0
-        d: 0
-    """
-    for i in range(100):
-        data = ordered_load(yamltext)
-        assert isinstance(data, OrderedDict)
-        assert isinstance(data['a'], OrderedDict)
-        assert list(data['a'].items()) == [('x', 1), ('y', 2), ('z', 3)]
-        del data['a']
-        assert list(data.items()) == [('b', 0), ('c', 0), ('d', 0)]
-
-
 def test_parse_docs():
     def f_no_docs():
         pass
@@ -233,26 +212,6 @@ def test_parse_docs_invalid_yaml():
         """
     with pytest.raises(yaml.YAMLError):
         parse_docs(f_invalid_syntax.__doc__, ["$input"])
-
-    def f_invalid_yaml_char():
-        """
-        $input:
-            userid: @userid
-        """
-    with pytest.raises(yaml.YAMLError):
-        parse_docs(f_invalid_yaml_char.__doc__, ["$input"])
-
-    def f_invalid_char_quoted():
-        """
-        $input:
-            userid: "@userid"
-        """
-    assert parse_docs(f_invalid_char_quoted.__doc__, ["$input"]) == {
-        "$desc": "",
-        "$input": {
-            "userid": "@userid"
-        }
-    }
 
 
 def test_get_request_data():

@@ -1,7 +1,6 @@
 """API - Resource Manager"""
 import re
 import json
-import yaml
 import textwrap
 from os.path import join, basename, dirname
 from collections import defaultdict, OrderedDict
@@ -12,6 +11,7 @@ from flask import (
 from werkzeug.wrappers import Response as ResponseBase
 from validr import SchemaParser, Invalid
 from validr.schema import MarkKey
+from . import simple_yaml as yaml
 from .exporters import exporters
 from .res import Res
 from .cli import generate_code, parse_meta
@@ -82,20 +82,6 @@ def export(rv, code=None, headers=None):
         return exporters[mediatype](rv, code, headers)
 
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    """Load-yaml-mappings-as-ordereddicts"""
-    class OrderedLoader(Loader):
-        pass
-
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
-    return yaml.load(stream, OrderedLoader)
-
-
 def parse_docs(docs, marks):
     """Parse YAML syntax content from docs
 
@@ -118,7 +104,7 @@ def parse_docs(docs, marks):
     start = min(indexs)
     start = docs.rfind("\n", 0, start)
     yamltext = textwrap.dedent(docs[start + 1:])
-    meta = ordered_load(yamltext)
+    meta = yaml.load(yamltext)
     meta["$desc"] = textwrap.dedent(docs[:start]).strip()
     return meta
 
