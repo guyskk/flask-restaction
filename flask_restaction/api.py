@@ -123,10 +123,7 @@ def get_request_data():
             try:
                 return request.get_json()
             except:
-                abort(400, {
-                    "error": "InvalidData",
-                    "message": "invalid json content"
-                })
+                abort(400, "InvalidData", "invalid json content")
         else:
             return request.form
     else:
