@@ -70,11 +70,11 @@ class TestClientSession:
             "method": method,
             "query_string": params,
             "headers": headers,
-            "content_type": "application/json",
             "follow_redirects": True
         }
         if json is not None:
             params["data"] = dumps(json, ensure_ascii=False)
+            params["content_type"] = "application/json"
         with self.test_client() as c:
             resp = c.open(**params)
         return resp
