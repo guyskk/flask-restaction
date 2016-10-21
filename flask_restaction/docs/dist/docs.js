@@ -187,11 +187,15 @@
 	            }
 	        },
 	        toggleSidebar: function toggleSidebar() {
-	            this.sidebar = !this.sidebar;
+	            if (this.sidebar === "none") {
+	                this.sidebar = "block";
+	            } else {
+	                this.sidebar = "none";
+	            }
 	        },
 	        hideSidebar: function hideSidebar() {
 	            if (window.innerWidth < 768) {
-	                this.sidebar = false;
+	                this.sidebar = "none";
 	            }
 	        }
 	    },

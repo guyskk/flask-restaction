@@ -24,7 +24,7 @@
     top: 0;
     bottom: 0;
     left: 0;
-    width: 240px;
+    width: 260px;
     padding: @width-gap;
     overflow-x: hidden;
     overflow-y: auto;
@@ -47,13 +47,16 @@
     }
 }
 
-.sidebar-mobile {
-    display: block;
+.content {
+    margin-left: 260px;
+    padding: 0 @width-gap*4 @width-gap*2;
 }
 
-.content {
-    margin-left: 240px;
-    padding: 0 @width-gap*4 @width-gap*2;
+@media (min-width: @width-breakpoint) {
+    .content-wrapper {
+        max-width: 80%;
+        margin: 0 auto;
+    }
 }
 
 .toggle-sidebar {
@@ -78,9 +81,12 @@
     .container{
         padding: @padding-small;
     }
+    .sidebar {
+        display: none;
+    }
     .content {
         margin-left: 0;
-        padding: @padding-small;
+        padding: 8px;
     }
     .show-on-mobile{
         display: block;

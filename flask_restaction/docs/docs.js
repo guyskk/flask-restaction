@@ -129,11 +129,15 @@ let app = new Vue({
             }
         },
         toggleSidebar() {
-            this.sidebar = !this.sidebar
+            if (this.sidebar === "none") {
+                this.sidebar = "block"
+            } else {
+                this.sidebar = "none"
+            }
         },
         hideSidebar() {
             if (window.innerWidth < 768) {
-                this.sidebar = false
+                this.sidebar = "none"
             }
         },
 
@@ -152,12 +156,12 @@ let app = new Vue({
     },
     directives: {
         marked: function(el, binding) {
-          if (binding.value!==undefined){
-            el.innerHTML = marked(binding.value)
-          }
+            if (binding.value !== undefined) {
+                el.innerHTML = marked(binding.value)
+            }
         },
         highlight: function(el, binding) {
-            if (binding.value!==undefined){
+            if (binding.value !== undefined) {
                 let value = null
                 if (typeof(binding.value) === "string") {
                     value = binding.value
