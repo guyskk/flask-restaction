@@ -39,21 +39,23 @@
 
 ## 测试
 
-测试之前需先运行一个服务器：
+测试之前: 
 
-    cd server
     pip install -r requires.txt
-    python index.py
+    pip install -r requires-dev.txt
+    python server/index.py
 
-用tox测试：
+单元测试: 
 
-    pip install tox
+    pytest
+
+代码风格测试:
+    
+    flake8
+    
+集成测试: 
+
     tox
-
-用pytest测试：
-
-    pip install pytest
-    py.test tests
 
 
 ## License
