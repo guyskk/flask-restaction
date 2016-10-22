@@ -7,7 +7,8 @@ install:
 - pip install -r requires-dev.txt
 - pip install .
 before_script:
-- cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1 &
+- cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1
+  &
 - sleep 3
 script:
 - export FLASK_RESTACTION=$(cd tests&&python -c "print(__import__('flask_restaction').__path__[0])")
@@ -19,6 +20,6 @@ deploy:
   provider: pypi
   user: guyskk
   password:
-    secure: I033FjQK4wjK9a9YtQ6K4+s/t2zygpIzXEtZmnEsSYTxDsScLM1qH/nKnpk8Uh+pNWJxTnTZF2xivGpZgb4gWpviyNe/3AGqwWAoshmVPFntNtcknbUgexi9pnwOLw0bH7m5fCFTtE58onVeWdbZTY70mJ2SxROyU8iiyVcyQOYwrMqLcdGdnzqxYVapzbZDJZkX5qgSwe1vqX/n1ZGlmLUFaP7+TRzTlvUFSloV1WGWxoBpyJT/6IrtY2Uu/U/3MjBOMv5X/AaGAStulBvFfvTxk40SPwFJltnXKPhvIV/X7THTIKk+O0bRNIMma5CihVQBXFZmnKbo9mJqTFcA/obq/rKwrhWCBk1wqqxCH6hRV44+55gpr/jl9TxN8/YYVEW2vLy0DWbJzMVXN80qEunaORSAMuU3Ow1Shh1N71OQ8oiX+3kdKF6ZKhoLQuTobGNugQn2R5o8cNnbvKIs10cpXxnkHyvePuGXDQ4sGxpAC8SXEpear+dAuydpe58z1Cu415X5SF6qj6Gztb079lmj8mXpH2fpxQlrsn3MpaApZsm23HmCJoIwGRybZluLy3fMYbVQB7zJIKLj0qFFQuJZ45B1aYGT2ZYdBAxoz6IqcpLPlcP3GoVxfCGYE0Cv44TbliPWiUMW9/JBzMuv/4tqrNLDodvtKa9BUsTdHcM=
+    secure: TgqhneRrT+xeHv8ReY8PeIJxixcdTsgt1xmuEZF36FedWWTZ95SrFasJ3AI9m2/hJ0FQUnF1tqYCbZ1n7LmIk+29UyjOZm8SYTpdlZREFGi6ouDZHE81XorM3pnhoZkT1odUGgt3GrCyMbW4LjyIqdOOlpKddONqgQ6xG59znqyEt/lmrRH/tUVfkYvNa7kk9EUMV3EPi3RAD/0DFl3tMcLkgBydEGE+cT+8fMPl3NqfxpWddBtlPueTmAUEtzghYlb5PiI/hlYxOSxri4VXO+7ZqbdgCWUwMapM5o4gQWr7TtUqQHwgtLFo4C2Ylx1K1lwDXQVV/06v0Rd3mgWRxtqK2s1efaIlg72PK3Bs064oSt2V0W5TLYYsXrxLOorfLGv5jsxeUMTzp/i0rnvv3atwBg4ghUjYTpkfRp9ydpcQXuwit1zgx6ovS6/fmCMAnLQUetW1V8VQqTXoyuuOkzVeEJeKMw5C04pog4u9+rYs5e1f/nsZVL/lK/jT9lIw7NMzb/NnpdNzvOpdEqaytX0245GWxStxhuc5k4CsBTts+7tGShtTBnrKaaGmm6iZvY7tl0pbDraaPV+Ms5P+wFie8r79UAzhoIMEJ5JiXb+zvR4EMLO+914hcd+Yck0Bsom85XBB2RJhbW4e5m/sVsXkCO92Uzr8jikWI5NXMwg=
   on:
     tags: true
