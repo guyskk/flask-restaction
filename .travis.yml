@@ -1,20 +1,22 @@
 language: python
-
 python:
-  - "3.3"
-  - "3.4"
-  - "3.5"
-
+- '3.3'
+- '3.4'
+- '3.5'
 install:
-    - pip install -r requires-dev.txt
-    - pip install .
-
+- pip install -r requires-dev.txt
+- pip install .
 before_script:
-    - cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1 &
-    - sleep 3
-
+- cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1 &
+- sleep 3
 script:
-    - py.test tests --cov=$(cd tests&&python -c "import flask_restaction;print(flask_restaction.__path__[0])")
-
+- py.test tests --cov=$(cd tests&&python -c "import flask_restaction;print(flask_restaction.__path__[0])")
 after_success:
-    - codecov
+- codecov
+deploy:
+  provider: pypi
+  user: guyskk
+  password:
+    secure: I033FjQK4wjK9a9YtQ6K4+s/t2zygpIzXEtZmnEsSYTxDsScLM1qH/nKnpk8Uh+pNWJxTnTZF2xivGpZgb4gWpviyNe/3AGqwWAoshmVPFntNtcknbUgexi9pnwOLw0bH7m5fCFTtE58onVeWdbZTY70mJ2SxROyU8iiyVcyQOYwrMqLcdGdnzqxYVapzbZDJZkX5qgSwe1vqX/n1ZGlmLUFaP7+TRzTlvUFSloV1WGWxoBpyJT/6IrtY2Uu/U/3MjBOMv5X/AaGAStulBvFfvTxk40SPwFJltnXKPhvIV/X7THTIKk+O0bRNIMma5CihVQBXFZmnKbo9mJqTFcA/obq/rKwrhWCBk1wqqxCH6hRV44+55gpr/jl9TxN8/YYVEW2vLy0DWbJzMVXN80qEunaORSAMuU3Ow1Shh1N71OQ8oiX+3kdKF6ZKhoLQuTobGNugQn2R5o8cNnbvKIs10cpXxnkHyvePuGXDQ4sGxpAC8SXEpear+dAuydpe58z1Cu415X5SF6qj6Gztb079lmj8mXpH2fpxQlrsn3MpaApZsm23HmCJoIwGRybZluLy3fMYbVQB7zJIKLj0qFFQuJZ45B1aYGT2ZYdBAxoz6IqcpLPlcP3GoVxfCGYE0Cv44TbliPWiUMW9/JBzMuv/4tqrNLDodvtKa9BUsTdHcM=
+  on:
+    tags: true
