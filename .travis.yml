@@ -10,7 +10,9 @@ before_script:
 - cd server && pip install -r requires.txt && nohup python index.py > /dev/null 2>&1 &
 - sleep 3
 script:
-- py.test tests --cov=$(cd tests&&python -c "import flask_restaction;print(flask_restaction.__path__[0])")
+- export FLASK_RESTACTION=$(cd tests&&python -c "print(__import__('flask_restaction').__path__[0])")
+- pytest --cov=$FLASK_RESTACTION
+- flake8
 after_success:
 - codecov
 deploy:
