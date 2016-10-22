@@ -43,6 +43,7 @@
 
     pip install -r requires.txt
     pip install -r requires-dev.txt
+    pip install -e .
     python server/index.py
 
 单元测试: 
