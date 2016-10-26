@@ -1,4 +1,6 @@
-"""API - Resource Manager"""
+"""
+API - Resource Manager
+"""
 import re
 import json
 import textwrap
@@ -37,11 +39,13 @@ DOCS_HTML = join(dirname(__file__), 'docs/docs.html')
 
 
 def abort(code, error=None, message=None):
-    """Abort with suitable error response
+    """
+    Abort with suitable error response
 
-    :param code: status code
-    :parma error: error symbol or flask.Response
-    :param message: error message
+    Args:
+        code (int): status code
+        error (str): error symbol or flask.Response
+        message (str): error message
     """
     if error is None:
         flask_abort(code)
@@ -58,9 +62,13 @@ def abort(code, error=None, message=None):
 
 
 def unpack(rv):
-    """Convert rv to tuple(data, code, headers)
+    """
+    Convert rv to tuple(data, code, headers)
 
-    :param rv: data or tuple that contain code and headers
+    Args:
+        rv: data or tuple that contain code and headers
+    Returns:
+        tuple (rv, status, headers)
     """
     status = headers = None
     if isinstance(rv, tuple):
@@ -71,7 +79,16 @@ def unpack(rv):
 
 
 def export(rv, code=None, headers=None):
-    """Create a suitable response"""
+    """
+    Create a suitable response
+
+    Args:
+        rv: return value of action
+        code: status code
+        headers: response headers
+    Returns:
+        flask.Response
+    """
     if isinstance(rv, ResponseBase):
         return make_response(rv, code, headers)
     else:
@@ -83,14 +100,18 @@ def export(rv, code=None, headers=None):
 
 
 def parse_docs(docs, marks):
-    """Parse YAML syntax content from docs
+    """
+    Parse YAML syntax content from docs
 
     If docs is None, return {}
     If docs has no YAML content, return {"$desc": docs}
     Else, parse YAML content, return {"$desc": docs, YAML}
 
-    :param docs: docs to be parsed
-    :param marks: list of which indicate YAML content starts, eg: ``$input``
+    Args:
+        docs (str): docs to be parsed
+        marks (list): list of which indicate YAML content starts
+    Returns:
+        A dict contains information of docs
     """
     if docs is None:
         return {}
@@ -110,7 +131,8 @@ def parse_docs(docs, marks):
 
 
 def get_request_data():
-    """Get request data based on request.method
+    """
+    Get request data based on request.method
 
     If method is GET or DELETE, get data from request.args
     If method is POST, PATCH or PUT, get data from request.form or request.json
@@ -131,7 +153,7 @@ def get_request_data():
 
 
 def parse_request():
-    """Parse endpoint and return (resource, action)"""
+    """Parse request endpoint and return (resource, action)"""
     find = None
     if request.endpoint is not None:
         find = PATTERN_ENDPOINT.findall(request.endpoint)
@@ -156,12 +178,17 @@ def get_title(desc, default=None):
 
 
 class Api:
-    """Manager of Resource
+    """
+    Manager of Resource
 
-    :param app: Flask or Blueprint
-    :param validators: custom validators
-    :param metafile: path of metafile
-    :param docs: api docs
+    Args:
+        app: Flask or Blueprint
+        validators (dict): custom validators
+        metafile (str): path of metafile
+        docs (str): api docs
+    Attributes:
+        validators (dict): custom validators
+        meta (dict): metadata of api
     """
 
     def __init__(self, app, validators=None, metafile=None, docs=""):
@@ -236,13 +263,15 @@ class Api:
         return make_response(content)
 
     def add_resource(self, resource, *class_args, **class_kwargs):
-        """Add resource
+        """
+        Add resource
 
         Parse resource and it's actions, route actions by naming rule.
 
-        :param resource: resource class
-        :param class_args: class_args
-        :param class_kwargs: class_kwargs
+        Args:
+            resource: resource class
+            class_args: class_args
+            class_kwargs: class_kwargs
         """
         name = resource.__name__.lower()
         meta_resource = parse_docs(resource.__doc__, ["$shared"])
@@ -285,15 +314,17 @@ class Api:
             )
 
     def make_action(self, fn, schema_parser, meta):
-        """Make resource's method an action
+        """
+        Make resource's method an action
 
         Validate input, output by schema in meta.
         If no input schema, call fn without params.
         If no output schema, will not validate return value.
 
-        :param fn: resource's method
-        :param schema_parser: for parsing schema in meta
-        :param meta: meta data of the action
+        Args:
+            fn: resource's method
+            schema_parser: for parsing schema in meta
+            meta: meta data of the action
         """
         validate_input = validate_output = None
         if "$input" in meta:
@@ -325,7 +356,8 @@ class Api:
         return action
 
     def make_view(self, action_group):
-        """Create a view function
+        """
+        Create a view function
 
         Check permission and Dispatch request to action by request.method
         """

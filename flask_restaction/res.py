@@ -7,8 +7,10 @@ def resp_json(resp):
     """
     Get JSON from response if success, raise requests.HTTPError otherwise.
 
-    :param resp: requests.Response or flask.Response
-    :return: JSON value
+    Args:
+        resp: requests.Response or flask.Response
+    Retuens:
+        JSON value
     """
     if isinstance(resp, flask.Response):
         if 400 <= resp.status_code < 600:
@@ -53,7 +55,12 @@ def res_to_url(resource, action):
 
 
 class TestClientSession:
-    """Wrapper Flask.test_client like requests.Session"""
+    """
+    Wrapper Flask.test_client like requests.Session
+
+    Attributes:
+        headers: request headers
+    """
 
     def __init__(self, test_client):
         self.test_client = test_client
@@ -81,11 +88,12 @@ class TestClientSession:
 
 
 class Res:
-    """A tool for calling API
+    """
+    A tool for calling API
 
     Will keep a session and handle auth token automatic
 
-    Usage::
+    Usage:
 
         >>> res = Res(test_client=app.test_client)  # used in testing
         >>> res = Res("http://127.0.0.1:5000")  # request remote api
@@ -97,12 +105,15 @@ class Res:
         {'message': 'Hello kk, Welcome to flask-restaction!'}
         >>> res.xxx.get()
         ...
-        requests.exceptions.HTTPError: 404 Client Error: NOT FOUND
-                                       for url: http://127.0.0.1:5000/xxx
+        requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://127.0.0.1:5000/xxx
 
-    :param url_prefix: url prefix of API
-    :param auth_header: auth header name of API
-    :return: requests.Response
+    Args:
+        url_prefix: url prefix of API
+        auth_header: auth header name of API
+    Attributes:
+        url_prefix: url prefix
+        auth_header: auth header
+        session: requests.Session or TestClientSession
     """
 
     def __init__(self, url_prefix="", test_client=None,
@@ -116,6 +127,7 @@ class Res:
         self.session.headers.update({'Accept': 'application/json'})
 
     def ajax(self, url, method="GET", data=None, headers=None):
+        """Send request"""
         params = {
             "method": method,
             "url": self.url_prefix + url,
@@ -133,12 +145,14 @@ class Res:
         return resp_json(resp)
 
     def _request(self, resource, action, data=None, headers=None):
-        """Send request
+        """
+        Send request
 
-        :param resource: resource
-        :param action: action
-        :param data: string or object which can be json.dumps
-        :param headers: http headers
+        Args:
+            resource: resource
+            action: action
+            data: string or object which can be json.dumps
+            headers: http headers
         """
         url, httpmethod = res_to_url(resource, action)
         return self.ajax(url, httpmethod, data, headers)

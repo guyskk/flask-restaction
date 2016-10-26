@@ -7,10 +7,13 @@ RESJS_DIST = os.path.join(os.path.dirname(__file__), 'resjs/dist')
 
 
 def parse_meta(meta):
-    """Parse metadata of API
+    """
+    Parse metadata of API
 
-    :param meta: metadata of API
-    :return: url_prefix, auth_header, resources
+    Args:
+        meta: metadata of API
+    Returns:
+        tuple(url_prefix, auth_header, resources)
     """
     resources = {}
     for name in meta:
@@ -59,10 +62,13 @@ def render_core(url_prefix, auth_header, resources):
 
 
 def generate_code(meta, prefix=None, node=False, min=False):
-    """Generate res.js
+    """
+    Generate res.js
 
-    :param meta: tuple(url_prefix, auth_header, resources) or metadata of API
-    :return: res.js source code
+    Args:
+        meta: tuple(url_prefix, auth_header, resources) or metadata of API
+    Returns:
+        res.js source code
     """
     if isinstance(meta, dict):
         url_prefix, auth_header, resources = parse_meta(meta)

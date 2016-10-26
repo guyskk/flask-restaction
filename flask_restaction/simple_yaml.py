@@ -4,7 +4,8 @@ from yaml import *  # noqa
 
 
 class SimpleLoader(yaml.SafeLoader):
-    """Simple, Ordered and Safe Loader.
+    """
+    Simple, Ordered and Safe Loader.
 
     1. treat '@', '&', '*' as plain string, anchors and aliases are disabled
     2. load YAML mapping as OrderedDict

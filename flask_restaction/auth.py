@@ -53,10 +53,14 @@ class TokenAuth:
         return headers
 
     def calculate_expiration(self, token):
-        """Calculate token expiration
+        """
+        Calculate token expiration
 
         return expiration if the token need to set expiration or refresh,
         otherwise return None.
+
+        Args:
+            token (dict): a decoded token
         """
         if not token:
             return None
