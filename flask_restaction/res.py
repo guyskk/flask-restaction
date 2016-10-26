@@ -105,7 +105,8 @@ class Res:
         {'message': 'Hello kk, Welcome to flask-restaction!'}
         >>> res.xxx.get()
         ...
-        requests.exceptions.HTTPError: 404 Client Error: NOT FOUND for url: http://127.0.0.1:5000/xxx
+        requests.exceptions.HTTPError:
+            404 Client Error: NOT FOUND for url: http://127.0.0.1:5000/xxx
 
     Args:
         url_prefix: url prefix of API
