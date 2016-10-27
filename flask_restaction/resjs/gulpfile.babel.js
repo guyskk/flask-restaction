@@ -59,6 +59,12 @@ gulp.task('build:res-node', () => {
         .pipe(gulp.dest('./dist/'))
 })
 
+gulp.task('build:res-rn', () => {
+    return gulp.src('res.rn.js')
+        .pipe(rename('res.rn.js'))
+        .pipe(gulp.dest('./dist/'))
+})
+
 gulp.task('build:index', () => {
     return gulp.src('index.js')
         .pipe(babel())
@@ -66,7 +72,7 @@ gulp.task('build:index', () => {
 })
 
 
-gulp.task('build', ['build:res-web', 'build:res-web-min', 'build:res-node', 'build:index'])
+gulp.task('build', ['build:res-web', 'build:res-web-min', 'build:res-node', 'build:res-rn', 'build:index'])
 gulp.task('default', ['build'])
 gulp.task('watch', ['build'], () => {
     gulp.watch('*.js', ['build'])
