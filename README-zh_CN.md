@@ -2,6 +2,7 @@
 
 [![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)](https://travis-ci.org/guyskk/flask-restaction) [![codecov](https://codecov.io/gh/guyskk/flask-restaction/branch/master/graph/badge.svg)](https://codecov.io/gh/guyskk/flask-restaction)
 
+[English](README.md) [中文](README-zh_CN.md)
 
 为RESTful API而生的Web框架：
 
@@ -18,23 +19,11 @@
     pip install flask-restaction
 
 
-## 架构
-
-[REST-Action风格的Web架构](REST-Action.md)
-
-此项目是基于Flask框架实现的REST-Action风格的Web框架。
-目前已具备雏形，但还没有实现所有特性。
-
-
 ## 文档
 
-在线文档：http://flask-restaction.readthedocs.io/
-
-手动构建文档：
-
-    pip install sphinx
-    cd docs
-    make html
+简体中文文档: http://restaction-zh-cn.readthedocs.io/  
+English Document: http://restaction.readthedocs.io/    
+文档源文件: https://github.com/restaction    
 
 
 ## 测试
