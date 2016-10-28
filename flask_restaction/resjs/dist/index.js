@@ -86,12 +86,16 @@ function renderCore(meta) {
 }
 
 function parseResjs() {
-    var node = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
-    var min = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+    var node = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+    var rn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
     var filename = min ? 'res.web.min.js' : 'res.web.js';
     if (node) {
         filename = 'res.node.js';
+    }
+    if (rn) {
+        filename = 'res.rn.js';
     }
     filename = (0, _path.join)(__dirname, filename);
     return new _promise2.default(function (resolve, reject) {
@@ -108,16 +112,16 @@ function parseResjs() {
 }
 
 function resjs(url) {
-    var dest = arguments.length <= 1 || arguments[1] === undefined ? './res.js' : arguments[1];
-    var urlPrefix = arguments.length <= 2 || arguments[2] === undefined ? undefined : arguments[2];
-    var node = arguments.length <= 3 || arguments[3] === undefined ? undefined : arguments[3];
-    var min = arguments.length <= 4 || arguments[4] === undefined ? undefined : arguments[4];
+    var dest = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : './res.js';
+    var urlPrefix = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
+    var node = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : undefined;
+    var rn = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : undefined;
+    var min = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : undefined;
 
-    return _promise2.default.all([parseMeta(url), parseResjs(node, min)]).then(function (_ref) {
-        var _ref2 = (0, _slicedToArray3.default)(_ref, 2);
-
-        var meta = _ref2[0];
-        var generate = _ref2[1];
+    return _promise2.default.all([parseMeta(url), parseResjs(node, rn, min)]).then(function (_ref) {
+        var _ref2 = (0, _slicedToArray3.default)(_ref, 2),
+            meta = _ref2[0],
+            generate = _ref2[1];
 
         if (urlPrefix) {
             meta.urlPrefix = urlPrefix;

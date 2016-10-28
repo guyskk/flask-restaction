@@ -6,18 +6,24 @@
 
     resjs --help
 
-    Usage: resjs [options] <url> [dest]
+
+    Usage: resjs [options] <url>
 
     generate res.js for browser or nodejs
 
     Options:
 
-      -h, --help             output usage information
-      -V, --version          output the version number
-      -p, --prefix [prefix]  urlPrefix of generated res.js
-      -n, --node [node]      generate res.js for nodejs, default for browser
-      -m, --min [min]        minimize generated res.js, default not minimize
+    -h, --help             output usage information
+    -V, --version          output the version number
+    -d, --dest [dest]      dest path to save res.js
+    -p, --prefix [prefix]  url prefix of generated res.js
+    -n, --node [node]      generate res.js for nodejs, default for browser
+    -r, --rn [rn]          generate res.js for react-native
+    -m, --min [min]        minimize generated res.js, default not minimize
 
+ReactNative
+
+    resjs APIURL -p APIURL --rn
 
 构建
 

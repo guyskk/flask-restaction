@@ -69,10 +69,13 @@ function renderCore(meta) {
     return code
 }
 
-function parseResjs(node = false, min = false) {
+function parseResjs(node = false, rn = false, min = false) {
     let filename = min ? 'res.web.min.js' : 'res.web.js'
     if (node) {
         filename = 'res.node.js'
+    }
+    if (rn) {
+        filename = 'res.rn.js'
     }
     filename = join(__dirname, filename)
     return new Promise((resolve, reject) => {
@@ -88,8 +91,8 @@ function parseResjs(node = false, min = false) {
     })
 }
 
-function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined, min = undefined) {
-    return Promise.all([parseMeta(url), parseResjs(node, min)])
+function resjs(url, dest = './res.js', urlPrefix = undefined, node = undefined, rn = undefined, min = undefined) {
+    return Promise.all([parseMeta(url), parseResjs(node, rn, min)])
         .then(([meta, generate]) => {
             if (urlPrefix) {
                 meta.urlPrefix = urlPrefix

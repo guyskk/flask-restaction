@@ -8,7 +8,8 @@ require('commander')
     .option('-d, --dest [dest]', 'dest path to save res.js')
     .option('-p, --prefix [prefix]', 'url prefix of generated res.js')
     .option('-n, --node [node]', 'generate res.js for nodejs, default for browser')
+    .option('-r, --rn [rn]', 'generate res.js for react-native')
     .option('-m, --min [min]', 'minimize generated res.js, default not minimize')
     .action(function(url, options) {
-        return resjs(url, options.dest, options.prefix, options.node, options.min)
+        return resjs(url, options.dest, options.prefix, options.node, options.rn, options.min)
     }).parse(process.argv);
