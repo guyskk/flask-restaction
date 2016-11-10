@@ -2,7 +2,7 @@
 
 [![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)](https://travis-ci.org/guyskk/flask-restaction) [![codecov](https://codecov.io/gh/guyskk/flask-restaction/branch/master/graph/badge.svg)](https://codecov.io/gh/guyskk/flask-restaction)
 
-[中文](README-zh_CN.md) [English](README.md)
+[README](README.md) | [中文文档](README-zh_CN.md)
 
 A web framwork born to create RESTful API
 

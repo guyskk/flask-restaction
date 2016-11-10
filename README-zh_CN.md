@@ -2,7 +2,7 @@
 
 [![travis-ci](https://api.travis-ci.org/guyskk/flask-restaction.svg)](https://travis-ci.org/guyskk/flask-restaction) [![codecov](https://codecov.io/gh/guyskk/flask-restaction/branch/master/graph/badge.svg)](https://codecov.io/gh/guyskk/flask-restaction)
 
-[English](README.md) [中文](README-zh_CN.md)
+[README](README.md) | [中文文档](README-zh_CN.md)
 
 为RESTful API而生的Web框架：
 
