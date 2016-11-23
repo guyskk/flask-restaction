@@ -1,6 +1,7 @@
-import jwt
 from datetime import datetime, timedelta
-from flask import request, current_app, g
+
+import jwt
+from flask import current_app, g, request
 from werkzeug.http import dump_cookie
 
 
@@ -95,5 +96,6 @@ class TokenAuth:
         """Encode Authorization token, return bytes token"""
         key = current_app.secret_key
         if key is None:
-            raise ValueError("please set app.secret_key before generate token")
+            raise RuntimeError(
+                "please set app.secret_key before generate token")
         return jwt.encode(token, key, algorithm=self.config["algorithm"])
