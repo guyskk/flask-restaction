@@ -73,6 +73,7 @@ class Hello:
         g.token = {"name": name, "role": "normal"}
         return "OK"
 
+
 api.add_resource(Hello, api)
 api.add_resource(type('Docs', (), {'get': api.meta_view}))
 

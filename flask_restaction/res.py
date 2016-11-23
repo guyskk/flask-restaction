@@ -1,6 +1,7 @@
+from json import dumps, loads
+
 import flask
 import requests
-from json import dumps, loads
 
 
 def resp_json(resp):

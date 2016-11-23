@@ -1,23 +1,24 @@
 """
 API - Resource Manager
 """
-import re
 import json
+import re
 import textwrap
-from os.path import join, basename, dirname
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
+from os.path import basename, dirname, join
+
+from flask import abort as flask_abort
 from flask import (
-    Response, request, make_response, send_from_directory,
-    current_app, abort as flask_abort
+    Response, current_app, make_response, request, send_from_directory
 )
-from werkzeug.wrappers import Response as ResponseBase
-from validr import SchemaParser, Invalid
+from validr import Invalid, SchemaParser
 from validr.schema import MarkKey
+from werkzeug.wrappers import Response as ResponseBase
+
 from . import simple_yaml as yaml
+from .cli import generate_code, parse_meta
 from .exporters import exporters
 from .res import Res
-from .cli import generate_code, parse_meta
-
 
 PATTERN_ACTION = re.compile(
     r'^(get|post|put|delete|head|options|trace|patch){1}(?:_(.*))?$')

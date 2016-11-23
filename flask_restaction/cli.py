@@ -1,6 +1,8 @@
-import os
 import argparse
+import os
+
 import requests
+
 from .res import res_to_url
 
 RESJS_DIST = os.path.join(os.path.dirname(__file__), 'resjs/dist')

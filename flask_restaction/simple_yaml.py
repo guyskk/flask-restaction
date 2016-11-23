@@ -1,5 +1,6 @@
-import yaml
 from collections import OrderedDict
+
+import yaml
 from yaml import *  # noqa
 
 
@@ -33,6 +34,7 @@ class SimpleLoader(yaml.SafeLoader):
 def construct_mapping(loader, node):
     loader.flatten_mapping(node)
     return OrderedDict(loader.construct_pairs(node))
+
 
 SimpleLoader.add_constructor(
     yaml.Loader.DEFAULT_MAPPING_TAG,

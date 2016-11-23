@@ -1,8 +1,10 @@
-from flask_restaction import Res
-import pytest
-from requests import HTTPError
 import importlib
 import sys
+
+import pytest
+from flask_restaction import Res
+from requests import HTTPError
+
 sys.path.append('./server')
 app = importlib.import_module("index").app
 
