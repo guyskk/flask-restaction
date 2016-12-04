@@ -197,6 +197,16 @@
 	            if (window.innerWidth < 768) {
 	                this.sidebar = "none";
 	            }
+	        },
+	        toUrl: function toUrl(resource, action) {
+	            var prefix = this.meta.basic.$url_prefix || '';
+	            //Convert resource.action to "METHOD url", method is UpperCase
+	            var i = action.indexOf("_");
+	            if (i < 0) {
+	                return action.toUpperCase() + ' ' + prefix + '/' + resource;
+	            } else {
+	                return action.slice(0, i).toUpperCase() + ' ' + prefix + '/' + action.slice(i + 1);
+	            }
 	        }
 	    },
 	    created: function created() {

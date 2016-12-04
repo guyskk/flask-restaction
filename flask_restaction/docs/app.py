@@ -24,6 +24,8 @@ from flask_restaction import Api
 from flask import Flask
 app = Flask(__name__)
 app.debug = True
+app.config['API_URL_PREFIX'] = '/api'
+
 api = Api(app, docs=__doc__)
 api.meta["$roles"] = {
     "管理员": {
@@ -89,6 +91,7 @@ class Article(Hello):
 
 class World(Hello):
     """Hello World"""
+
 
 api.add_resource(User)
 api.add_resource(Hello)

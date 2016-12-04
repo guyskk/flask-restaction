@@ -219,7 +219,7 @@ class Api:
         auth = DEFAULT_AUTH.copy()
         auth.update(self.meta.get("$auth", {}))
         self.meta["$auth"] = auth
-        # TODO
+        # TODO new feature: $requires
         self.requires = {}
         for k, v in self.meta.get("$requires", {}).items():
             self.requires[k] = Res(v)
@@ -233,6 +233,9 @@ class Api:
         you can set request header `Accept` to `application/json`
         or set query string `json` to get meta data(JSON).
         """
+        # API_URL_PREFIX maybe diffierent in development and production,
+        # so pick it from app.config other than store it in metafile
+        self.meta["$url_prefix"] = current_app.config.get("API_URL_PREFIX", "")
         mediatype = request.accept_mimetypes.best_match(
             ['text/html', 'application/json'], default='text/html')
         dumped = json.dumps(
@@ -246,9 +249,9 @@ class Api:
             # cache parsed meta
             if self._resjs_cache is None:
                 self._resjs_cache = parse_meta(self.meta)
-            prefix = current_app.config.get("API_URL_PREFIX")
-            min = filename == "res.min.js"
-            code = generate_code(self._resjs_cache, prefix=prefix, min=min)
+            minify = filename == "res.min.js"
+            code = generate_code(self._resjs_cache,
+                                 prefix=self.meta["$url_prefix"], min=minify)
             response = make_response(code, {
                 "Content-Type": "application/javascript"
             })

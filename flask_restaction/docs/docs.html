@@ -87,7 +87,10 @@
                         </div>
                     </div>
                     <div v-for="(item,action,index) in resource" :key="index" v-if="!isSpecial(action)">
-                        <h2 :id="'res.'+resourceName+'.'+action"><span>{{action}}</span></h2>
+                        <h2 :id="'res.'+resourceName+'.'+action">
+                          <span>{{action}}: </span>
+                          <code class="action-url">{{toUrl(resourceName,action)}}</code>
+                        </h2>
                         <p v-marked="item.$desc"></p>
                         <p>Input</p>
                         <pre v-highlight="item.$input">No Input Schema</pre>
