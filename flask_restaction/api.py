@@ -7,6 +7,7 @@ import textwrap
 from collections import OrderedDict, defaultdict
 from os.path import basename, dirname, join
 
+import simple_yaml as yaml
 from flask import abort as flask_abort
 from flask import (
     Response, current_app, make_response, request, send_from_directory
@@ -15,7 +16,6 @@ from validr import Invalid, SchemaParser
 from validr.schema import MarkKey
 from werkzeug.wrappers import Response as ResponseBase
 
-from . import simple_yaml as yaml
 from .cli import generate_code, parse_meta
 from .exporters import exporters
 from .res import Res
