@@ -70,7 +70,7 @@ class TokenAuth:
         if "exp" not in token:
             return now + timedelta(seconds=time_to_live)
         elif self.config["refresh"]:
-            exp = datetime.fromtimestamp(token["exp"])
+            exp = datetime.utcfromtimestamp(token["exp"])
             # 0.5: reduce refresh frequent
             if exp - now < timedelta(seconds=0.5 * time_to_live):
                 return now + timedelta(seconds=time_to_live)
