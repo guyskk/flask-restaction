@@ -1,7 +1,7 @@
 import json
 import pytest
 from validr import Invalid, SchemaError
-from validr.validators import handle_default_optional_desc
+from validr import validator
 from flask import Flask, Blueprint, jsonify, url_for, request, make_response
 from flask_restaction import exporter
 from flask_restaction.api import (
@@ -520,18 +520,16 @@ def test_blueprint():
 
 def test_validators():
 
-    @handle_default_optional_desc()
-    def even_validator():
-        def validator(value):
-            try:
-                i = int(value)
-            except:
-                raise Invalid("invalid int")
-            if i % 2 == 0:
-                return i
-            else:
-                raise Invalid("not even number")
-        return validator
+    @validator()
+    def even_validator(value):
+        try:
+            i = int(value)
+        except:
+            raise Invalid("invalid int")
+        if i % 2 == 0:
+            return i
+        else:
+            raise Invalid("not even number")
 
     app = Flask(__name__)
     api = Api(app, validators={"even": even_validator})

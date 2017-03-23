@@ -1,5 +1,5 @@
 flask>=0.11.1
 pyjwt>=1.4.2
-validr>=0.12.0
+validr>=0.14.0
 requests>=2.7.0
 simple-yaml>=0.1.0

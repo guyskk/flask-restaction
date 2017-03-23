@@ -12,8 +12,7 @@ from flask import abort as flask_abort
 from flask import (
     Response, current_app, make_response, request, send_from_directory
 )
-from validr import Invalid, SchemaParser
-from validr.schema import MarkKey
+from validr import Invalid, SchemaParser, mark_key
 from werkzeug.wrappers import Response as ResponseBase
 
 from .cli import generate_code, parse_meta
@@ -214,7 +213,7 @@ class Api:
         self.meta["$error"].update(meta_api.get("$error", {}))
         # check shared is valid or not
         if self.meta["$shared"]:
-            with MarkKey("$shared"):
+            with mark_key("$shared"):
                 SchemaParser(shared=self.meta["$shared"])
         auth = DEFAULT_AUTH.copy()
         auth.update(self.meta.get("$auth", {}))
@@ -282,9 +281,9 @@ class Api:
         self.meta[name] = meta_resource
         shared = self.meta["$shared"].copy()
         shared.update(meta_resource.get("$shared", {}))
-        with MarkKey("%s.$shared" % resource.__name__):
+        with mark_key("%s.$shared" % resource.__name__):
             sp = SchemaParser(validators=self.validators, shared=shared)
-        with MarkKey(resource.__name__):
+        with mark_key(resource.__name__):
             resource = resource(*class_args, **class_kwargs)
             # group actions by it's name, and
             # make action group a view function
@@ -299,7 +298,7 @@ class Api:
                 meta_action = parse_docs(
                     fn.__doc__, ["$input", "$output", "$error"])
                 meta_resource[action] = meta_action
-                with MarkKey(fn.__name__):
+                with mark_key(fn.__name__):
                     action_group[httpmethod] = \
                         self.make_action(fn, sp, meta_action)
 
@@ -332,10 +331,10 @@ class Api:
         """
         validate_input = validate_output = None
         if "$input" in meta:
-            with MarkKey("$input"):
+            with mark_key("$input"):
                 validate_input = schema_parser.parse(meta["$input"])
         if "$output" in meta:
-            with MarkKey("$output"):
+            with mark_key("$output"):
                 validate_output = schema_parser.parse(meta["$output"])
 
         def action(data):
